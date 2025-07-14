@@ -29,7 +29,7 @@ class ControllerInput:
             j.init()
             print(f"🔍 偵測到手把：{j.get_name()}")
             confirm = input("要使用這個裝置嗎？(Y/n): ").strip().lower()
-            if confirm == "y":
+            if confirm == "y" or confirm == "":
                 self.joystick = j
                 print(f"✅ 已選擇：{j.get_name()}")
                 return
@@ -96,3 +96,10 @@ class ControllerInput:
                             last_key_bit=last_key_bit,
                             last_key_down=last_key_down
                         )
+
+if __name__ == "__main__":
+    # 初始化手把輸入
+    controller = ControllerInput()
+
+    # 開始監聽手把事件
+    controller.run()
