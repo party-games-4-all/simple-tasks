@@ -98,7 +98,7 @@ class AccuracyDirectionTestApp:
 
 if __name__ == "__main__":
     from threading import Thread
-    from joycon_input import JoyConListener
+    from controller_input import ControllerInput
 
     root = tk.Tk()
     app = AccuracyDirectionTestApp(root)
@@ -109,7 +109,8 @@ if __name__ == "__main__":
     app.directions["left"]["bit"] = 0
     app.directions["right"]["bit"] = 2
 
-    listener = JoyConListener(button_callback=app.on_joycon_input)
+    listener = ControllerInput(button_callback=app.on_joycon_input)
     Thread(target=listener.run, daemon=True).start()
 
     root.mainloop()
+    print("🎮 CRT 反應時間測試結束")

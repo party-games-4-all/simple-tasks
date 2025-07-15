@@ -95,4 +95,4 @@ if __name__ == "__main__":
     Thread(target=listener.run, daemon=True).start()
 
     root.mainloop()
-    print("🎮 Joy-Con 反應時間測試結束")
+    print("🎮 SRT 反應時間測試結束")

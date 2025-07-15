@@ -140,3 +140,4 @@ if __name__ == "__main__":
     Thread(target=listener.run, daemon=True).start()
 
     root.mainloop()
+    print("🎮 TP 可預測反應時間測試結束")
