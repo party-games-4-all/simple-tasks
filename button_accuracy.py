@@ -24,12 +24,14 @@ class AccuracyDirectionTestApp:
                 x - 50, y - 50, x + 50, y + 50,
                 fill="lightgray", outline="black", width=3
             )
-            self.canvas.create_text(x, y, text=dir.upper(), font=("Arial", 16))
+            # self.canvas.create_text(x, y, text=dir.upper(), font=("Arial", 16))
 
         self.label = tk.Label(root, text="請按亮起的方向鍵", font=("Arial", 32))
-        self.label.place(relx=0.5, rely=0.05, anchor='n')
-
         self.start_button = tk.Button(root, text="開始計算", font=("Arial", 24), command=self.start_measurement)
+        self.reset()
+
+    def reset(self):
+        self.label.place(relx=0.5, rely=0.05, anchor='n')
         self.start_button.place(relx=0.5, rely=0.92, anchor='s')
 
         self.measuring = False
@@ -39,10 +41,11 @@ class AccuracyDirectionTestApp:
         self.total = 0
         self.response_times = []
         self.error_count = 0
-
         self.next_round()
 
     def start_measurement(self):
+        self.label.place_forget()  # 隱藏提示文字
+        self.start_button.place_forget()  # 隱藏開始按鈕
         self.response_times.clear()
         self.total = 0
         self.score = 0
@@ -67,28 +70,35 @@ class AccuracyDirectionTestApp:
 
                 if direction == self.current_target:
                     self.canvas.itemconfig(self.circles[direction], fill="green")
-                    self.label.config(text="✅ 正確！")
+                    # self.label.config(text="✅ 正確！")
                     correct = True
                     self.score += 1
                 else:
                     self.canvas.itemconfig(self.circles[direction], fill="gray")
-                    self.label.config(text=f"❌ 錯誤！正確是 {self.current_target.upper()}")
+                    # self.label.config(text=f"❌ 錯誤！正確是 {self.current_target.upper()}")
                     correct = False
                     self.error_count += 1
 
                 self.total += 1
 
                 if self.measuring:
-                    if self.total > 1:  # 第 1 回合不記錄
-                        self.response_times.append(response_time)
+                    if self.total > 5:
                         avg_time = sum(self.response_times) / len(self.response_times)
                         error_rate = self.error_count / (self.total - 1)
                         # 更新畫面上方 label
                         self.label.config(
-                            text=f"正確率：{(1-error_rate):.1%}｜平均反應時間：{avg_time:.3f} 秒"
+                            text=f"測驗結束\n正確率：{(1-error_rate):.1%}｜平均反應時間：{avg_time:.3f} 秒"
                         )
-                        print(f"🔘 回合 {self.total-1}：{'正確' if correct else '錯誤'}，反應時間 {response_time:.3f} 秒")
                         print(f"📊 平均反應時間：{avg_time:.3f} 秒｜錯誤率：{error_rate:.1%}")
+                        self.reset()
+                        break
+                    if self.total > 1:  # 第 1 回合不記錄
+                        self.response_times.append(response_time)
+                        # # 更新畫面上方 label
+                        # self.label.config(
+                        #     text=f"正確率：{(1-error_rate):.1%}｜平均反應時間：{avg_time:.3f} 秒"
+                        # )
+                        print(f"🔘 回合 {self.total-1}：{'正確' if correct else '錯誤'}，反應時間 {response_time:.3f} 秒")
                     else:
                         print("👟 第 1 回合為熱身，不納入統計。")
 
@@ -105,9 +115,9 @@ if __name__ == "__main__":
 
     # 根據你的 Joy-Con 對應設定 bit 值
     app.directions["up"]["bit"] = 3
-    app.directions["down"]["bit"] = 1
-    app.directions["left"]["bit"] = 0
-    app.directions["right"]["bit"] = 2
+    app.directions["down"]["bit"] = 0
+    app.directions["left"]["bit"] = 2
+    app.directions["right"]["bit"] = 1
 
     listener = ControllerInput(button_callback=app.on_joycon_input)
     Thread(target=listener.run, daemon=True).start()
