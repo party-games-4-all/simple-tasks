@@ -56,6 +56,10 @@ class AccuracyDirectionTestApp:
     def next_round(self):
         for cid in self.circles.values():
             self.canvas.itemconfig(cid, fill="lightgray")
+        delay = random.randint(1000, 3000)  # 毫秒，1 到 3 秒
+        self.root.after(delay, self.start)
+
+    def start(self):
         self.current_target = random.choice(list(self.directions.keys()))
         self.canvas.itemconfig(self.circles[self.current_target], fill="red")
         self.round_start_time = time.time()
@@ -102,7 +106,7 @@ class AccuracyDirectionTestApp:
                     else:
                         print("👟 第 1 回合為熱身，不納入統計。")
 
-                self.root.after(1000, self.next_round)
+                self.root.after(1000, self.next_round) # 等待 1 秒後開始下一回合
                 break
 
 
