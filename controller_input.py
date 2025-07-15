@@ -51,7 +51,10 @@ class ControllerInput:
                 if event.type == pygame.JOYAXISMOTION:
                     print(f"軸移動：{event.axis} -> {event.value}")
                     axis = event.axis
-                    val = round(event.value, 3)
+                    val = round(event.value, 4)
+                    if abs(val) < 0.15:
+                        val = 0
+                    print(f"軸移動：{axis} -> {val}")
 
                     if axis == 0:
                         self.leftX = val
