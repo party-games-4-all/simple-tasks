@@ -26,6 +26,7 @@ class JoystickTargetTestApp:
         self.player = None
 
         self.start_time = None
+        self.has_moved = False
         self.total_time = 0
         self.success_count = 0
         self.testing = False
@@ -40,6 +41,9 @@ class JoystickTargetTestApp:
         self.leftX = 0
         self.leftY = 0
 
+        self.spawn_target()
+        Thread(target=self.player_loop, daemon=True).start()
+
     def player_loop(self):
         while True:
             if self.testing:
@@ -52,8 +56,8 @@ class JoystickTargetTestApp:
         self.label.config(text="")
         # self.label.config(text="測試中... 請用搖桿移動點進入紅圈")
         self.spawn_target()
+        self.has_moved = False  # 重設第一次移動判定
         self.start_time = time.time()
-        Thread(target=self.player_loop, daemon=True).start()
 
     def spawn_target(self):
         self.canvas.delete("all")
@@ -80,10 +84,9 @@ class JoystickTargetTestApp:
         )
 
     def update_player_position(self):
-        # 將 -1 ~ 1 值轉換為 -8 ~ +8 的速度
-        dx = (self.leftX) * 8
-        dy = (self.leftY) * 8
-        # print(f"移動：dx={dx}, dy={dy}")
+        # 將 -1 ~ 1 值轉換為 -13 ~ +13 的速度
+        dx = (self.leftX) * 13
+        dy = (self.leftY) * 13
 
         self.player_x += dx
         self.player_y += dy
@@ -98,7 +101,27 @@ class JoystickTargetTestApp:
             self.player_x + self.player_radius, self.player_y + self.player_radius
         )
 
-        # 檢查是否到達目標
+    def on_joycon_input(self, buttons, leftX, leftY, last_key_bit, last_key_down):
+        self.leftX = leftX
+        self.leftY = leftY
+
+        # 如果第一次移動，開始計時
+        if not self.has_moved and (leftX != 0 or leftY != 0):
+            self.start_time = time.time()
+            self.has_moved = True
+
+    def on_joycon_button(self, buttons, leftX, leftY, last_key_bit, last_key_down):
+        # 若按下任一按鍵（例如 A 鍵），進行位置判定
+        if not last_key_down:
+            return  # 只處理按下事件（不處理放開）
+
+        # 以 1 號鍵為例，可視需要調整
+        if last_key_bit != 1:  # 你可以改成任意你想用的按鍵編號
+            return
+
+        if not self.testing:
+            return
+
         distance = ((self.player_x - self.target_x) ** 2 + (self.player_y - self.target_y) ** 2) ** 0.5
         if distance <= self.target_radius:
             elapsed = time.time() - self.start_time
@@ -122,18 +145,9 @@ class JoystickTargetTestApp:
                 self.label.config(
                     text=(
                         f"第 {self.success_count - 1} 次"
-                        # f"第 {self.success_count - 1} 次成功｜用時 {elapsed:.2f}s｜距離 {self.initial_distance:.1f}px\n"
-                        # f"平均時間：{avg_time:.2f}s｜平均每像素時間：{avg_efficiency:.4f}s"
                     )
                 )
-            self.testing = False  # 停止測試，需按下開始才能繼續
-            # self.start_time = time.time()
-            # self.spawn_target()
-
-    def on_joycon_input(self, buttons, leftX, leftY, last_key_bit, last_key_down):
-        self.leftX = leftX
-        self.leftY = leftY
-
+            self.testing = False
 
 if __name__ == "__main__":
     from threading import Thread
@@ -142,7 +156,7 @@ if __name__ == "__main__":
     root = tk.Tk()
     app = JoystickTargetTestApp(root)
 
-    listener = ControllerInput(analog_callback=app.on_joycon_input)
+    listener = ControllerInput(analog_callback=app.on_joycon_input, button_callback=app.on_joycon_button)
     Thread(target=listener.run, daemon=True).start()
 
     root.mainloop()

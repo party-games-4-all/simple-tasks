@@ -49,17 +49,19 @@ class ControllerInput:
                 last_key_down = None
 
                 if event.type == pygame.JOYAXISMOTION:
-                    print(f"軸移動：{event.axis} -> {event.value}")
+                    # print(f"軸移動：{event.axis} -> {event.value}")
                     axis = event.axis
                     val = round(event.value, 4)
                     if abs(val) < 0.15:
                         val = 0
-                    print(f"軸移動：{axis} -> {val}")
+                    # print(f"軸移動：{axis} -> {val}")
 
                     if axis == 0:
                         self.leftX = val
                     elif axis == 1:
                         self.leftY = val
+                    else:
+                        continue
 
                     if self.analog_callback:
                         self.analog_callback(
@@ -71,7 +73,7 @@ class ControllerInput:
                         )
 
                 elif event.type == pygame.JOYBUTTONDOWN:
-                    print(f"按下按鍵：{event.button}")
+                    # print(f"按下按鍵：{event.button}")
                     self.buttons |= (1 << event.button)
                     last_key_bit = event.button
                     last_key_down = True
@@ -85,20 +87,7 @@ class ControllerInput:
                             last_key_down=last_key_down
                         )
 
-                elif event.type == pygame.JOYBUTTONUP:
-                    print(f"放開按鍵：{event.button}")
-                    self.buttons &= ~(1 << event.button)
-                    last_key_bit = event.button
-                    last_key_down = False
-
-                    if self.button_callback:
-                        self.button_callback(
-                            buttons=self.buttons,
-                            leftX=self.leftX,
-                            leftY=self.leftY,
-                            last_key_bit=last_key_bit,
-                            last_key_down=last_key_down
-                        )
+                # elif event.type                            
 
 if __name__ == "__main__":
     # 初始化手把輸入
