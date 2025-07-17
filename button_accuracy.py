@@ -2,6 +2,7 @@ import tkinter as tk
 import random
 import time
 
+
 class AccuracyDirectionTestApp:
 
     def __init__(self, root):
@@ -11,23 +12,41 @@ class AccuracyDirectionTestApp:
         self.canvas.pack()
 
         self.directions = {
-            "up":    {"pos": (600, 250), "bit": None},
-            "down":  {"pos": (600, 550), "bit": None},
-            "left":  {"pos": (400, 400), "bit": None},
-            "right": {"pos": (800, 400), "bit": None},
+            "up": {
+                "pos": (600, 250),
+                "bit": None
+            },
+            "down": {
+                "pos": (600, 550),
+                "bit": None
+            },
+            "left": {
+                "pos": (400, 400),
+                "bit": None
+            },
+            "right": {
+                "pos": (800, 400),
+                "bit": None
+            },
         }
 
         self.circles = {}
         for dir, info in self.directions.items():
             x, y = info["pos"]
-            self.circles[dir] = self.canvas.create_oval(
-                x - 50, y - 50, x + 50, y + 50,
-                fill="lightgray", outline="black", width=3
-            )
+            self.circles[dir] = self.canvas.create_oval(x - 50,
+                                                        y - 50,
+                                                        x + 50,
+                                                        y + 50,
+                                                        fill="lightgray",
+                                                        outline="black",
+                                                        width=3)
             # self.canvas.create_text(x, y, text=dir.upper(), font=("Arial", 16))
 
         self.label = tk.Label(root, text="請按亮起的方向鍵", font=("Arial", 32))
-        self.start_button = tk.Button(root, text="開始計算", font=("Arial", 24), command=self.start_measurement)
+        self.start_button = tk.Button(root,
+                                      text="開始計算",
+                                      font=("Arial", 24),
+                                      command=self.start_measurement)
         self.reset()
 
     def reset(self):
@@ -64,7 +83,8 @@ class AccuracyDirectionTestApp:
         self.canvas.itemconfig(self.circles[self.current_target], fill="red")
         self.round_start_time = time.time()
 
-    def on_joycon_input(self, buttons, leftX, leftY, last_key_bit, last_key_down):
+    def on_joycon_input(self, buttons, leftX, leftY, last_key_bit,
+                        last_key_down):
         if not last_key_down or last_key_bit is None:
             return
 
@@ -73,12 +93,14 @@ class AccuracyDirectionTestApp:
                 response_time = time.time() - self.round_start_time
 
                 if direction == self.current_target:
-                    self.canvas.itemconfig(self.circles[direction], fill="green")
+                    self.canvas.itemconfig(self.circles[direction],
+                                           fill="green")
                     # self.label.config(text="✅ 正確！")
                     correct = True
                     self.score += 1
                 else:
-                    self.canvas.itemconfig(self.circles[direction], fill="gray")
+                    self.canvas.itemconfig(self.circles[direction],
+                                           fill="gray")
                     # self.label.config(text=f"❌ 錯誤！正確是 {self.current_target.upper()}")
                     correct = False
                     self.error_count += 1
@@ -87,13 +109,16 @@ class AccuracyDirectionTestApp:
 
                 if self.measuring:
                     if self.total > 5:
-                        avg_time = sum(self.response_times) / len(self.response_times)
+                        avg_time = sum(self.response_times) / len(
+                            self.response_times)
                         error_rate = self.error_count / (self.total - 1)
                         # 更新畫面上方 label
                         self.label.config(
-                            text=f"測驗結束\n正確率：{(1-error_rate):.1%}｜平均反應時間：{avg_time:.3f} 秒"
+                            text=
+                            f"測驗結束\n正確率：{(1-error_rate):.1%}｜平均反應時間：{avg_time:.3f} 秒"
                         )
-                        print(f"📊 平均反應時間：{avg_time:.3f} 秒｜錯誤率：{error_rate:.1%}")
+                        print(
+                            f"📊 平均反應時間：{avg_time:.3f} 秒｜錯誤率：{error_rate:.1%}")
                         self.reset()
                         break
                     if self.total > 1:  # 第 1 回合不記錄
@@ -102,11 +127,13 @@ class AccuracyDirectionTestApp:
                         # self.label.config(
                         #     text=f"正確率：{(1-error_rate):.1%}｜平均反應時間：{avg_time:.3f} 秒"
                         # )
-                        print(f"🔘 回合 {self.total-1}：{'正確' if correct else '錯誤'}，反應時間 {response_time:.3f} 秒")
+                        print(
+                            f"🔘 回合 {self.total-1}：{'正確' if correct else '錯誤'}，反應時間 {response_time:.3f} 秒"
+                        )
                     else:
                         print("👟 第 1 回合為熱身，不納入統計。")
 
-                self.root.after(1000, self.next_round) # 等待 1 秒後開始下一回合
+                self.root.after(1000, self.next_round)  # 等待 1 秒後開始下一回合
                 break
 
 

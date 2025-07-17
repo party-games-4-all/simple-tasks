@@ -1,9 +1,15 @@
 import pygame
+import os
+
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
+os.environ['SDL_VIDEODRIVER'] = 'dummy'
 
 pygame.init()
 pygame.joystick.init()
 
+
 class ControllerInput:
+
     def __init__(self, button_callback=None, analog_callback=None):
 
         self.joystick = None
@@ -47,9 +53,10 @@ class ControllerInput:
             for event in pygame.event.get():
                 last_key_bit = None
                 last_key_down = None
+                print(f"{event}")
 
                 if event.type == pygame.JOYAXISMOTION:
-                    # print(f"軸移動：{event.axis} -> {event.value}")
+                    print(f"軸移動：{event.axis} -> {event.value}")
                     axis = event.axis
                     val = round(event.value, 4)
                     if abs(val) < 0.15:
@@ -64,30 +71,27 @@ class ControllerInput:
                         continue
 
                     if self.analog_callback:
-                        self.analog_callback(
-                            buttons=self.buttons,
-                            leftX=self.leftX,
-                            leftY=self.leftY,
-                            last_key_bit=axis,
-                            last_key_down=True
-                        )
+                        self.analog_callback(buttons=self.buttons,
+                                             leftX=self.leftX,
+                                             leftY=self.leftY,
+                                             last_key_bit=axis,
+                                             last_key_down=True)
 
                 elif event.type == pygame.JOYBUTTONDOWN:
-                    # print(f"按下按鍵：{event.button}")
+                    print(f"按下按鍵：{event.button}")
                     self.buttons |= (1 << event.button)
                     last_key_bit = event.button
                     last_key_down = True
 
                     if self.button_callback:
-                        self.button_callback(
-                            buttons=self.buttons,
-                            leftX=self.leftX,
-                            leftY=self.leftY,
-                            last_key_bit=last_key_bit,
-                            last_key_down=last_key_down
-                        )
+                        self.button_callback(buttons=self.buttons,
+                                             leftX=self.leftX,
+                                             leftY=self.leftY,
+                                             last_key_bit=last_key_bit,
+                                             last_key_down=last_key_down)
 
-                # elif event.type                            
+                # elif event.type
+
 
 if __name__ == "__main__":
     # 初始化手把輸入
