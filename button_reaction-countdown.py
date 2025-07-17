@@ -7,7 +7,7 @@ class CountdownReactionTestApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Reaction Test")
-        CANVAS_WIDTH = 2400
+        CANVAS_WIDTH = 1600
         CANVAS_HEIGHT = 800
         self.canvas = tk.Canvas(root, width=CANVAS_WIDTH, height=CANVAS_HEIGHT, bg='white')
         self.canvas.pack()
