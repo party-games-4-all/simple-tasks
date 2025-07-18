@@ -7,6 +7,7 @@ os.environ['SDL_VIDEODRIVER'] = 'dummy'
 pygame.init()
 pygame.joystick.init()
 
+DEBUG = False  # 設定為 True 以啟用除錯輸出
 
 class ControllerInput:
 
@@ -53,10 +54,12 @@ class ControllerInput:
             for event in pygame.event.get():
                 last_key_bit = None
                 last_key_down = None
-                print(f"{event}")
 
                 if event.type == pygame.JOYAXISMOTION:
-                    print(f"軸移動：{event.axis} -> {event.value}")
+                    if DEBUG:
+                        print(
+                            f"軸移動：{event.axis} -> {round(event.value, 4)}"
+                        )
                     axis = event.axis
                     val = round(event.value, 4)
                     if abs(val) < 0.15:
@@ -78,7 +81,8 @@ class ControllerInput:
                                              last_key_down=True)
 
                 elif event.type == pygame.JOYBUTTONDOWN:
-                    print(f"按下按鍵：{event.button}")
+                    if DEBUG:
+                        print(f"按下按鍵：{event.button}")
                     self.buttons |= (1 << event.button)
                     last_key_bit = event.button
                     last_key_down = True
