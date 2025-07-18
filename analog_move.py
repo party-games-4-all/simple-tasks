@@ -19,7 +19,7 @@ class JoystickTargetTestApp:
         self.start_button = tk.Button(root, text="開始測試", font=("Arial", 24), command=self.start_test)
         self.start_button.place(relx=0.5, rely=0.95, anchor='s')
 
-        self.target_radius = 30
+        # self.target_radius = 30
         self.player_radius = 10
 
         self.target = None
@@ -41,6 +41,31 @@ class JoystickTargetTestApp:
         self.leftX = 0
         self.leftY = 0
 
+        # 固定目標組合
+        self.fixed_targets = [
+            # D=100 W=20
+            {"x": 670, "y": 330, "radius": 20},  # 右上
+            {"x": 530, "y": 330, "radius": 20},  # 左上
+            {"x": 530, "y": 470, "radius": 20},  # 左下
+            {"x": 670, "y": 470, "radius": 20},  # 右下
+            # D=100 W=50
+            {"x": 670, "y": 330, "radius": 50},  # 右上
+            {"x": 530, "y": 330, "radius": 50},  # 左上
+            {"x": 530, "y": 470, "radius": 50},  # 左下
+            {"x": 670, "y": 470, "radius": 50},  # 右下
+            # D=400 W=20
+            {"x": 882, "y": 118, "radius": 20},  # 右上
+            {"x": 318, "y": 118, "radius": 20},  # 左上
+            {"x": 318, "y": 682, "radius": 20},  # 左下
+            {"x": 882, "y": 682, "radius": 20},  # 右下
+            # D=400 W=50
+            {"x": 882, "y": 118, "radius": 50},  # 右上
+            {"x": 318, "y": 118, "radius": 50},  # 左上
+            {"x": 318, "y": 682, "radius": 50},  # 左下
+            {"x": 882, "y": 682, "radius": 50},  # 右下
+        ]
+        random.shuffle(self.fixed_targets)
+
         self.spawn_target()
         Thread(target=self.player_loop, daemon=True).start()
 
@@ -51,23 +76,33 @@ class JoystickTargetTestApp:
             time.sleep(0.016)  # 約 60fps
 
     def start_test(self):
+        if self.success_count >= len(self.fixed_targets):
+            self.label.config(text="✅ 測驗完成")
+            return
+
         self.testing = True
         self.total_time = 0
         self.label.config(text="")
-        # self.label.config(text="測試中... 請用搖桿移動點進入紅圈")
+        self.start_button.place_forget()  # 隱藏按鈕
         self.spawn_target()
         self.has_moved = False  # 重設第一次移動判定
-        self.start_time = time.time()
 
     def spawn_target(self):
         self.canvas.delete("all")
 
+        # 重置玩家位置
         self.player_x = self.canvas_width // 2
         self.player_y = self.canvas_height // 2
 
-        # 產生目標
-        self.target_x = random.randint(self.target_radius, self.canvas_width - self.target_radius)
-        self.target_y = random.randint(self.target_radius, self.canvas_height - self.target_radius)
+        if self.success_count >= len(self.fixed_targets):
+            self.label.config(text="✅ 測驗完成")
+            return
+
+        target_index = (self.success_count) % len(self.fixed_targets)
+        target_info = self.fixed_targets[target_index]
+        self.target_x = target_info["x"]
+        self.target_y = target_info["y"]
+        self.target_radius = target_info["radius"]
 
         # 計算初始距離
         self.initial_distance = ((self.player_x - self.target_x) ** 2 + (self.player_y - self.target_y) ** 2) ** 0.5
@@ -127,27 +162,26 @@ class JoystickTargetTestApp:
             elapsed = time.time() - self.start_time
             self.success_count += 1
 
-            if self.success_count == 1:
-                print("👟 第一次為熱身，不列入統計")
-            else:
-                efficiency = elapsed / self.initial_distance
-                self.total_time += elapsed
-                self.total_efficiency += efficiency
+            efficiency = elapsed / self.initial_distance
+            self.total_time += elapsed
+            self.total_efficiency += efficiency
 
-                avg_time = self.total_time / (self.success_count - 1)
-                avg_efficiency = self.total_efficiency / (self.success_count - 1)
+            avg_time = self.total_time / (self.success_count)
+            avg_efficiency = self.total_efficiency / (self.success_count)
 
-                print(f"✅ 第 {self.success_count - 1} 次成功")
-                print(f"⏱ 用時：{elapsed:.2f} 秒")
-                print(f"📏 初始距離：{self.initial_distance:.1f} px")
-                print(f"⚡ 單位距離時間：{efficiency:.4f} 秒/像素")
-                print(f"📊 平均時間：{avg_time:.2f} 秒，平均秒/像素：{avg_efficiency:.4f}")
-                self.label.config(
-                    text=(
-                        f"第 {self.success_count - 1} 次"
-                    )
+            print(f"✅ 第 {self.success_count} 次成功")
+            print(f"⏱ 用時：{elapsed:.2f} 秒")
+            print(f"📏 初始距離：{self.initial_distance:.1f} px")
+            print(f"⚡ 單位距離時間：{efficiency:.4f} 秒/像素")
+            print(f"📊 平均時間：{avg_time:.2f} 秒，平均秒/像素：{avg_efficiency:.4f}")
+            self.label.config(
+                text=(
+                    f"第 {self.success_count} 次"
                 )
+            )
             self.testing = False
+            time.sleep(1)  # 約 60fps
+            self.start_test()  # 重新開始測試
 
 if __name__ == "__main__":
     from threading import Thread
