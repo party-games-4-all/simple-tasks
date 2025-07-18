@@ -180,7 +180,7 @@ class JoystickTargetTestApp:
                 )
             )
             self.testing = False
-            time.sleep(1)  # 約 60fps
+            time.sleep(1)  # 等待 1 秒後再開始下一個目標
             self.start_test()  # 重新開始測試
 
 if __name__ == "__main__":
