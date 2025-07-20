@@ -3,6 +3,7 @@ import time
 import math
 from threading import Thread
 from abc import ABC, abstractmethod
+from utils import get_directional_offset
 
 DEBUG = True
 
@@ -537,9 +538,14 @@ class PathFollowingTestApp:
     def create_paths(self):
         """回傳多條路徑清單"""
         return [
+            # 從左往右
             StraightPath(self.canvas, 50, 400, 1150, 400, 80),
-            CornerPath(self.canvas, 50, 400, 600, 400, 600, 200, 80),
-            StraightPath(self.canvas, 600, 200, 1150, 200, 80),
+            # 從右往左
+            StraightPath(self.canvas, 1150, 400, 50, 400, 80),
+            # 從上往下
+            StraightPath(self.canvas, 600, 100, 600, 700, 80),
+            # 從下往上
+            StraightPath(self.canvas, 600, 700, 600, 100, 80),
         ]
 
     def load_path(self, index):
@@ -552,10 +558,23 @@ class PathFollowingTestApp:
         self.setup_goal()
 
         # 重設玩家位置（可根據每條 path 決定）
-        self.player_x = (self.path.start_x +
-                         self.offset) if hasattr(self.path, "start_x") else 100
-        self.player_y = (self.path.start_y) if hasattr(self.path,
-                                                       "start_y") else 400
+        # 根據 path 類型自動設置 offset 起始點
+        if isinstance(self.path, StraightPath):
+            dx = self.path.end_x - self.path.start_x
+            dy = self.path.end_y - self.path.start_y
+            offset_x, offset_y = get_directional_offset(dx, dy, self.offset)
+            self.player_x = self.path.start_x + offset_x
+            self.player_y = self.path.start_y + offset_y
+        elif isinstance(self.path, CornerPath):
+            dx = self.path.corner_x - self.path.start_x
+            dy = self.path.corner_y - self.path.start_y
+            offset_x, offset_y = get_directional_offset(dx, dy, self.offset)
+            self.player_x = self.path.start_x + offset_x
+            self.player_y = self.path.start_y + offset_y
+        else:
+            self.player_x = 100
+            self.player_y = 400
+
         self.canvas.coords(self.player, self.player_x - self.player_radius,
                            self.player_y - self.player_radius,
                            self.player_x + self.player_radius,
