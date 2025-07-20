@@ -247,19 +247,20 @@ class CornerPath(Path):
         """創建轉彎路徑"""
         # 創建第一段（起點到轉彎點）
         self.segment1 = self._create_segment(self.start_x, self.start_y,
-                                             self.corner_x + (self.width / 2),
-                                             self.corner_y)
+                                             self.corner_x, self.corner_y,
+                                             'blue')
 
         # 創建第二段（轉彎點到終點）
-        self.segment2 = self._create_segment(self.corner_x, self.corner_y,
-                                             self.end_x, self.end_y)
+        self.segment2 = self._create_segment(self.corner_x,
+                                             self.corner_y + (self.width / 2),
+                                             self.end_x, self.end_y, 'green')
 
         if self.segment1:
             self.path_elements.append(self.segment1)
         if self.segment2:
             self.path_elements.append(self.segment2)
 
-    def _create_segment(self, x1, y1, x2, y2):
+    def _create_segment(self, x1, y1, x2, y2, color):
         """創建路徑段"""
         # 計算垂直於路徑方向的向量
         dx = x2 - x1
@@ -290,7 +291,7 @@ class CornerPath(Path):
         ]
 
         return self.canvas.create_polygon(points,
-                                          fill=self.color,
+                                          fill=color,
                                           outline=self.color)
 
     def is_inside(self, x, y):
@@ -304,7 +305,9 @@ class CornerPath(Path):
             # 只剩 segment2，從 end 回推
             ratio = remaining_length / self.segment2_length
             seg2_start_x = self.end_x - (self.end_x - self.corner_x) * ratio
-            seg2_start_y = self.end_y - (self.end_y - self.corner_y) * ratio
+            seg2_start_y = self.end_y - (self.end_y -
+                                         (self.corner_y +
+                                          (self.width / 2))) * ratio
 
             # 若玩家在收掉的 segment1 上就直接 False（例如往回走）
             if self._point_in_segment(x, y, self.start_x, self.start_y,
@@ -332,7 +335,8 @@ class CornerPath(Path):
             if self._point_in_segment(x, y, seg1_start_x, seg1_start_y,
                                       self.corner_x, self.corner_y):
                 return True
-            if self._point_in_segment(x, y, self.corner_x, self.corner_y,
+            if self._point_in_segment(x, y, self.corner_x,
+                                      (self.corner_y + (self.width / 2)),
                                       self.end_x, self.end_y):
                 return True
 
@@ -382,7 +386,8 @@ class CornerPath(Path):
             # 只顯示 segment2 的後段
             ratio = remaining_length / self.segment2_length
             start_x = self.end_x - (self.end_x - self.corner_x) * ratio
-            start_y = self.end_y - (self.end_y - self.corner_y) * ratio
+            start_y = self.end_y - (self.end_y - (self.corner_y +
+                                                  (self.width / 2))) * ratio
 
             if self.segment2:
                 points = self._create_segment_points(start_x, start_y,
@@ -396,9 +401,10 @@ class CornerPath(Path):
         else:
             # segment2 全顯示
             if self.segment2:
-                points2 = self._create_segment_points(self.corner_x,
-                                                      self.corner_y,
-                                                      self.end_x, self.end_y)
+                points2 = self._create_segment_points(
+                    self.corner_x, (self.corner_y + (self.width / 2)),
+                    self.end_x, self.end_y)
+
                 self.canvas.coords(self.segment2, *points2)
 
             # segment1 部分顯示
@@ -521,7 +527,7 @@ class PathFollowingTestApp:
     def setup_path(self):
         """設置路徑，可以選擇不同類型"""
         # 選擇路徑類型
-        path_type = "straight"  # 可改為 "corner" 來測試轉彎路徑
+        path_type = "corner"  # 可改為 "corner" 來測試轉彎路徑
 
         if path_type == "straight":
             # 直線路徑
