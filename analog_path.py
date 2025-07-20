@@ -537,8 +537,6 @@ class PathFollowingTestApp:
         self.setup_player()
         self.load_path(self.current_path_index)
 
-        Thread(target=self.player_loop, daemon=True).start()
-
     def create_paths(self):
         """回傳多條路徑清單"""
         paths = [
@@ -611,6 +609,8 @@ class PathFollowingTestApp:
         elif isinstance(self.path, CornerPath):
             self.path.current_progress = 1.0
 
+        self.player_loop()
+
     def setup_goal(self):
         """設置目標區域"""
         goal_area = self.path.get_goal_area()
@@ -641,57 +641,57 @@ class PathFollowingTestApp:
         self.canvas.tag_raise(self.player)  # ← 初始時也拉最上面
 
     def player_loop(self):
-        while True:
-            if self.running and not self.reached_goal:
-                dx = self.leftX * self.speed
-                dy = self.leftY * self.speed
+        if self.running and not self.reached_goal:
+            dx = self.leftX * self.speed
+            dy = self.leftY * self.speed
 
-                self.player_x += dx
-                self.player_y += dy
+            self.player_x += dx
+            self.player_y += dy
 
-                self.player_x = max(
-                    self.player_radius,
-                    min(self.canvas_width - self.player_radius, self.player_x))
-                self.player_y = max(
-                    self.player_radius,
-                    min(self.canvas_height - self.player_radius,
-                        self.player_y))
+            self.player_x = max(
+                self.player_radius,
+                min(self.canvas_width - self.player_radius, self.player_x))
+            self.player_y = max(
+                self.player_radius,
+                min(self.canvas_height - self.player_radius, self.player_y))
 
-                self.canvas.coords(self.player,
-                                   self.player_x - self.player_radius,
-                                   self.player_y - self.player_radius,
-                                   self.player_x + self.player_radius,
-                                   self.player_y + self.player_radius)
-                self.canvas.tag_raise(self.player)  # ← 這行確保在最上層
-                if DEBUG:
-                    if self.path.is_inside(self.player_x, self.player_y):
-                        self.canvas.itemconfig(self.player, fill="skyblue")
-                    else:
-                        self.canvas.itemconfig(self.player, fill="red")
+            self.canvas.coords(self.player, self.player_x - self.player_radius,
+                               self.player_y - self.player_radius,
+                               self.player_x + self.player_radius,
+                               self.player_y + self.player_radius)
+            self.canvas.tag_raise(self.player)
 
-                self.path.shrink()
+            if DEBUG:
+                if self.path.is_inside(self.player_x, self.player_y):
+                    self.canvas.itemconfig(self.player, fill="skyblue")
+                else:
+                    self.canvas.itemconfig(self.player, fill="red")
 
-                now = time.time()
-                if self.start_time is None:
-                    self.start_time = now
+            self.path.shrink()
 
-                self.total_time += 0.016
-                if not self.path.is_inside(self.player_x, self.player_y):
-                    self.off_path_time += 0.016
+            now = time.time()
+            if self.start_time is None:
+                self.start_time = now
 
-                # 檢查是否到達目標（簡化版，可以根據路徑類型調整）
-                if self.check_reached_goal():
-                    self.reached_goal = True
-                    self.show_result()
-                    time.sleep(1)
+            self.total_time += 0.016
+            if not self.path.is_inside(self.player_x, self.player_y):
+                self.off_path_time += 0.016
 
-                    self.current_path_index += 1
-                    if self.current_path_index >= len(self.paths):
-                        print("✅ 所有路徑測試完成")
-                    else:
-                        self.load_path(self.current_path_index)
+            if self.check_reached_goal():
+                self.reached_goal = True
+                self.show_result()
+                self.root.after(1000, self.advance_path)
+                return
 
-            time.sleep(0.016)
+        # 16ms 之後再執行一次（~60fps）
+        self.root.after(16, self.player_loop)
+
+    def advance_path(self):
+        self.current_path_index += 1
+        if self.current_path_index >= len(self.paths):
+            print("✅ 所有路徑測試完成")
+        else:
+            self.load_path(self.current_path_index)
 
     def check_reached_goal(self):
         """檢查是否到達目標"""
