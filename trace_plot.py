@@ -1,5 +1,3 @@
-# trace_plot.py
-
 import os
 import time
 import matplotlib.pyplot as plt
@@ -20,37 +18,33 @@ def output_single_trace(path_obj, index, output_dir="trace_output"):
 
     fig, ax = plt.subplots(figsize=(8, 4))
 
-    # ✅ 黑色背景路徑（完整長度，不收縮）
-    if hasattr(path_obj, "_calculate_path_points"):
-        original_len = path_obj.current_length
-        path_obj.current_length = path_obj.path_length  # 暫時還原完整長度
-        path_points = path_obj._calculate_path_points()
-        path_obj.current_length = original_len  # 還原回來
-
-        polygon = Polygon([[path_points[i], path_points[i + 1]]
-                           for i in range(0, 8, 2)],
-                          closed=True,
-                          facecolor="black")
-        ax.add_patch(polygon)
+    # ✅ 黑色背景路徑（支援 StraightPath / CornerPath）
+    if hasattr(path_obj, "get_path_shapes"):
+        for shape in path_obj.get_path_shapes():
+            polygon = Polygon(shape, closed=True, facecolor="black")
+            ax.add_patch(polygon)
 
     # ✅ 灰色區塊（未被清除的）
-    for cp in path_obj.checkpoints:
-        x1, y1, x2, y2 = cp["area"]
-        rect = Rectangle((x1, y1),
-                         x2 - x1,
-                         y2 - y1,
-                         linewidth=2,
-                         edgecolor='gray',
-                         facecolor='none')
-        ax.add_patch(rect)
+    if hasattr(path_obj, "checkpoints"):
+        for cp in path_obj.checkpoints:
+            x1, y1, x2, y2 = cp["area"]
+            rect = Rectangle((x1, y1),
+                             x2 - x1,
+                             y2 - y1,
+                             linewidth=2,
+                             edgecolor='gray',
+                             facecolor='none')
+            ax.add_patch(rect)
 
-        # ✅ 紅色封鎖線
-        axis = cp["axis"]
-        pos = cp["line_pos"]
-        if axis == "x":
-            ax.add_line(Line2D([pos, pos], [y1, y2], color='red', linewidth=2))
-        else:
-            ax.add_line(Line2D([x1, x2], [pos, pos], color='red', linewidth=2))
+            # ✅ 紅色封鎖線
+            axis = cp["axis"]
+            pos = cp["line_pos"]
+            if axis == "x":
+                ax.add_line(
+                    Line2D([pos, pos], [y1, y2], color='red', linewidth=2))
+            else:
+                ax.add_line(
+                    Line2D([x1, x2], [pos, pos], color='red', linewidth=2))
 
     # ✅ 藍色玩家軌跡點
     xs, ys = zip(*trace_list)

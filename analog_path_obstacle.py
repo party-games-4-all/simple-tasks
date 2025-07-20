@@ -80,6 +80,14 @@ class StraightPath(Path):
         # 玩家軌跡
         self.player_trace = []
 
+    def get_path_shapes(self):
+        """回傳完整未收縮的直線路徑多邊形點位"""
+        original_length = self.current_length
+        self.current_length = self.path_length  # 暫時還原成完整長度
+        points = self._calculate_path_points()
+        self.current_length = original_length  # 還原
+        return [[(points[i], points[i + 1]) for i in range(0, 8, 2)]]
+
     def create_path(self):
         """創建直線路徑與灰區＋紅線檢查點（方向適應）"""
         if self.path_length > 0:
@@ -334,7 +342,8 @@ class PathFollowingTestApp:
 
         # 圖片紀錄位置
         timestamp = time.strftime("%Y%m%d_%H%M%S")
-        self.session_output_dir = os.path.join("trace_output", timestamp)
+        self.session_output_dir = os.path.join(
+            "analog_path_obstacle_trace_output", timestamp)
         os.makedirs(self.session_output_dir, exist_ok=True)
 
     def create_paths(self):

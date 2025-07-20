@@ -1,10 +1,11 @@
 import random
 import tkinter as tk
-import time
+import time, os
 import math
 from threading import Thread
 from abc import ABC, abstractmethod
 from utils import get_directional_offset
+from trace_plot import output_single_trace
 
 DEBUG = False  # 是否啟用除錯模式
 
@@ -19,6 +20,7 @@ class Path(ABC):
         self.path_elements = []  # 儲存路徑的圖形元素
         self.shrink_speed = 3
         self.is_active = True
+        self.player_trace = []  # 玩家軌跡點
 
     @abstractmethod
     def create_path(self):
@@ -71,6 +73,14 @@ class StraightPath(Path):
 
         # 當前路徑長度（用於收縮）
         self.current_length = self.path_length
+
+    def get_path_shapes(self):
+        """回傳完整未收縮的直線路徑多邊形點位"""
+        original_length = self.current_length
+        self.current_length = self.path_length  # 暫時還原成完整長度
+        points = self._calculate_path_points()
+        self.current_length = original_length  # 還原
+        return [[(points[i], points[i + 1]) for i in range(0, 8, 2)]]
 
     def create_path(self):
         """創建直線路徑"""
@@ -242,6 +252,33 @@ class CornerPath(Path):
                                          (end_y - corner_y)**2)
         self.total_length = self.segment1_length + self.segment2_length
         self.current_progress = 1.0  # 1.0 表示完整路徑，0.0 表示完全收縮
+
+    def get_path_shapes(self):
+        """回傳未收縮的兩段轉角路徑 polygon 點位陣列（供圖像輸出用）"""
+        shapes = []
+
+        # 第一段：start → corner
+        points1 = self._create_segment_points(self.start_x, self.start_y,
+                                              self.corner_x, self.corner_y)
+        shape1 = [(points1[i], points1[i + 1]) for i in range(0, 8, 2)]
+        shapes.append(shape1)
+
+        # 第二段：corner → end（起點視為偏移後起點）
+        # 這段跟 create_path() 用的是 offset_y 概念
+        if self.end_y != self.corner_y:
+            seg2_start_y = self.corner_y + (self.width / 2) if self.end_y < self.corner_y \
+                        else self.corner_y - (self.width / 2)
+            seg2_start_x = self.corner_x
+        else:
+            seg2_start_x = self.corner_x
+            seg2_start_y = self.corner_y
+
+        points2 = self._create_segment_points(seg2_start_x, seg2_start_y,
+                                              self.end_x, self.end_y)
+        shape2 = [(points2[i], points2[i + 1]) for i in range(0, 8, 2)]
+        shapes.append(shape2)
+
+        return shapes
 
     def create_path(self):
         """創建轉彎路徑，並延長 segment2 起點來補轉角空缺"""
@@ -537,6 +574,13 @@ class PathFollowingTestApp:
         self.setup_player()
         self.load_path(self.current_path_index)
 
+        # 圖片紀錄位置
+        timestamp = time.strftime("%Y%m%d_%H%M%S")
+        self.session_output_dir = os.path.join("analog_path_trace_output",
+                                               timestamp)
+        os.makedirs(self.session_output_dir, exist_ok=True)
+        print(f"📂 本次資料儲存於：{self.session_output_dir}")
+
     def create_paths(self):
         """回傳多條路徑清單"""
         paths = [
@@ -683,10 +727,15 @@ class PathFollowingTestApp:
                 self.root.after(1000, self.advance_path)
                 return
 
+            # 紀錄玩家軌跡
+            self.path.player_trace.append((self.player_x, self.player_y))
+
         # 16ms 之後再執行一次（~60fps）
         self.root.after(16, self.player_loop)
 
     def advance_path(self):
+        output_single_trace(self.path, self.current_path_index,
+                            self.session_output_dir)
         self.current_path_index += 1
         if self.current_path_index >= len(self.paths):
             print("✅ 所有路徑測試完成")
