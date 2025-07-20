@@ -119,36 +119,40 @@ class StraightPath(Path):
         ]
 
     def is_inside(self, x, y):
-        """檢查點是否在直線路徑內"""
+        """檢查點是否在收縮後的直線路徑內"""
         if self.path_length == 0:
-            distance = math.sqrt((x - self.start_x)**2 + (y - self.start_y)**2)
+            distance = math.hypot(x - self.start_x, y - self.start_y)
             return distance <= self.width / 2
 
-        # 計算當前起點位置（因為從終點收縮回來）
+        # 目前黑色段的起點（從 end 回推）
         ratio = self.current_length / self.path_length
         current_start_x = self.end_x - self.dx * ratio
         current_start_y = self.end_y - self.dy * ratio
 
-        # 計算當前線段方向
-        current_dx = self.end_x - current_start_x
-        current_dy = self.end_y - current_start_y
-        current_length_sq = current_dx**2 + current_dy**2
-
-        if current_length_sq == 0:
-            return False
-
-        # 投影
+        # 使用 current_start → end 這段作為合法區段
+        # 玩家若跑在 current_start 前面（已被收掉），也要算偏離
         dx = x - current_start_x
         dy = y - current_start_y
-        t = (dx * current_dx + dy * current_dy) / current_length_sq
-        t = max(0, min(1, t))
 
-        # 最近點
-        nearest_x = current_start_x + t * current_dx
-        nearest_y = current_start_y + t * current_dy
+        segment_dx = self.end_x - current_start_x
+        segment_dy = self.end_y - current_start_y
+        segment_len_sq = segment_dx**2 + segment_dy**2
 
-        # 距離
-        distance = math.sqrt((x - nearest_x)**2 + (y - nearest_y)**2)
+        if segment_len_sq == 0:
+            return False
+
+        # 投影參數 t：投影在 segment 上的相對位置（0~1）
+        t = (dx * segment_dx + dy * segment_dy) / segment_len_sq
+
+        # ⛔ 超出 segment 範圍（不是黑色段）
+        if t < 0 or t > 1:
+            return False
+
+        # 找到投影點
+        nearest_x = current_start_x + t * segment_dx
+        nearest_y = current_start_y + t * segment_dy
+
+        distance = math.hypot(x - nearest_x, y - nearest_y)
         return distance <= self.width / 2
 
     def shrink(self):
@@ -290,18 +294,49 @@ class CornerPath(Path):
                                           outline=self.color)
 
     def is_inside(self, x, y):
-        """檢查點是否在轉彎路徑內"""
-        # 檢查是否在第一段路徑內
-        if self._point_in_segment(x, y, self.start_x, self.start_y,
-                                  self.corner_x, self.corner_y):
-            return True
+        """檢查點是否在收縮後的黑色路徑內"""
+        remaining_length = self.total_length * self.current_progress
 
-        # 檢查是否在第二段路徑內
-        if self._point_in_segment(x, y, self.corner_x, self.corner_y,
-                                  self.end_x, self.end_y):
-            return True
+        if remaining_length <= 0:
+            return False  # 全部都收走了
 
-        return False
+        if remaining_length <= self.segment2_length:
+            # 只剩 segment2，從 end 回推
+            ratio = remaining_length / self.segment2_length
+            seg2_start_x = self.end_x - (self.end_x - self.corner_x) * ratio
+            seg2_start_y = self.end_y - (self.end_y - self.corner_y) * ratio
+
+            # 若玩家在收掉的 segment1 上就直接 False（例如往回走）
+            if self._point_in_segment(x, y, self.start_x, self.start_y,
+                                      self.corner_x, self.corner_y):
+                return False
+
+            return self._point_in_segment(x, y, seg2_start_x, seg2_start_y,
+                                          self.end_x, self.end_y)
+
+        else:
+            # segment2 完整，segment1 部分顯示
+            remain_len = remaining_length - self.segment2_length
+            ratio = remain_len / self.segment1_length
+            seg1_start_x = self.corner_x - (self.corner_x -
+                                            self.start_x) * ratio
+            seg1_start_y = self.corner_y - (self.corner_y -
+                                            self.start_y) * ratio
+
+            # 若玩家超前到 segment1 開頭之前（走太慢），也算偏離
+            if self._point_in_segment(x, y, self.start_x, self.start_y,
+                                      seg1_start_x, seg1_start_y):
+                return False
+
+            # 合法黑色區段檢查
+            if self._point_in_segment(x, y, seg1_start_x, seg1_start_y,
+                                      self.corner_x, self.corner_y):
+                return True
+            if self._point_in_segment(x, y, self.corner_x, self.corner_y,
+                                      self.end_x, self.end_y):
+                return True
+
+            return False
 
     def _point_in_segment(self, px, py, x1, y1, x2, y2):
         """檢查點是否在路徑段內"""
@@ -486,7 +521,7 @@ class PathFollowingTestApp:
     def setup_path(self):
         """設置路徑，可以選擇不同類型"""
         # 選擇路徑類型
-        path_type = "corner"  # 可改為 "corner" 來測試轉彎路徑
+        path_type = "straight"  # 可改為 "corner" 來測試轉彎路徑
 
         if path_type == "straight":
             # 直線路徑
@@ -617,9 +652,15 @@ if __name__ == "__main__":
     root = tk.Tk()
     app = PathFollowingTestApp(root)
 
-    listener = ControllerInput(analog_callback=app.on_joycon_input)
-    Thread(target=listener.run, daemon=True).start()
+    try:
+        listener = ControllerInput(analog_callback=app.on_joycon_input)
+        Thread(target=listener.run, daemon=True).start()
 
-    root.mainloop()
+        root.mainloop()
+
+    except KeyboardInterrupt:
+        root.destroy()
+        app.running = False
+        print("🔴 測試被中斷")
 
     print("🎮 Path Following 測試結束")
