@@ -335,48 +335,48 @@ class CornerPath(Path):
             self._update_path()
 
     def _update_path(self):
-        """根據當前進度更新路徑"""
-        # 計算當前應該顯示的路徑長度
-        current_length = self.total_length * self.current_progress
+        """根據當前進度更新路徑（從終點往起點收縮）"""
+        remaining_length = self.total_length * self.current_progress
 
-        if current_length <= 0:
-            # 隱藏所有路徑元素
+        if remaining_length <= 0:
             for element in self.path_elements:
                 self.canvas.coords(element, 0, 0, 0, 0)
             return
 
-        if current_length >= self.segment1_length:
-            # 顯示完整的第一段
-            if self.segment1:
-                segment1_points = self._create_segment_points(
-                    self.start_x, self.start_y, self.corner_x, self.corner_y)
-                self.canvas.coords(self.segment1, *segment1_points)
-
-            # 顯示部分第二段
-            remaining_length = current_length - self.segment1_length
+        if remaining_length <= self.segment2_length:
+            # 只顯示 segment2 的後段
             ratio = remaining_length / self.segment2_length
-
-            end_x = self.corner_x + (self.end_x - self.corner_x) * ratio
-            end_y = self.corner_y + (self.end_y - self.corner_y) * ratio
+            start_x = self.end_x - (self.end_x - self.corner_x) * ratio
+            start_y = self.end_y - (self.end_y - self.corner_y) * ratio
 
             if self.segment2:
-                segment2_points = self._create_segment_points(
-                    self.corner_x, self.corner_y, end_x, end_y)
-                self.canvas.coords(self.segment2, *segment2_points)
+                points = self._create_segment_points(start_x, start_y,
+                                                     self.end_x, self.end_y)
+                self.canvas.coords(self.segment2, *points)
+
+            # 隱藏 segment1
+            if self.segment1:
+                self.canvas.coords(self.segment1, 0, 0, 0, 0)
+
         else:
-            # 只顯示部分第一段
-            ratio = current_length / self.segment1_length
-            end_x = self.start_x + (self.corner_x - self.start_x) * ratio
-            end_y = self.start_y + (self.corner_y - self.start_y) * ratio
+            # segment2 全顯示
+            if self.segment2:
+                points2 = self._create_segment_points(self.corner_x,
+                                                      self.corner_y,
+                                                      self.end_x, self.end_y)
+                self.canvas.coords(self.segment2, *points2)
+
+            # segment1 部分顯示
+            remaining_length1 = remaining_length - self.segment2_length
+            ratio = remaining_length1 / self.segment1_length
+            start_x = self.corner_x - (self.corner_x - self.start_x) * ratio
+            start_y = self.corner_y - (self.corner_y - self.start_y) * ratio
 
             if self.segment1:
-                segment1_points = self._create_segment_points(
-                    self.start_x, self.start_y, end_x, end_y)
-                self.canvas.coords(self.segment1, *segment1_points)
-
-            # 隱藏第二段
-            if self.segment2:
-                self.canvas.coords(self.segment2, 0, 0, 0, 0)
+                points1 = self._create_segment_points(start_x, start_y,
+                                                      self.corner_x,
+                                                      self.corner_y)
+                self.canvas.coords(self.segment1, *points1)
 
     def _create_segment_points(self, x1, y1, x2, y2):
         """創建路徑段的點座標"""
@@ -486,7 +486,7 @@ class PathFollowingTestApp:
     def setup_path(self):
         """設置路徑，可以選擇不同類型"""
         # 選擇路徑類型
-        path_type = "straight"  # 可改為 "corner" 來測試轉彎路徑
+        path_type = "corner"  # 可改為 "corner" 來測試轉彎路徑
 
         if path_type == "straight":
             # 直線路徑
