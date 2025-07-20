@@ -1,3 +1,4 @@
+import random
 import tkinter as tk
 import time
 import math
@@ -243,15 +244,19 @@ class CornerPath(Path):
         self.current_progress = 1.0  # 1.0 表示完整路徑，0.0 表示完全收縮
 
     def create_path(self):
-        """創建轉彎路徑"""
-        # 創建第一段（起點到轉彎點）
+        """創建轉彎路徑，並延長 segment2 起點來補轉角空缺"""
         self.segment1 = self._create_segment(self.start_x, self.start_y,
                                              self.corner_x, self.corner_y,
                                              'blue')
-
-        # 創建第二段（轉彎點到終點）
-        self.segment2 = self._create_segment(self.corner_x,
-                                             self.corner_y + (self.width / 2),
+        # 動態調整 segment2 起點的 y
+        if self.end_y != self.corner_y:
+            # 垂直方向為主（上下轉）
+            segment2_start_y = self.corner_y + (self.width / 2) if self.end_y < self.corner_y \
+                            else self.corner_y - (self.width / 2)
+        else:
+            # 水平轉（左轉或右轉）
+            segment2_start_y = self.corner_y
+        self.segment2 = self._create_segment(self.corner_x, segment2_start_y,
                                              self.end_x, self.end_y, 'green')
 
         if self.segment1:
@@ -302,24 +307,21 @@ class CornerPath(Path):
         """檢查點是否在收縮後的黑色轉彎路徑內"""
         remaining_length = self.total_length * self.current_progress
         if remaining_length <= 0:
-            return False  # 全部收掉了
+            return False
 
         segment2_start_x = self.corner_x
-        segment2_start_y = self.corner_y + (self.width / 2)
+        segment2_start_y = self.corner_y + (self.width / 2) if self.end_y < self.corner_y \
+                        else self.corner_y - (self.width / 2)
 
         if remaining_length <= self.segment2_length:
-            # segment2 正在收縮中
             ratio = remaining_length / self.segment2_length
             seg2_start_x = self.end_x - (self.end_x - segment2_start_x) * ratio
             seg2_start_y = self.end_y - (self.end_y - segment2_start_y) * ratio
 
             polygon = self._create_segment_points(seg2_start_x, seg2_start_y,
                                                   self.end_x, self.end_y)
-
             return self._point_in_polygon(x, y, polygon)
-
         else:
-            # segment2 完整、segment1 部分存在
             remain_len = remaining_length - self.segment2_length
             ratio = remain_len / self.segment1_length
             seg1_start_x = self.corner_x - (self.corner_x -
@@ -383,7 +385,7 @@ class CornerPath(Path):
             self._update_path()
 
     def _update_path(self):
-        """根據當前進度更新路徑（從終點往起點收縮）"""
+        """根據當前進度更新路徑（從終點往起點收縮），並補角落空缺"""
         remaining_length = self.total_length * self.current_progress
 
         if remaining_length <= 0:
@@ -391,11 +393,13 @@ class CornerPath(Path):
                 self.canvas.coords(element, 0, 0, 0, 0)
             return
 
+        # 根據 end_y 與 corner_y 決定 segment2 起點是否補角落
         segment2_start_x = self.corner_x
-        segment2_start_y = self.corner_y + (self.width / 2)
+        segment2_start_y = self.corner_y + (self.width / 2) if self.end_y < self.corner_y \
+                        else self.corner_y - (self.width / 2)
 
         if remaining_length <= self.segment2_length:
-            # 只顯示 segment2 的後段
+            # segment2 正在收縮
             ratio = remaining_length / self.segment2_length
             start_x = self.end_x - (self.end_x - segment2_start_x) * ratio
             start_y = self.end_y - (self.end_y - segment2_start_y) * ratio
@@ -416,7 +420,7 @@ class CornerPath(Path):
                                                       self.end_x, self.end_y)
                 self.canvas.coords(self.segment2, *points2)
 
-            # segment1 剩餘部分顯示
+            # segment1 部分收縮
             remaining_length1 = remaining_length - self.segment2_length
             ratio = remaining_length1 / self.segment1_length
             start_x = self.corner_x - (self.corner_x - self.start_x) * ratio
@@ -537,16 +541,28 @@ class PathFollowingTestApp:
 
     def create_paths(self):
         """回傳多條路徑清單"""
-        return [
-            # 從左往右
+        paths = [
+            # ---- 四條直線 ----
+            # 從左往右 →
             StraightPath(self.canvas, 50, 400, 1150, 400, 80),
-            # 從右往左
+            # 從右往左 ←
             StraightPath(self.canvas, 1150, 400, 50, 400, 80),
-            # 從上往下
+            # 從上往下 ↓
             StraightPath(self.canvas, 600, 100, 600, 700, 80),
-            # 從下往上
+            # 從下往上 ↑
             StraightPath(self.canvas, 600, 700, 600, 100, 80),
+            # ---- 四條轉彎 ----
+            # 往左轉往上（⊏）
+            CornerPath(self.canvas, 1050, 400, 500, 400, 500, 100, 80),
+            # 往左轉往下（⊐）
+            CornerPath(self.canvas, 1050, 400, 500, 400, 500, 700, 80),
+            # 往右轉往上（┗）
+            CornerPath(self.canvas, 150, 400, 700, 400, 700, 100, 80),
+            # 往右轉往下（┏）
+            CornerPath(self.canvas, 150, 400, 700, 400, 700, 700, 80),
         ]
+        random.shuffle(paths)
+        return paths
 
     def load_path(self, index):
         if hasattr(self, "path"):
