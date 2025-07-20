@@ -1,10 +1,11 @@
 import random
 import tkinter as tk
-import time
+import time, os
 import math
 from threading import Thread
 from abc import ABC, abstractmethod
 from utils import get_directional_offset
+from trace_plot import output_single_trace
 
 DEBUG = False
 
@@ -75,6 +76,9 @@ class StraightPath(Path):
         self.checkpoints = []  # 每個 checkpoint 含灰色區、紅線、範圍座標、狀態
         self.checkpoint_positions = [0.3, 0.6]
         self.trigger_width = 50
+
+        # 玩家軌跡
+        self.player_trace = []
 
     def create_path(self):
         """創建直線路徑與灰區＋紅線檢查點（方向適應）"""
@@ -307,6 +311,8 @@ class PathFollowingTestApp:
         self.player_radius = 8
         self.goal_color = "red"
 
+        self.player_trace = []
+
         self.player_x = 100
         self.player_y = 400
         self.offset = 20
@@ -325,6 +331,11 @@ class PathFollowingTestApp:
         self.current_path_index = 0
         self.setup_player()
         self.load_path(self.current_path_index)
+
+        # 圖片紀錄位置
+        timestamp = time.strftime("%Y%m%d_%H%M%S")
+        self.session_output_dir = os.path.join("trace_output", timestamp)
+        os.makedirs(self.session_output_dir, exist_ok=True)
 
     def create_paths(self):
         """回傳多條路徑清單"""
@@ -464,6 +475,9 @@ class PathFollowingTestApp:
             if not self.path.is_inside(self.player_x, self.player_y):
                 self.off_path_time += 0.016
 
+            # 紀錄玩家軌跡
+            self.path.player_trace.append((self.player_x, self.player_y))
+
             # 判斷是否到達終點
             if self.check_reached_goal():
                 self.reached_goal = True
@@ -475,6 +489,10 @@ class PathFollowingTestApp:
         self.root.after(16, self.player_loop)
 
     def advance_path(self):
+        # 儲存目前這段路徑的軌跡
+        output_single_trace(self.path, self.current_path_index,
+                            self.session_output_dir)
+
         self.current_path_index += 1
         if self.current_path_index >= len(self.paths):
             print("✅ 所有路徑測試完成")
