@@ -70,8 +70,6 @@ class StraightPath(Path):
         # 當前路徑長度（用於收縮）
         self.current_length = self.path_length
 
-        self.create_path()
-
     def create_path(self):
         """創建直線路徑"""
         if self.path_length > 0:
@@ -242,8 +240,6 @@ class CornerPath(Path):
                                          (end_y - corner_y)**2)
         self.total_length = self.segment1_length + self.segment2_length
         self.current_progress = 1.0  # 1.0 表示完整路徑，0.0 表示完全收縮
-
-        self.create_path()
 
     def create_path(self):
         """創建轉彎路徑"""
@@ -525,35 +521,54 @@ class PathFollowingTestApp:
         self.reached_goal = False
 
         # 創建路徑（可以選擇不同類型的路徑）
-        self.setup_path()
-        self.setup_goal()
+        self.paths = self.create_paths()
+        self.current_path_index = 0
         self.setup_player()
+        self.load_path(self.current_path_index)
 
         Thread(target=self.player_loop, daemon=True).start()
 
-    def setup_path(self):
-        """設置路徑，可以選擇不同類型"""
-        # 選擇路徑類型
-        path_type = "corner"  # 可改為 "corner" 來測試轉彎路徑
+    def create_paths(self):
+        """回傳多條路徑清單"""
+        return [
+            StraightPath(self.canvas, 50, 400, 1150, 400, 80),
+            CornerPath(self.canvas, 50, 400, 600, 400, 600, 200, 80),
+            StraightPath(self.canvas, 600, 200, 1150, 200, 80),
+        ]
 
-        if path_type == "straight":
-            # 直線路徑
-            self.path = StraightPath(self.canvas,
-                                     start_x=50,
-                                     start_y=400,
-                                     end_x=self.canvas_width - 50,
-                                     end_y=400,
-                                     width=80)
-        elif path_type == "corner":
-            # 轉彎路徑
-            self.path = CornerPath(self.canvas,
-                                   start_x=50,
-                                   start_y=400,
-                                   corner_x=600,
-                                   corner_y=400,
-                                   end_x=600,
-                                   end_y=200,
-                                   width=80)
+    def load_path(self, index):
+        if hasattr(self, "path"):
+            self.path.destroy()
+            self.canvas.delete(self.goal_rect)
+
+        self.path = self.paths[index]
+        self.path.create_path()  # ✅ 在這裡才繪製當前路徑
+        self.setup_goal()
+
+        # 重設玩家位置（可根據每條 path 決定）
+        self.player_x = self.path.start_x if hasattr(self.path,
+                                                     "start_x") else 100
+        self.player_y = self.path.start_y if hasattr(self.path,
+                                                     "start_y") else 400
+        self.canvas.coords(self.player, self.player_x - self.player_radius,
+                           self.player_y - self.player_radius,
+                           self.player_x + self.player_radius,
+                           self.player_y + self.player_radius)
+        self.canvas.tag_raise(self.player)
+
+        # 重設狀態
+        self.start_time = None
+        self.total_time = 0
+        self.off_path_time = 0
+        self.reached_goal = False
+        self.running = False
+        self.leftX = 0
+        self.leftY = 0
+        # 重設縮短狀態
+        if isinstance(self.path, StraightPath):
+            self.path.current_length = self.path.path_length
+        elif isinstance(self.path, CornerPath):
+            self.path.current_progress = 1.0
 
     def setup_goal(self):
         """設置目標區域"""
@@ -572,6 +587,7 @@ class PathFollowingTestApp:
                                                           goal_area['right'],
                                                           goal_area['bottom'],
                                                           fill=self.goal_color)
+        self.canvas.tag_raise(self.goal_rect)
 
     def setup_player(self):
         """設置玩家"""
@@ -581,6 +597,7 @@ class PathFollowingTestApp:
             self.player_x + self.player_radius,
             self.player_y + self.player_radius,
             fill="skyblue")
+        self.canvas.tag_raise(self.player)  # ← 初始時也拉最上面
 
     def player_loop(self):
         while True:
@@ -604,6 +621,7 @@ class PathFollowingTestApp:
                                    self.player_y - self.player_radius,
                                    self.player_x + self.player_radius,
                                    self.player_y + self.player_radius)
+                self.canvas.tag_raise(self.player)  # ← 這行確保在最上層
 
                 self.path.shrink()
 
@@ -619,6 +637,13 @@ class PathFollowingTestApp:
                 if self.check_reached_goal():
                     self.reached_goal = True
                     self.show_result()
+                    time.sleep(1)
+
+                    self.current_path_index += 1
+                    if self.current_path_index >= len(self.paths):
+                        print("✅ 所有路徑測試完成")
+                    else:
+                        self.load_path(self.current_path_index)
 
             time.sleep(0.016)
 
@@ -654,7 +679,7 @@ class PathFollowingTestApp:
                         last_key_down):
         self.leftX = leftX
         self.leftY = leftY
-        if not self.running:
+        if not self.running and last_key_down:
             self.running = True
             print("✅ 開始測試！請沿著路徑前進")
 

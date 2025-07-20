@@ -7,7 +7,8 @@ os.environ['SDL_VIDEODRIVER'] = 'dummy'
 pygame.init()
 pygame.joystick.init()
 
-DEBUG = False  # 設定為 True 以啟用除錯輸出
+DEBUG = True  # 設定為 True 以啟用除錯輸出
+
 
 class ControllerInput:
 
@@ -56,15 +57,12 @@ class ControllerInput:
                 last_key_down = None
 
                 if event.type == pygame.JOYAXISMOTION:
-                    if DEBUG:
-                        print(
-                            f"軸移動：{event.axis} -> {round(event.value, 4)}"
-                        )
                     axis = event.axis
                     val = round(event.value, 4)
+                    last_key_down = True
                     if abs(val) < 0.15:
                         val = 0
-                    # print(f"軸移動：{axis} -> {val}")
+                        last_key_down = False
 
                     if axis == 0:
                         self.leftX = val
@@ -73,12 +71,15 @@ class ControllerInput:
                     else:
                         continue
 
+                    if DEBUG:
+                        print(f"軸移動：{event.axis} -> {round(event.value, 4)}")
+
                     if self.analog_callback:
                         self.analog_callback(buttons=self.buttons,
                                              leftX=self.leftX,
                                              leftY=self.leftY,
                                              last_key_bit=axis,
-                                             last_key_down=True)
+                                             last_key_down=last_key_down)
 
                 elif event.type == pygame.JOYBUTTONDOWN:
                     if DEBUG:
