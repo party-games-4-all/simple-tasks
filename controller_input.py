@@ -7,7 +7,7 @@ os.environ['SDL_VIDEODRIVER'] = 'dummy'
 pygame.init()
 pygame.joystick.init()
 
-DEBUG = True  # 設定為 True 以啟用除錯輸出
+DEBUG = False  # 設定為 True 以啟用除錯輸出
 
 
 class ControllerInput:

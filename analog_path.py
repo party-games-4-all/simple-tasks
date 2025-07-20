@@ -510,6 +510,7 @@ class PathFollowingTestApp:
 
         self.player_x = 100
         self.player_y = 400
+        self.offset = 20
         self.leftX = 0
         self.leftY = 0
         self.speed = 13
@@ -546,10 +547,10 @@ class PathFollowingTestApp:
         self.setup_goal()
 
         # 重設玩家位置（可根據每條 path 決定）
-        self.player_x = self.path.start_x if hasattr(self.path,
-                                                     "start_x") else 100
-        self.player_y = self.path.start_y if hasattr(self.path,
-                                                     "start_y") else 400
+        self.player_x = (self.path.start_x +
+                         self.offset) if hasattr(self.path, "start_x") else 100
+        self.player_y = (self.path.start_y) if hasattr(self.path,
+                                                       "start_y") else 400
         self.canvas.coords(self.player, self.player_x - self.player_radius,
                            self.player_y - self.player_radius,
                            self.player_x + self.player_radius,
