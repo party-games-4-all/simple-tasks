@@ -6,7 +6,7 @@ from threading import Thread
 from abc import ABC, abstractmethod
 from utils import get_directional_offset
 
-DEBUG = False  # 是否啟用除錯模式
+DEBUG = False
 
 
 class Path(ABC):
@@ -72,18 +72,18 @@ class StraightPath(Path):
         # 當前路徑長度（用於收縮）
         self.current_length = self.path_length
 
-    def create_path(self):
-        """創建直線路徑"""
-        if self.path_length > 0:
-            # 計算初始路徑點
-            points = self._calculate_path_points()
+        self.checkpoints = []  # 每個 checkpoint 含灰色區、紅線、範圍座標、狀態
+        self.checkpoint_positions = [0.3, 0.6]
+        self.trigger_width = 50
 
-            # 創建多邊形路徑
+    def create_path(self):
+        """創建直線路徑與灰區＋紅線檢查點（方向適應）"""
+        if self.path_length > 0:
+            points = self._calculate_path_points()
             self.path_rect = self.canvas.create_polygon(points,
                                                         fill=self.color,
                                                         outline=self.color)
         else:
-            # 處理零長度的情況
             half_width = self.width // 2
             self.path_rect = self.canvas.create_oval(self.start_x - half_width,
                                                      self.start_y - half_width,
@@ -93,6 +93,83 @@ class StraightPath(Path):
                                                      outline=self.color)
 
         self.path_elements.append(self.path_rect)
+
+        # 準備灰色區域與紅線
+        self.checkpoints = []
+        trigger_half_length = self.trigger_width / 2
+        trigger_half_width = self.width / 2
+
+        # 單位向量
+        ux = self.dx / self.path_length
+        uy = self.dy / self.path_length
+        perp_x = -uy
+        perp_y = ux
+
+        for pos in self.checkpoint_positions:
+            # 中心點
+            cx = self.start_x + self.dx * pos
+            cy = self.start_y + self.dy * pos
+
+            # 四個角
+            p1x = cx - ux * trigger_half_length + perp_x * trigger_half_width
+            p1y = cy - uy * trigger_half_length + perp_y * trigger_half_width
+            p2x = cx + ux * trigger_half_length + perp_x * trigger_half_width
+            p2y = cy + uy * trigger_half_length + perp_y * trigger_half_width
+            p3x = cx + ux * trigger_half_length - perp_x * trigger_half_width
+            p3y = cy + uy * trigger_half_length - perp_y * trigger_half_width
+            p4x = cx - ux * trigger_half_length - perp_x * trigger_half_width
+            p4y = cy - uy * trigger_half_length - perp_y * trigger_half_width
+
+            # 灰色區域
+            rect_id = self.canvas.create_polygon(p1x,
+                                                 p1y,
+                                                 p2x,
+                                                 p2y,
+                                                 p3x,
+                                                 p3y,
+                                                 p4x,
+                                                 p4y,
+                                                 fill="",
+                                                 outline="gray",
+                                                 width=5)
+
+            # 紅線：畫在區塊前端（從 cx + dx * 半長）
+            # 找出紅線兩端：與區域前緣重合
+            front_cx = cx + ux * trigger_half_length
+            front_cy = cy + uy * trigger_half_length
+            line_half = trigger_half_width
+
+            lx1 = front_cx + perp_x * line_half
+            ly1 = front_cy + perp_y * line_half
+            lx2 = front_cx - perp_x * line_half
+            ly2 = front_cy - perp_y * line_half
+
+            red_line_id = self.canvas.create_line(lx1,
+                                                  ly1,
+                                                  lx2,
+                                                  ly2,
+                                                  fill="red",
+                                                  width=3)
+
+            # 判斷封鎖方向：用主軸最大值來決定
+            axis = "x" if abs(self.dx) >= abs(self.dy) else "y"
+            line_pos = front_cx if axis == "x" else front_cy
+
+            self.path_elements.extend([rect_id, red_line_id])
+            self.checkpoints.append({
+                "rect_id":
+                rect_id,
+                "line_id":
+                red_line_id,
+                "area": (min(p1x, p2x, p3x, p4x), min(p1y, p2y, p3y, p4y),
+                         max(p1x, p2x, p3x, p4x), max(p1y, p2y, p3y, p4y)),
+                "cleared":
+                False,
+                "line_pos":
+                line_pos,
+                "axis":
+                axis
+            })
 
     def _calculate_path_points(self):
         """計算路徑的多邊形點座標（從起點收縮到終點）"""
@@ -214,294 +291,6 @@ class StraightPath(Path):
         }
 
 
-class CornerPath(Path):
-    """轉彎路徑"""
-
-    def __init__(self,
-                 canvas,
-                 start_x,
-                 start_y,
-                 corner_x,
-                 corner_y,
-                 end_x,
-                 end_y,
-                 width,
-                 color="black"):
-        super().__init__(canvas, width, color)
-        self.start_x = start_x
-        self.start_y = start_y
-        self.corner_x = corner_x
-        self.corner_y = corner_y
-        self.end_x = end_x
-        self.end_y = end_y
-
-        # 計算路徑段
-        self.segment1_length = math.sqrt((corner_x - start_x)**2 +
-                                         (corner_y - start_y)**2)
-        self.segment2_length = math.sqrt((end_x - corner_x)**2 +
-                                         (end_y - corner_y)**2)
-        self.total_length = self.segment1_length + self.segment2_length
-        self.current_progress = 1.0  # 1.0 表示完整路徑，0.0 表示完全收縮
-
-    def create_path(self):
-        """創建轉彎路徑，並延長 segment2 起點來補轉角空缺"""
-        self.segment1 = self._create_segment(self.start_x, self.start_y,
-                                             self.corner_x, self.corner_y,
-                                             'blue')
-        # 動態調整 segment2 起點的 y
-        if self.end_y != self.corner_y:
-            # 垂直方向為主（上下轉）
-            segment2_start_y = self.corner_y + (self.width / 2) if self.end_y < self.corner_y \
-                            else self.corner_y - (self.width / 2)
-        else:
-            # 水平轉（左轉或右轉）
-            segment2_start_y = self.corner_y
-        self.segment2 = self._create_segment(self.corner_x, segment2_start_y,
-                                             self.end_x, self.end_y, 'green')
-
-        if self.segment1:
-            self.path_elements.append(self.segment1)
-        if self.segment2:
-            self.path_elements.append(self.segment2)
-
-    def _create_segment(self, x1, y1, x2, y2, color):
-        """創建路徑段"""
-        # 計算垂直於路徑方向的向量
-        dx = x2 - x1
-        dy = y2 - y1
-        length = math.sqrt(dx**2 + dy**2)
-
-        if length == 0:
-            return None
-
-        # 單位向量
-        ux = dx / length
-        uy = dy / length
-
-        # 垂直向量
-        perp_x = -uy * self.width / 2
-        perp_y = ux * self.width / 2
-
-        # 創建多邊形
-        points = [
-            x1 + perp_x,
-            y1 + perp_y,  # 左上
-            x2 + perp_x,
-            y2 + perp_y,  # 右上
-            x2 - perp_x,
-            y2 - perp_y,  # 右下
-            x1 - perp_x,
-            y1 - perp_y  # 左下
-        ]
-
-        if DEBUG:
-            return self.canvas.create_polygon(points,
-                                              fill=color,
-                                              outline=self.color)
-
-        return self.canvas.create_polygon(points,
-                                          fill=self.color,
-                                          outline=self.color)
-
-    def is_inside(self, x, y):
-        """檢查點是否在收縮後的黑色轉彎路徑內"""
-        remaining_length = self.total_length * self.current_progress
-        if remaining_length <= 0:
-            return False
-
-        segment2_start_x = self.corner_x
-        segment2_start_y = self.corner_y + (self.width / 2) if self.end_y < self.corner_y \
-                        else self.corner_y - (self.width / 2)
-
-        if remaining_length <= self.segment2_length:
-            ratio = remaining_length / self.segment2_length
-            seg2_start_x = self.end_x - (self.end_x - segment2_start_x) * ratio
-            seg2_start_y = self.end_y - (self.end_y - segment2_start_y) * ratio
-
-            polygon = self._create_segment_points(seg2_start_x, seg2_start_y,
-                                                  self.end_x, self.end_y)
-            return self._point_in_polygon(x, y, polygon)
-        else:
-            remain_len = remaining_length - self.segment2_length
-            ratio = remain_len / self.segment1_length
-            seg1_start_x = self.corner_x - (self.corner_x -
-                                            self.start_x) * ratio
-            seg1_start_y = self.corner_y - (self.corner_y -
-                                            self.start_y) * ratio
-
-            polygon1 = self._create_segment_points(seg1_start_x, seg1_start_y,
-                                                   self.corner_x,
-                                                   self.corner_y)
-            polygon2 = self._create_segment_points(segment2_start_x,
-                                                   segment2_start_y,
-                                                   self.end_x, self.end_y)
-
-            return self._point_in_polygon(x, y, polygon1) or \
-                self._point_in_polygon(x, y, polygon2)
-
-    def _point_in_segment(self, px, py, x1, y1, x2, y2):
-        """檢查點是否在路徑段內"""
-        # 計算點到線段的距離
-        dx = x2 - x1
-        dy = y2 - y1
-        length_sq = dx**2 + dy**2
-
-        if length_sq == 0:
-            return False
-
-        # 計算投影參數
-        t = ((px - x1) * dx + (py - y1) * dy) / length_sq
-        t = max(0, min(1, t))
-
-        # 計算最近點
-        nearest_x = x1 + t * dx
-        nearest_y = y1 + t * dy
-
-        # 計算距離
-        distance = math.sqrt((px - nearest_x)**2 + (py - nearest_y)**2)
-
-        return distance <= self.width / 2
-
-    def _point_in_polygon(self, px, py, polygon_points):
-        """使用 ray casting 演算法判斷點是否在多邊形內"""
-        num = len(polygon_points)
-        inside = False
-        j = num - 2
-        for i in range(0, num, 2):
-            xi, yi = polygon_points[i], polygon_points[i + 1]
-            xj, yj = polygon_points[j], polygon_points[j + 1]
-            if ((yi > py) != (yj > py)) and \
-            (px < (xj - xi) * (py - yi) / ((yj - yi) + 1e-9) + xi):
-                inside = not inside
-            j = i
-        return inside
-
-    def shrink(self):
-        """收縮轉彎路徑"""
-        if self.current_progress > 0:
-            self.current_progress = max(
-                0,
-                self.current_progress - self.shrink_speed / self.total_length)
-            self._update_path()
-
-    def _update_path(self):
-        """根據當前進度更新路徑（從終點往起點收縮），並補角落空缺"""
-        remaining_length = self.total_length * self.current_progress
-
-        if remaining_length <= 0:
-            for element in self.path_elements:
-                self.canvas.coords(element, 0, 0, 0, 0)
-            return
-
-        # 根據 end_y 與 corner_y 決定 segment2 起點是否補角落
-        segment2_start_x = self.corner_x
-        segment2_start_y = self.corner_y + (self.width / 2) if self.end_y < self.corner_y \
-                        else self.corner_y - (self.width / 2)
-
-        if remaining_length <= self.segment2_length:
-            # segment2 正在收縮
-            ratio = remaining_length / self.segment2_length
-            start_x = self.end_x - (self.end_x - segment2_start_x) * ratio
-            start_y = self.end_y - (self.end_y - segment2_start_y) * ratio
-
-            if self.segment2:
-                points = self._create_segment_points(start_x, start_y,
-                                                     self.end_x, self.end_y)
-                self.canvas.coords(self.segment2, *points)
-
-            if self.segment1:
-                self.canvas.coords(self.segment1, 0, 0, 0, 0)
-
-        else:
-            # segment2 全部顯示
-            if self.segment2:
-                points2 = self._create_segment_points(segment2_start_x,
-                                                      segment2_start_y,
-                                                      self.end_x, self.end_y)
-                self.canvas.coords(self.segment2, *points2)
-
-            # segment1 部分收縮
-            remaining_length1 = remaining_length - self.segment2_length
-            ratio = remaining_length1 / self.segment1_length
-            start_x = self.corner_x - (self.corner_x - self.start_x) * ratio
-            start_y = self.corner_y - (self.corner_y - self.start_y) * ratio
-
-            if self.segment1:
-                points1 = self._create_segment_points(start_x, start_y,
-                                                      self.corner_x,
-                                                      self.corner_y)
-                self.canvas.coords(self.segment1, *points1)
-
-    def _create_segment_points(self, x1, y1, x2, y2):
-        """創建路徑段的點座標"""
-        # 計算垂直於路徑方向的向量
-        dx = x2 - x1
-        dy = y2 - y1
-        length = math.sqrt(dx**2 + dy**2)
-
-        if length == 0:
-            return [x1, y1, x1, y1, x1, y1, x1, y1]
-
-        # 單位向量
-        ux = dx / length
-        uy = dy / length
-
-        # 垂直向量
-        perp_x = -uy * self.width / 2
-        perp_y = ux * self.width / 2
-
-        # 返回多邊形的四個頂點
-        return [
-            x1 + perp_x,
-            y1 + perp_y,  # 左上
-            x2 + perp_x,
-            y2 + perp_y,  # 右上
-            x2 - perp_x,
-            y2 - perp_y,  # 右下
-            x1 - perp_x,
-            y1 - perp_y  # 左下
-        ]
-
-    def get_goal_area(self):
-        """獲取目標區域座標"""
-        # 計算終點附近的目標區域
-        goal_length = 100  # 目標區域長度
-
-        # 計算第二段的方向向量
-        dx = self.end_x - self.corner_x
-        dy = self.end_y - self.corner_y
-        length = math.sqrt(dx**2 + dy**2)
-
-        if length == 0:
-            return {
-                'left': self.end_x,
-                'top': self.end_y,
-                'right': self.end_x,
-                'bottom': self.end_y
-            }
-
-        # 單位向量
-        ux = dx / length
-        uy = dy / length
-
-        # 目標區域起點
-        goal_start_x = self.end_x - ux * goal_length
-        goal_start_y = self.end_y - uy * goal_length
-
-        # 垂直向量
-        perp_x = -uy * self.width / 2
-        perp_y = ux * self.width / 2
-
-        return {
-            'points': [
-                goal_start_x + perp_x, goal_start_y + perp_y,
-                self.end_x + perp_x, self.end_y + perp_y, self.end_x - perp_x,
-                self.end_y - perp_y, goal_start_x - perp_x,
-                goal_start_y - perp_y
-            ]
-        }
-
-
 class PathFollowingTestApp:
 
     def __init__(self, root):
@@ -549,15 +338,6 @@ class PathFollowingTestApp:
             StraightPath(self.canvas, 600, 100, 600, 700, 80),
             # 從下往上 ↑
             StraightPath(self.canvas, 600, 700, 600, 100, 80),
-            # ---- 四條轉彎 ----
-            # 往左轉往上（⊏）
-            CornerPath(self.canvas, 1050, 400, 500, 400, 500, 100, 80),
-            # 往左轉往下（⊐）
-            CornerPath(self.canvas, 1050, 400, 500, 400, 500, 700, 80),
-            # 往右轉往上（┗）
-            CornerPath(self.canvas, 150, 400, 700, 400, 700, 100, 80),
-            # 往右轉往下（┏）
-            CornerPath(self.canvas, 150, 400, 700, 400, 700, 700, 80),
         ]
         random.shuffle(paths)
         return paths
@@ -572,22 +352,11 @@ class PathFollowingTestApp:
         self.setup_goal()
 
         # 重設玩家位置（可根據每條 path 決定）
-        # 根據 path 類型自動設置 offset 起始點
-        if isinstance(self.path, StraightPath):
-            dx = self.path.end_x - self.path.start_x
-            dy = self.path.end_y - self.path.start_y
-            offset_x, offset_y = get_directional_offset(dx, dy, self.offset)
-            self.player_x = self.path.start_x + offset_x
-            self.player_y = self.path.start_y + offset_y
-        elif isinstance(self.path, CornerPath):
-            dx = self.path.corner_x - self.path.start_x
-            dy = self.path.corner_y - self.path.start_y
-            offset_x, offset_y = get_directional_offset(dx, dy, self.offset)
-            self.player_x = self.path.start_x + offset_x
-            self.player_y = self.path.start_y + offset_y
-        else:
-            self.player_x = 100
-            self.player_y = 400
+        dx = self.path.end_x - self.path.start_x
+        dy = self.path.end_y - self.path.start_y
+        offset_x, offset_y = get_directional_offset(dx, dy, self.offset)
+        self.player_x = self.path.start_x + offset_x
+        self.player_y = self.path.start_y + offset_y
 
         self.canvas.coords(self.player, self.player_x - self.player_radius,
                            self.player_y - self.player_radius,
@@ -606,8 +375,6 @@ class PathFollowingTestApp:
         # 重設縮短狀態
         if isinstance(self.path, StraightPath):
             self.path.current_length = self.path.path_length
-        elif isinstance(self.path, CornerPath):
-            self.path.current_progress = 1.0
 
         self.player_loop()
 
@@ -645,15 +412,33 @@ class PathFollowingTestApp:
             dx = self.leftX * self.speed
             dy = self.leftY * self.speed
 
-            self.player_x += dx
-            self.player_y += dy
+            # 嘗試移動玩家
+            next_x = self.player_x + dx
+            next_y = self.player_y + dy
 
-            self.player_x = max(
-                self.player_radius,
-                min(self.canvas_width - self.player_radius, self.player_x))
-            self.player_y = max(
-                self.player_radius,
-                min(self.canvas_height - self.player_radius, self.player_y))
+            # 🟥 紅線封鎖邏輯
+            for cp in self.path.checkpoints:
+                if not cp["cleared"]:
+                    axis = cp["axis"]
+                    pos = cp["line_pos"]
+                    if axis == "x":
+                        if ((self.path.dx > 0 and next_x > pos)
+                                or (self.path.dx < 0 and next_x < pos)):
+                            next_x = pos
+                    elif axis == "y":
+                        if ((self.path.dy > 0 and next_y > pos)
+                                or (self.path.dy < 0 and next_y < pos)):
+                            next_y = pos
+
+            # 邊界限制
+            next_x = max(self.player_radius,
+                         min(self.canvas_width - self.player_radius, next_x))
+            next_y = max(self.player_radius,
+                         min(self.canvas_height - self.player_radius, next_y))
+
+            # 更新位置
+            self.player_x = next_x
+            self.player_y = next_y
 
             self.canvas.coords(self.player, self.player_x - self.player_radius,
                                self.player_y - self.player_radius,
@@ -661,29 +446,32 @@ class PathFollowingTestApp:
                                self.player_y + self.player_radius)
             self.canvas.tag_raise(self.player)
 
+            # 顏色：判斷是否在路徑內
             if DEBUG:
                 if self.path.is_inside(self.player_x, self.player_y):
                     self.canvas.itemconfig(self.player, fill="skyblue")
                 else:
                     self.canvas.itemconfig(self.player, fill="red")
 
+            # 更新路徑收縮
             self.path.shrink()
 
+            # 時間紀錄
             now = time.time()
             if self.start_time is None:
                 self.start_time = now
-
             self.total_time += 0.016
             if not self.path.is_inside(self.player_x, self.player_y):
                 self.off_path_time += 0.016
 
+            # 判斷是否到達終點
             if self.check_reached_goal():
                 self.reached_goal = True
                 self.show_result()
                 self.root.after(1000, self.advance_path)
                 return
 
-        # 16ms 之後再執行一次（~60fps）
+        # 持續呼叫
         self.root.after(16, self.player_loop)
 
     def advance_path(self):
@@ -729,6 +517,20 @@ class PathFollowingTestApp:
             self.running = True
             print("✅ 開始測試！請沿著路徑前進")
 
+    def on_joycon_button(self, buttons, leftX, leftY, last_key_bit,
+                         last_key_down):
+        if not last_key_down:
+            return
+
+        for cp in self.path.checkpoints:
+            if not cp["cleared"]:
+                x1, y1, x2, y2 = cp["area"]
+                if x1 <= self.player_x <= x2 and y1 <= self.player_y <= y2:
+                    cp["cleared"] = True
+                    self.canvas.delete(cp["line_id"])
+                    self.canvas.delete(cp["rect_id"])
+                    print("🟢 檢查點解除：灰色區域與紅線已移除")
+
 
 if __name__ == "__main__":
     from controller_input import ControllerInput
@@ -737,7 +539,8 @@ if __name__ == "__main__":
     app = PathFollowingTestApp(root)
 
     try:
-        listener = ControllerInput(analog_callback=app.on_joycon_input)
+        listener = ControllerInput(analog_callback=app.on_joycon_input,
+                                   button_callback=app.on_joycon_button)
         Thread(target=listener.run, daemon=True).start()
 
         root.mainloop()
