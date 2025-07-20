@@ -4,6 +4,8 @@ import math
 from threading import Thread
 from abc import ABC, abstractmethod
 
+DEBUG = True
+
 
 class Path(ABC):
     """抽象路徑基類"""
@@ -290,8 +292,13 @@ class CornerPath(Path):
             y1 - perp_y  # 左下
         ]
 
+        if DEBUG:
+            return self.canvas.create_polygon(points,
+                                              fill=color,
+                                              outline=self.color)
+
         return self.canvas.create_polygon(points,
-                                          fill=color,
+                                          fill=self.color,
                                           outline=self.color)
 
     def is_inside(self, x, y):
