@@ -248,6 +248,10 @@ class JoystickTargetTestApp:
         distance = ((self.player_x - self.target_x)**2 +
                     (self.player_y - self.target_y)**2)**0.5
         if distance <= self.target_radius:
+
+            elapsed = time.time() - self.start_time
+            self.success_count += 1
+
             output_move_trace(trace_points=self.trace_points,
                               start=(self.canvas_width // 2,
                                      self.canvas_height // 2),
@@ -256,9 +260,6 @@ class JoystickTargetTestApp:
                               index=self.success_count - 1,
                               output_dir=self.output_dir)
             self.trace_points = []  # 清空以便下次測試
-
-            elapsed = time.time() - self.start_time
-            self.success_count += 1
 
             efficiency = elapsed / self.initial_distance
             self.total_time += elapsed
