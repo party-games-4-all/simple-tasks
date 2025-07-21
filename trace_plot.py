@@ -1,19 +1,19 @@
 import os
 import time
 import matplotlib.pyplot as plt
-from matplotlib.patches import Polygon, Rectangle
+from matplotlib.patches import Polygon, Rectangle, Circle
 from matplotlib.lines import Line2D
 
 
-def init_trace_output_folder():
+def init_trace_output_folder(folder_name="trace_output"):
     timestamp = time.strftime("%Y%m%d_%H%M%S")
-    folder = os.path.join("trace_output", timestamp)
+    folder = os.path.join(folder_name, timestamp)
     os.makedirs(folder, exist_ok=True)
     print(f"📂 本次軌跡儲存在：{folder}")
     return folder
 
 
-def output_move_trace(trace_points, start, target, radius, index, output_dir):
+def output_move_trace(trace_points, start, target, radius, player_radius, press_points, index, output_dir):
     if not trace_points:
         print(f"⚠️ 第 {index} 筆無紀錄資料")
         return
@@ -21,15 +21,21 @@ def output_move_trace(trace_points, start, target, radius, index, output_dir):
     xs, ys = zip(*trace_points)
     fig, ax = plt.subplots(figsize=(6, 6))
 
-    # 玩家軌跡點
+    # 🔵 玩家軌跡點
     ax.plot(xs, ys, 'deepskyblue', marker='.', linestyle='None', markersize=2)
 
-    # 起點位置
-    ax.plot(start[0], start[1], 'o', color='blue', markersize=10, alpha=0.7)
+    # 🔵 玩家起點
+    player_circle = Circle(start, player_radius, color='skyblue', alpha=0.7)
+    ax.add_patch(player_circle)
 
-    # 目標紅圈
-    circle = plt.Circle(target, radius, color='red', fill=False, linewidth=2)
-    ax.add_patch(circle)
+    # 🔴 目標紅圈
+    target_circle = Circle(target, radius, edgecolor='red', facecolor='none', linewidth=2)
+    ax.add_patch(target_circle)
+
+    # 🟠 按下按鍵的所有點（橘色小圓）
+    for px, py in press_points:
+        press_circle = Circle((px, py), player_radius-3, color='orange', alpha=0.9)
+        ax.add_patch(press_circle)
 
     ax.set_aspect('equal')
     ax.invert_yaxis()

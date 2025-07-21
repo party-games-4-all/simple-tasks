@@ -52,7 +52,8 @@ class JoystickTargetTestApp:
         self.leftY = 0
 
         self.trace_points = []  # 當前軌跡
-        self.output_dir = init_trace_output_folder()
+        self.press_trace = []
+        self.output_dir = init_trace_output_folder("analog_move_output")
 
         # 固定目標組合
         self.fixed_targets = [
@@ -238,28 +239,20 @@ class JoystickTargetTestApp:
         if not last_key_down:
             return  # 只處理按下事件（不處理放開）
 
+        if not self.testing:
+            return
+
         # 以 1 號鍵為例，可視需要調整
         if last_key_bit != 1:  # 你可以改成任意你想用的按鍵編號
             return
 
-        if not self.testing:
-            return
+        self.press_trace.append((self.player_x, self.player_y))
 
         distance = ((self.player_x - self.target_x)**2 +
                     (self.player_y - self.target_y)**2)**0.5
         if distance <= self.target_radius:
-
             elapsed = time.time() - self.start_time
             self.success_count += 1
-
-            output_move_trace(trace_points=self.trace_points,
-                              start=(self.canvas_width // 2,
-                                     self.canvas_height // 2),
-                              target=(self.target_x, self.target_y),
-                              radius=self.target_radius,
-                              index=self.success_count - 1,
-                              output_dir=self.output_dir)
-            self.trace_points = []  # 清空以便下次測試
 
             efficiency = elapsed / self.initial_distance
             self.total_time += elapsed
@@ -275,6 +268,18 @@ class JoystickTargetTestApp:
             print(f"📊 平均時間：{avg_time:.2f} 秒，平均秒/像素：{avg_efficiency:.4f}")
             self.label.config(text=(f"第 {self.success_count} 次"))
             self.testing = False
+            output_move_trace(
+                trace_points=self.trace_points,
+                start=(self.canvas_width // 2, self.canvas_height // 2),
+                target=(self.target_x, self.target_y),
+                radius=self.target_radius,
+                player_radius=self.player_radius,   # ✅ 傳入實際玩家半徑
+                press_points=self.press_trace,
+                index=self.success_count,
+                output_dir=self.output_dir
+            )
+            self.trace_points = []  # 清空以便下次測試
+            self.press_trace = []
             time.sleep(1)  # 等待 1 秒後再開始下一個目標
             self.start_test()  # 重新開始測試
 
