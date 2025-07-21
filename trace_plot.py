@@ -5,6 +5,44 @@ from matplotlib.patches import Polygon, Rectangle
 from matplotlib.lines import Line2D
 
 
+def init_trace_output_folder():
+    timestamp = time.strftime("%Y%m%d_%H%M%S")
+    folder = os.path.join("trace_output", timestamp)
+    os.makedirs(folder, exist_ok=True)
+    print(f"📂 本次軌跡儲存在：{folder}")
+    return folder
+
+
+def output_move_trace(trace_points, start, target, radius, index, output_dir):
+    if not trace_points:
+        print(f"⚠️ 第 {index} 筆無紀錄資料")
+        return
+
+    xs, ys = zip(*trace_points)
+    fig, ax = plt.subplots(figsize=(6, 6))
+
+    # 玩家軌跡點
+    ax.plot(xs, ys, 'deepskyblue', marker='.', linestyle='None', markersize=2)
+
+    # 起點位置
+    ax.plot(start[0], start[1], 'o', color='blue', markersize=10, alpha=0.7)
+
+    # 目標紅圈
+    circle = plt.Circle(target, radius, color='red', fill=False, linewidth=2)
+    ax.add_patch(circle)
+
+    ax.set_aspect('equal')
+    ax.invert_yaxis()
+    ax.axis('off')
+    ax.set_title(f"Move Trace {index}")
+
+    path = os.path.join(output_dir, f"{index}.png")
+    plt.tight_layout()
+    plt.savefig(path, dpi=200)
+    plt.close()
+    print(f"📷 已儲存：{path}")
+
+
 def output_single_trace(path_obj, index, output_dir="trace_output"):
     """輸出單一路徑圖：含黑路徑、灰框、紅線、玩家軌跡"""
 

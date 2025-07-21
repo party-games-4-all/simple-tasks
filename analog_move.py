@@ -2,6 +2,8 @@ import tkinter as tk
 import random
 import time
 from threading import Thread
+from trace_plot import init_trace_output_folder, output_move_trace
+
 
 class JoystickTargetTestApp:
 
@@ -10,13 +12,21 @@ class JoystickTargetTestApp:
         self.root.title("Joystick 移動目標測試")
         self.canvas_width = 1200
         self.canvas_height = 800
-        self.canvas = tk.Canvas(root, width=self.canvas_width, height=self.canvas_height, bg='white')
+        self.canvas = tk.Canvas(root,
+                                width=self.canvas_width,
+                                height=self.canvas_height,
+                                bg='white')
         self.canvas.pack()
 
-        self.label = tk.Label(root, text="按『開始測試』後用搖桿移動到紅圈", font=("Arial", 24))
+        self.label = tk.Label(root,
+                              text="按『開始測試』後用搖桿移動到紅圈",
+                              font=("Arial", 24))
         self.label.place(relx=0.5, rely=0.02, anchor='n')
 
-        self.start_button = tk.Button(root, text="開始測試", font=("Arial", 24), command=self.start_test)
+        self.start_button = tk.Button(root,
+                                      text="開始測試",
+                                      font=("Arial", 24),
+                                      command=self.start_test)
         self.start_button.place(relx=0.5, rely=0.95, anchor='s')
 
         # self.target_radius = 30
@@ -41,28 +51,95 @@ class JoystickTargetTestApp:
         self.leftX = 0
         self.leftY = 0
 
+        self.trace_points = []  # 當前軌跡
+        self.output_dir = init_trace_output_folder()
+
         # 固定目標組合
         self.fixed_targets = [
             # D=100 W=20
-            {"x": 670, "y": 330, "radius": 20},  # 右上
-            {"x": 530, "y": 330, "radius": 20},  # 左上
-            {"x": 530, "y": 470, "radius": 20},  # 左下
-            {"x": 670, "y": 470, "radius": 20},  # 右下
+            {
+                "x": 670,
+                "y": 330,
+                "radius": 20
+            },  # 右上
+            {
+                "x": 530,
+                "y": 330,
+                "radius": 20
+            },  # 左上
+            {
+                "x": 530,
+                "y": 470,
+                "radius": 20
+            },  # 左下
+            {
+                "x": 670,
+                "y": 470,
+                "radius": 20
+            },  # 右下
             # D=100 W=50
-            {"x": 670, "y": 330, "radius": 50},  # 右上
-            {"x": 530, "y": 330, "radius": 50},  # 左上
-            {"x": 530, "y": 470, "radius": 50},  # 左下
-            {"x": 670, "y": 470, "radius": 50},  # 右下
+            {
+                "x": 670,
+                "y": 330,
+                "radius": 50
+            },  # 右上
+            {
+                "x": 530,
+                "y": 330,
+                "radius": 50
+            },  # 左上
+            {
+                "x": 530,
+                "y": 470,
+                "radius": 50
+            },  # 左下
+            {
+                "x": 670,
+                "y": 470,
+                "radius": 50
+            },  # 右下
             # D=400 W=20
-            {"x": 882, "y": 118, "radius": 20},  # 右上
-            {"x": 318, "y": 118, "radius": 20},  # 左上
-            {"x": 318, "y": 682, "radius": 20},  # 左下
-            {"x": 882, "y": 682, "radius": 20},  # 右下
+            {
+                "x": 882,
+                "y": 118,
+                "radius": 20
+            },  # 右上
+            {
+                "x": 318,
+                "y": 118,
+                "radius": 20
+            },  # 左上
+            {
+                "x": 318,
+                "y": 682,
+                "radius": 20
+            },  # 左下
+            {
+                "x": 882,
+                "y": 682,
+                "radius": 20
+            },  # 右下
             # D=400 W=50
-            {"x": 882, "y": 118, "radius": 50},  # 右上
-            {"x": 318, "y": 118, "radius": 50},  # 左上
-            {"x": 318, "y": 682, "radius": 50},  # 左下
-            {"x": 882, "y": 682, "radius": 50},  # 右下
+            {
+                "x": 882,
+                "y": 118,
+                "radius": 50
+            },  # 右上
+            {
+                "x": 318,
+                "y": 118,
+                "radius": 50
+            },  # 左上
+            {
+                "x": 318,
+                "y": 682,
+                "radius": 50
+            },  # 左下
+            {
+                "x": 882,
+                "y": 682,
+                "radius": 50
+            },  # 右下
         ]
         random.shuffle(self.fixed_targets)
 
@@ -105,18 +182,21 @@ class JoystickTargetTestApp:
         self.target_radius = target_info["radius"]
 
         # 計算初始距離
-        self.initial_distance = ((self.player_x - self.target_x) ** 2 + (self.player_y - self.target_y) ** 2) ** 0.5
+        self.initial_distance = ((self.player_x - self.target_x)**2 +
+                                 (self.player_y - self.target_y)**2)**0.5
 
         self.target = self.canvas.create_oval(
-            self.target_x - self.target_radius, self.target_y - self.target_radius,
-            self.target_x + self.target_radius, self.target_y + self.target_radius,
-            fill="red"
-        )
+            self.target_x - self.target_radius,
+            self.target_y - self.target_radius,
+            self.target_x + self.target_radius,
+            self.target_y + self.target_radius,
+            fill="red")
         self.player = self.canvas.create_oval(
-            self.player_x - self.player_radius, self.player_y - self.player_radius,
-            self.player_x + self.player_radius, self.player_y + self.player_radius,
-            fill="blue"
-        )
+            self.player_x - self.player_radius,
+            self.player_y - self.player_radius,
+            self.player_x + self.player_radius,
+            self.player_y + self.player_radius,
+            fill="blue")
 
     def update_player_position(self):
         # 將 -1 ~ 1 值轉換為 -13 ~ +13 的速度
@@ -127,16 +207,23 @@ class JoystickTargetTestApp:
         self.player_y += dy
 
         # 限制在畫布內
-        self.player_x = max(self.player_radius, min(self.canvas_width - self.player_radius, self.player_x))
-        self.player_y = max(self.player_radius, min(self.canvas_height - self.player_radius, self.player_y))
+        self.player_x = max(
+            self.player_radius,
+            min(self.canvas_width - self.player_radius, self.player_x))
+        self.player_y = max(
+            self.player_radius,
+            min(self.canvas_height - self.player_radius, self.player_y))
 
-        self.canvas.coords(
-            self.player,
-            self.player_x - self.player_radius, self.player_y - self.player_radius,
-            self.player_x + self.player_radius, self.player_y + self.player_radius
-        )
+        self.canvas.coords(self.player, self.player_x - self.player_radius,
+                           self.player_y - self.player_radius,
+                           self.player_x + self.player_radius,
+                           self.player_y + self.player_radius)
 
-    def on_joycon_input(self, buttons, leftX, leftY, last_key_bit, last_key_down):
+        if self.testing:
+            self.trace_points.append((self.player_x, self.player_y))
+
+    def on_joycon_input(self, buttons, leftX, leftY, last_key_bit,
+                        last_key_down):
         self.leftX = leftX
         self.leftY = leftY
 
@@ -145,7 +232,8 @@ class JoystickTargetTestApp:
             self.start_time = time.time()
             self.has_moved = True
 
-    def on_joycon_button(self, buttons, leftX, leftY, last_key_bit, last_key_down):
+    def on_joycon_button(self, buttons, leftX, leftY, last_key_bit,
+                         last_key_down):
         # 若按下任一按鍵（例如 A 鍵），進行位置判定
         if not last_key_down:
             return  # 只處理按下事件（不處理放開）
@@ -157,8 +245,18 @@ class JoystickTargetTestApp:
         if not self.testing:
             return
 
-        distance = ((self.player_x - self.target_x) ** 2 + (self.player_y - self.target_y) ** 2) ** 0.5
+        distance = ((self.player_x - self.target_x)**2 +
+                    (self.player_y - self.target_y)**2)**0.5
         if distance <= self.target_radius:
+            output_move_trace(trace_points=self.trace_points,
+                              start=(self.canvas_width // 2,
+                                     self.canvas_height // 2),
+                              target=(self.target_x, self.target_y),
+                              radius=self.target_radius,
+                              index=self.success_count - 1,
+                              output_dir=self.output_dir)
+            self.trace_points = []  # 清空以便下次測試
+
             elapsed = time.time() - self.start_time
             self.success_count += 1
 
@@ -174,14 +272,11 @@ class JoystickTargetTestApp:
             print(f"📏 初始距離：{self.initial_distance:.1f} px")
             print(f"⚡ 單位距離時間：{efficiency:.4f} 秒/像素")
             print(f"📊 平均時間：{avg_time:.2f} 秒，平均秒/像素：{avg_efficiency:.4f}")
-            self.label.config(
-                text=(
-                    f"第 {self.success_count} 次"
-                )
-            )
+            self.label.config(text=(f"第 {self.success_count} 次"))
             self.testing = False
             time.sleep(1)  # 等待 1 秒後再開始下一個目標
             self.start_test()  # 重新開始測試
+
 
 if __name__ == "__main__":
     from threading import Thread
@@ -190,7 +285,8 @@ if __name__ == "__main__":
     root = tk.Tk()
     app = JoystickTargetTestApp(root)
 
-    listener = ControllerInput(analog_callback=app.on_joycon_input, button_callback=app.on_joycon_button)
+    listener = ControllerInput(analog_callback=app.on_joycon_input,
+                               button_callback=app.on_joycon_button)
     Thread(target=listener.run, daemon=True).start()
 
     root.mainloop()
