@@ -1,6 +1,11 @@
 import tkinter as tk
 import random
 import time
+import sys
+from pathlib import Path
+
+# 添加父目錄到 Python 路徑以便導入共用模組
+sys.path.append(str(Path(__file__).parent.parent))
 
 
 class ReactionTestApp:

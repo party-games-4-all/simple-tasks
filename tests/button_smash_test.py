@@ -1,5 +1,10 @@
 import tkinter as tk
 import time
+import sys
+from pathlib import Path
+
+# 添加父目錄到 Python 路徑以便導入共用模組
+sys.path.append(str(Path(__file__).parent.parent))
 
 
 class ButtonSmashTestApp:
@@ -227,7 +232,6 @@ class ButtonSmashTestApp:
 if __name__ == "__main__":
     from threading import Thread
     from common.controller_input import ControllerInput
-    import sys
 
     root = tk.Tk()
     app = ButtonSmashTestApp(root)

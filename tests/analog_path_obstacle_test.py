@@ -4,6 +4,12 @@ import time, os
 import math
 from threading import Thread
 from abc import ABC, abstractmethod
+import sys
+from pathlib import Path
+
+# 添加父目錄到 Python 路徑以便導入共用模組
+sys.path.append(str(Path(__file__).parent.parent))
+
 from utils import get_directional_offset
 from trace_plot import output_single_trace
 
