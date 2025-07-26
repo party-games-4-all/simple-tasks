@@ -21,23 +21,27 @@ class AccuracyDirectionTestApp:
 
         # 計算中心位置和方向按鈕位置
         center_x, center_y = config.WINDOW_WIDTH // 2, config.WINDOW_HEIGHT // 2
-        button_distance = 200  # 按鈕距離中心的距離
+        button_distance = 150  # 按鈕距離中心的距離
+        
+        # 調整為正菱形排列（正方形旋轉45度），符合真實控制器外觀
+        # 使用45度角的對角線距離來計算位置
+        diagonal_distance = button_distance * 1.414  # sqrt(2) ≈ 1.414
         
         self.directions = {
             "up": {
-                "pos": (center_x, center_y - button_distance),
+                "pos": (center_x, center_y - diagonal_distance),
                 "bit": None
             },
             "down": {
-                "pos": (center_x, center_y + button_distance),
+                "pos": (center_x, center_y + diagonal_distance),
                 "bit": None
             },
             "left": {
-                "pos": (center_x - button_distance, center_y),
+                "pos": (center_x - diagonal_distance, center_y),
                 "bit": None
             },
             "right": {
-                "pos": (center_x + button_distance, center_y),
+                "pos": (center_x + diagonal_distance, center_y),
                 "bit": None
             },
         }
