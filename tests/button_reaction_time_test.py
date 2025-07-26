@@ -7,13 +7,15 @@ from pathlib import Path
 # 添加父目錄到 Python 路徑以便導入共用模組
 sys.path.append(str(Path(__file__).parent.parent))
 
+from common import config
+
 
 class ReactionTestApp:
     """簡單的反應時間測試應用程式"""
     def __init__(self, root):
         self.root = root
         self.root.title("Reaction Test")
-        self.canvas = tk.Canvas(root, width=1200, height=800, bg="white")
+        self.canvas = tk.Canvas(root, width=config.WINDOW_WIDTH, height=config.WINDOW_HEIGHT, bg="white")
         self.canvas.pack()
 
         self.state = "waiting"
@@ -22,7 +24,11 @@ class ReactionTestApp:
         self.reaction_times = []
 
         # 中央圓形（先畫成灰色）
-        self.circle = self.canvas.create_oval(550, 350, 650, 450, fill="gray", outline="black", width=3)
+        center_x, center_y = config.WINDOW_WIDTH // 2, config.WINDOW_HEIGHT // 2
+        circle_size = 50  # 半徑
+        self.circle = self.canvas.create_oval(center_x - circle_size, center_y - circle_size, 
+                                            center_x + circle_size, center_y + circle_size, 
+                                            fill="gray", outline="black", width=3)
 
         self.label = tk.Label(root,
                               text="請按『開始測試』按鈕開始測試",

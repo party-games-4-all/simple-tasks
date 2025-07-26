@@ -7,30 +7,36 @@ from pathlib import Path
 # 添加父目錄到 Python 路徑以便導入共用模組
 sys.path.append(str(Path(__file__).parent.parent))
 
+from common import config
+
 
 class AccuracyDirectionTestApp:
 
     def __init__(self, root):
         self.root = root
         self.root.title("按鍵準確度測試")
-        self.canvas = tk.Canvas(root, width=1200, height=800, bg='white')
+        self.canvas = tk.Canvas(root, width=config.WINDOW_WIDTH, height=config.WINDOW_HEIGHT, bg='white')
         self.canvas.pack()
 
+        # 計算中心位置和方向按鈕位置
+        center_x, center_y = config.WINDOW_WIDTH // 2, config.WINDOW_HEIGHT // 2
+        button_distance = 200  # 按鈕距離中心的距離
+        
         self.directions = {
             "up": {
-                "pos": (600, 250),
+                "pos": (center_x, center_y - button_distance),
                 "bit": None
             },
             "down": {
-                "pos": (600, 550),
+                "pos": (center_x, center_y + button_distance),
                 "bit": None
             },
             "left": {
-                "pos": (400, 400),
+                "pos": (center_x - button_distance, center_y),
                 "bit": None
             },
             "right": {
-                "pos": (800, 400),
+                "pos": (center_x + button_distance, center_y),
                 "bit": None
             },
         }

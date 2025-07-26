@@ -6,6 +6,8 @@ from pathlib import Path
 # 添加父目錄到 Python 路徑以便導入共用模組
 sys.path.append(str(Path(__file__).parent.parent))
 
+from common import config
+
 
 class ButtonSmashTestApp:
     """
@@ -26,7 +28,7 @@ class ButtonSmashTestApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Button Smash Test")
-        self.canvas = tk.Canvas(root, width=1200, height=800, bg="white")
+        self.canvas = tk.Canvas(root, width=config.WINDOW_WIDTH, height=config.WINDOW_HEIGHT, bg="white")
         self.canvas.pack()
 
         # 測試狀態

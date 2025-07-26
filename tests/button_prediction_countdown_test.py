@@ -22,14 +22,14 @@ from pathlib import Path
 # 添加父目錄到 Python 路徑以便導入共用模組
 sys.path.append(str(Path(__file__).parent.parent))
 
+from common import config
+
 class CountdownReactionTestApp:
 
     def __init__(self, root):
         self.root = root
         self.root.title("🎮 預測反應時間測試 - 遊戲化版本")
-        CANVAS_WIDTH = 1600
-        CANVAS_HEIGHT = 800
-        self.canvas = tk.Canvas(root, width=CANVAS_WIDTH, height=CANVAS_HEIGHT, bg='white')
+        self.canvas = tk.Canvas(root, width=config.WINDOW_WIDTH, height=config.WINDOW_HEIGHT, bg='white')
         self.canvas.pack()
 
         self.PERIOD = 2000  # 2000ms - 增加球與球之間的間隔時間
@@ -38,13 +38,13 @@ class CountdownReactionTestApp:
 
         self.ball_radius = 30
         self.start_x = 100
-        self.end_x = CANVAS_WIDTH  # 球移動到畫面最右邊（留一點邊距）
-        self.target_x = CANVAS_WIDTH * 0.9  # 目標判定位置（灰色圓圈位置）
-        self.y_pos = 400
+        self.end_x = config.WINDOW_WIDTH  # 球移動到畫面最右邊（留一點邊距）
+        self.target_x = config.WINDOW_WIDTH * 0.9  # 目標判定位置（灰色圓圈位置）
+        self.y_pos = config.WINDOW_HEIGHT // 2  # 使用畫面中央
 
         self.gray_x0 = self.target_x - self.ball_radius
         self.gray_x1 = self.target_x + self.ball_radius
-        # self.canvas.create_rectangle(self.gray_x0, 0, self.gray_x1, CANVAS_HEIGHT, fill="lightgray", outline="")
+        # self.canvas.create_rectangle(self.gray_x0, 0, self.gray_x1, config.WINDOW_HEIGHT, fill="lightgray", outline="")
         # 在 __init__ 中新增灰色圓形（與球一樣大小）放在 target_x 處
         self.gray_circle = self.canvas.create_oval(
             self.target_x - self.ball_radius, self.y_pos - self.ball_radius,

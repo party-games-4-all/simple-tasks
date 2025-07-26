@@ -15,6 +15,7 @@ from pathlib import Path
 # 添加父目錄到 Python 路徑以便導入共用模組
 sys.path.append(str(Path(__file__).parent.parent))
 
+from common import config
 from common.utils import get_directional_offset
 from data.trace_plot import output_single_trace
 
@@ -555,8 +556,8 @@ class PathFollowingTestApp:
     def __init__(self, root):
         self.root = root
         self.root.title("🎮 Path Following 測試 (簡化版本)")
-        self.canvas_width = 1200
-        self.canvas_height = 800
+        self.canvas_width = config.WINDOW_WIDTH
+        self.canvas_height = config.WINDOW_HEIGHT
         self.canvas = tk.Canvas(root,
                                 width=self.canvas_width,
                                 height=self.canvas_height,
