@@ -10,6 +10,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent / "common"))
 
 from common.controller_input import ControllerInput
+from common.controller_manager import controller_manager
 from common import config
 
 def show_menu():
@@ -57,6 +58,16 @@ def main():
         controller = ControllerInput()
         controller.run()
         return
+    
+    # 在開始測試之前先配對遙控器
+    print("🎮 正在初始化遙控器...")
+    controller_instance = controller_manager.setup_controller()
+    if controller_instance is None:
+        print("❌ 無法配對遙控器，某些測試可能無法正常運行")
+        print("您仍然可以進入測試選單，但建議先解決遙控器連接問題")
+        input("\n按 Enter 繼續...")
+    else:
+        print("🎮 遙控器配對成功！")
     
     # 互動式選單模式
     user_id = input("請輸入使用者ID (預設: test_user): ").strip()

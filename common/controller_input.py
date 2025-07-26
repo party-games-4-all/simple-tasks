@@ -1,5 +1,6 @@
 import pygame
 import os
+from .controller_manager import controller_manager
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 os.environ['SDL_VIDEODRIVER'] = 'dummy'
@@ -12,9 +13,7 @@ DEBUG = False  # 設定為 True 以啟用除錯輸出
 
 class ControllerInput:
 
-    def __init__(self, button_callback=None, analog_callback=None):
-
-        self.joystick = None
+    def __init__(self, button_callback=None, analog_callback=None, use_existing_controller=True):
         self.leftX = 0
         self.leftY = 0
         self.buttons = 0
@@ -22,7 +21,14 @@ class ControllerInput:
         self.button_callback = button_callback
         self.analog_callback = analog_callback
 
-        self.detect_joycon()
+        # 嘗試使用已存在的遙控器，如果沒有則進行配對
+        if use_existing_controller and controller_manager.is_controller_ready():
+            self.joystick = controller_manager.get_controller()
+            print(f"🎮 使用已配對的遙控器：{self.joystick.get_name()}")
+        else:
+            self.joystick = controller_manager.setup_controller()
+            if self.joystick is None:
+                print("❌ 無法配對遙控器")
 
     def detect_joycon(self):
         count = pygame.joystick.get_count()
@@ -45,6 +51,33 @@ class ControllerInput:
                 j.quit()
 
         print("❌ 沒有選擇任何手把")
+
+    @staticmethod
+    def setup_controller():
+        """
+        靜態方法：配對並返回遙控器實例
+        用於在主程式啟動時一次性配對遙控器
+        """
+        count = pygame.joystick.get_count()
+        print(f"🎮 偵測到 {count} 支手把")
+
+        if count == 0:
+            print("❌ 未偵測到任何🎮手把")
+            return None
+
+        for i in range(count):
+            j = pygame.joystick.Joystick(i)
+            j.init()
+            print(f"🔍 偵測到手把：{j.get_name()}")
+            confirm = input("要使用這個裝置嗎？(Y/n): ").strip().lower()
+            if confirm == "y" or confirm == "":
+                print(f"✅ 已選擇：{j.get_name()}")
+                return j
+            else:
+                j.quit()
+
+        print("❌ 沒有選擇任何手把")
+        return None
 
     def run(self):
         if self.joystick is None:

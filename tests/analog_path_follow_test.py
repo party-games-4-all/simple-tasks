@@ -17,7 +17,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 from common import config
 from common.result_saver import save_test_result
-from common.utils import get_directional_offset
+from common.utils import get_directional_offset, setup_window_topmost
 from common.trace_plot import output_single_trace
 
 DEBUG = False  # 是否啟用除錯模式
@@ -658,6 +658,10 @@ class PathFollowingTestApp:
         self.root = root
         self.user_id = user_id or "default"
         self.root.title("🎮 Path Following 測試 (簡化版本)")
+        
+        # 設定視窗置頂
+        setup_window_topmost(self.root)
+        
         self.canvas_width = config.WINDOW_WIDTH
         self.canvas_height = config.WINDOW_HEIGHT
         background_color = f"#{config.COLORS['BACKGROUND'][0]:02x}{config.COLORS['BACKGROUND'][1]:02x}{config.COLORS['BACKGROUND'][2]:02x}"
@@ -1148,7 +1152,9 @@ if __name__ == "__main__":
     app = PathFollowingTestApp(root, user_id)
 
     try:
-        listener = ControllerInput(analog_callback=app.on_joycon_input)
+        # 使用新的遙控器管理系統 - 會自動使用已配對的遙控器
+        listener = ControllerInput(analog_callback=app.on_joycon_input,
+                                   use_existing_controller=True)
         Thread(target=listener.run, daemon=True).start()
 
         root.mainloop()

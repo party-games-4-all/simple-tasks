@@ -11,6 +11,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 from common import config
 from common.result_saver import save_test_result
 from common.trace_plot import init_trace_output_folder, output_move_trace
+from common.utils import setup_window_topmost
 
 
 class JoystickTargetTestApp:
@@ -19,6 +20,10 @@ class JoystickTargetTestApp:
         self.root = root
         self.user_id = user_id or "default"
         self.root.title("Joystick 移動目標測試")
+        
+        # 設定視窗置頂
+        setup_window_topmost(self.root)
+        
         self.canvas_width = config.WINDOW_WIDTH
         self.canvas_height = config.WINDOW_HEIGHT
         background_color = f"#{config.COLORS['BACKGROUND'][0]:02x}{config.COLORS['BACKGROUND'][1]:02x}{config.COLORS['BACKGROUND'][2]:02x}"
@@ -423,8 +428,11 @@ if __name__ == "__main__":
     root = tk.Tk()
     app = JoystickTargetTestApp(root, user_id)
 
+    # 使用新的遙控器管理系統 - 會自動使用已配對的遙控器
+    # 使用新的遙控器管理系統 - 會自動使用已配對的遙控器
     listener = ControllerInput(analog_callback=app.on_joycon_input,
-                               button_callback=app.on_joycon_button)
+                               button_callback=app.on_joycon_button,
+                               use_existing_controller=True)
     Thread(target=listener.run, daemon=True).start()
 
     root.mainloop()

@@ -10,6 +10,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 from common import config
 from common.result_saver import save_test_result
+from common.utils import setup_window_topmost
 
 
 class ReactionTestApp:
@@ -18,6 +19,10 @@ class ReactionTestApp:
         self.root = root
         self.user_id = user_id or "default"
         self.root.title("Reaction Test")
+        
+        # 設定視窗置頂
+        setup_window_topmost(self.root)
+        
         self.canvas = tk.Canvas(root, width=config.WINDOW_WIDTH, height=config.WINDOW_HEIGHT, 
                                bg=f"#{config.COLORS['BACKGROUND'][0]:02x}{config.COLORS['BACKGROUND'][1]:02x}{config.COLORS['BACKGROUND'][2]:02x}")
         self.canvas.pack()
@@ -189,8 +194,9 @@ if __name__ == "__main__":
     root = tk.Tk()
     app = ReactionTestApp(root, user_id)
 
-    # 把所有輸入都交給 app 處理（不過濾按鍵）
-    listener = ControllerInput(button_callback=app.on_joycon_input)
+    # 使用新的遙控器管理系統 - 會自動使用已配對的遙控器
+    # 使用新的遙控器管理系統 - 會自動使用已配對的遙控器
+    listener = ControllerInput(button_callback=app.on_joycon_input, use_existing_controller=True)
     Thread(target=listener.run, daemon=True).start()
 
     root.mainloop()
