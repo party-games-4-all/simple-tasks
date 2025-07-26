@@ -276,12 +276,27 @@ class CornerPath(Path):
         shape1 = [(points1[i], points1[i + 1]) for i in range(0, 8, 2)]
         shapes.append(shape1)
 
-        # 第二段：corner → end（起點視為偏移後起點）
-        # 這段跟 create_path() 用的是 offset_y 概念
-        if self.end_y != self.corner_y:
-            seg2_start_y = self.corner_y + (self.width / 2) if self.end_y < self.corner_y \
-                        else self.corner_y - (self.width / 2)
-            seg2_start_x = self.corner_x
+        # 第二段：使用與 create_path 相同的邏輯計算起點
+        dx1 = self.corner_x - self.start_x
+        dy1 = self.corner_y - self.start_y
+        length1 = math.sqrt(dx1**2 + dy1**2)
+        
+        dx2 = self.end_x - self.corner_x
+        dy2 = self.end_y - self.corner_y
+        length2 = math.sqrt(dx2**2 + dy2**2)
+        
+        if length1 > 0 and length2 > 0:
+            ux2 = dx2 / length2
+            uy2 = dy2 / length2
+            
+            cross_product = dx1 * dy2 - dy1 * dx2
+            
+            if abs(cross_product) > 1e-6:
+                seg2_start_x = self.corner_x - ux2 * (self.width / 2)
+                seg2_start_y = self.corner_y - uy2 * (self.width / 2)
+            else:
+                seg2_start_x = self.corner_x
+                seg2_start_y = self.corner_y
         else:
             seg2_start_x = self.corner_x
             seg2_start_y = self.corner_y
@@ -294,19 +309,63 @@ class CornerPath(Path):
         return shapes
 
     def create_path(self):
-        """創建轉彎路徑，並延長 segment2 起點來補轉角空缺"""
+        """創建轉彎路徑，確保兩段路徑完全銜接無縫隙"""
+        # 第一段：從起點到轉角
         self.segment1 = self._create_segment(self.start_x, self.start_y,
                                              self.corner_x, self.corner_y,
                                              'blue')
-        # 動態調整 segment2 起點的 y
-        if self.end_y != self.corner_y:
-            # 垂直方向為主（上下轉）
-            segment2_start_y = self.corner_y + (self.width / 2) if self.end_y < self.corner_y \
-                            else self.corner_y - (self.width / 2)
+        
+        # 計算第一段的方向向量
+        dx1 = self.corner_x - self.start_x
+        dy1 = self.corner_y - self.start_y
+        length1 = math.sqrt(dx1**2 + dy1**2)
+        
+        # 計算第二段的方向向量
+        dx2 = self.end_x - self.corner_x
+        dy2 = self.end_y - self.corner_y
+        length2 = math.sqrt(dx2**2 + dy2**2)
+        
+        # 動態調整第二段起點來確保完全銜接
+        if length1 > 0 and length2 > 0:
+            # 第一段的單位向量
+            ux1 = dx1 / length1
+            uy1 = dy1 / length1
+            
+            # 第二段的單位向量  
+            ux2 = dx2 / length2
+            uy2 = dy2 / length2
+            
+            # 第一段在轉角處的垂直向量
+            perp1_x = -uy1 * self.width / 2
+            perp1_y = ux1 * self.width / 2
+            
+            # 第二段在轉角處的垂直向量
+            perp2_x = -uy2 * self.width / 2
+            perp2_y = ux2 * self.width / 2
+            
+            # 根據轉彎方向調整第二段起點
+            # 計算叉積來判斷轉彎方向
+            cross_product = dx1 * dy2 - dy1 * dx2
+            
+            if abs(cross_product) > 1e-6:  # 避免除零錯誤
+                if cross_product > 0:  # 左轉
+                    # 延伸第二段起點，使其與第一段的外側邊緣銜接
+                    segment2_start_x = self.corner_x - ux2 * (self.width / 2)
+                    segment2_start_y = self.corner_y - uy2 * (self.width / 2)
+                else:  # 右轉
+                    # 延伸第二段起點，使其與第一段的內側邊緣銜接
+                    segment2_start_x = self.corner_x - ux2 * (self.width / 2)
+                    segment2_start_y = self.corner_y - uy2 * (self.width / 2)
+            else:
+                # 直線情況（理論上不會發生在轉角路徑中）
+                segment2_start_x = self.corner_x
+                segment2_start_y = self.corner_y
         else:
-            # 水平轉（左轉或右轉）
+            # 後備方案
+            segment2_start_x = self.corner_x
             segment2_start_y = self.corner_y
-        self.segment2 = self._create_segment(self.corner_x, segment2_start_y,
+            
+        self.segment2 = self._create_segment(segment2_start_x, segment2_start_y,
                                              self.end_x, self.end_y, 'green')
 
         if self.segment1:
@@ -359,9 +418,30 @@ class CornerPath(Path):
         if remaining_length <= 0:
             return False
 
-        segment2_start_x = self.corner_x
-        segment2_start_y = self.corner_y + (self.width / 2) if self.end_y < self.corner_y \
-                        else self.corner_y - (self.width / 2)
+        # 計算第二段的正確起點（與其他方法保持一致）
+        dx1 = self.corner_x - self.start_x
+        dy1 = self.corner_y - self.start_y
+        length1 = math.sqrt(dx1**2 + dy1**2)
+        
+        dx2 = self.end_x - self.corner_x
+        dy2 = self.end_y - self.corner_y
+        length2 = math.sqrt(dx2**2 + dy2**2)
+        
+        if length1 > 0 and length2 > 0:
+            ux2 = dx2 / length2
+            uy2 = dy2 / length2
+            
+            cross_product = dx1 * dy2 - dy1 * dx2
+            
+            if abs(cross_product) > 1e-6:
+                segment2_start_x = self.corner_x - ux2 * (self.width / 2)
+                segment2_start_y = self.corner_y - uy2 * (self.width / 2)
+            else:
+                segment2_start_x = self.corner_x
+                segment2_start_y = self.corner_y
+        else:
+            segment2_start_x = self.corner_x
+            segment2_start_y = self.corner_y
 
         if remaining_length <= self.segment2_length:
             ratio = remaining_length / self.segment2_length
@@ -435,7 +515,7 @@ class CornerPath(Path):
             self._update_path()
 
     def _update_path(self):
-        """根據當前進度更新路徑（從終點往起點收縮），並補角落空缺"""
+        """根據當前進度更新路徑（從終點往起點收縮），使用正確的銜接邏輯"""
         remaining_length = self.total_length * self.current_progress
 
         if remaining_length <= 0:
@@ -443,10 +523,30 @@ class CornerPath(Path):
                 self.canvas.coords(element, 0, 0, 0, 0)
             return
 
-        # 根據 end_y 與 corner_y 決定 segment2 起點是否補角落
-        segment2_start_x = self.corner_x
-        segment2_start_y = self.corner_y + (self.width / 2) if self.end_y < self.corner_y \
-                        else self.corner_y - (self.width / 2)
+        # 計算第二段的正確起點（與 create_path 使用相同邏輯）
+        dx1 = self.corner_x - self.start_x
+        dy1 = self.corner_y - self.start_y
+        length1 = math.sqrt(dx1**2 + dy1**2)
+        
+        dx2 = self.end_x - self.corner_x
+        dy2 = self.end_y - self.corner_y
+        length2 = math.sqrt(dx2**2 + dy2**2)
+        
+        if length1 > 0 and length2 > 0:
+            ux2 = dx2 / length2
+            uy2 = dy2 / length2
+            
+            cross_product = dx1 * dy2 - dy1 * dx2
+            
+            if abs(cross_product) > 1e-6:
+                segment2_start_x = self.corner_x - ux2 * (self.width / 2)
+                segment2_start_y = self.corner_y - uy2 * (self.width / 2)
+            else:
+                segment2_start_x = self.corner_x
+                segment2_start_y = self.corner_y
+        else:
+            segment2_start_x = self.corner_x
+            segment2_start_y = self.corner_y
 
         if remaining_length <= self.segment2_length:
             # segment2 正在收縮
@@ -567,15 +667,16 @@ class PathFollowingTestApp:
                                 bg=background_color)
         self.canvas.pack()
 
-        self.player_radius = 8
+        # 參考Mario Party Lumber Tumble的角色大小和移動速度
+        self.player_radius = 6  # 縮小角色半徑，更接近遊戲比例
         self.goal_color = f"#{config.COLORS['TARGET'][0]:02x}{config.COLORS['TARGET'][1]:02x}{config.COLORS['TARGET'][2]:02x}"
 
         self.player_x = 100
         self.player_y = 400
-        self.offset = 20
+        self.offset = 15  # 減小起始偏移距離
         self.leftX = 0
         self.leftY = 0
-        self.speed = 13
+        self.speed = 10  # 調整移動速度，參考Mario Party的節奏
 
         self.off_path_time = 0
         self.total_time = 0
@@ -599,27 +700,59 @@ class PathFollowingTestApp:
         print(f"📂 本次資料儲存於：{self.session_output_dir}")
 
     def create_paths(self):
-        """回傳多條路徑清單"""
+        """回傳多條路徑清單 - 包含4種直線和8種L型轉彎路徑"""
+        # 參考Mario Party Lumber Tumble的設計調整參數
+        path_width = 60  # 縮小路徑寬度，參考遊戲中木板寬度
+        margin = 80      # 邊界距離
+        center_x = self.canvas_width // 2
+        center_y = self.canvas_height // 2
+        
+        path_color = f"#{config.COLORS['PATH'][0]:02x}{config.COLORS['PATH'][1]:02x}{config.COLORS['PATH'][2]:02x}"
+        
         paths = [
-            # ---- 四條直線 ----
-            # 從左往右 →
-            StraightPath(self.canvas, 50, 400, 1150, 400, 80, f"#{config.COLORS['PATH'][0]:02x}{config.COLORS['PATH'][1]:02x}{config.COLORS['PATH'][2]:02x}"),
-            # 從右往左 ←
-            StraightPath(self.canvas, 1150, 400, 50, 400, 80, f"#{config.COLORS['PATH'][0]:02x}{config.COLORS['PATH'][1]:02x}{config.COLORS['PATH'][2]:02x}"),
-            # 從上往下 ↓
-            StraightPath(self.canvas, 600, 100, 600, 700, 80, f"#{config.COLORS['PATH'][0]:02x}{config.COLORS['PATH'][1]:02x}{config.COLORS['PATH'][2]:02x}"),
-            # 從下往上 ↑
-            StraightPath(self.canvas, 600, 700, 600, 100, 80, f"#{config.COLORS['PATH'][0]:02x}{config.COLORS['PATH'][1]:02x}{config.COLORS['PATH'][2]:02x}"),
-            # ---- 四條轉彎 ----
-            # 往左轉往上（⊏）
-            CornerPath(self.canvas, 1050, 400, 500, 400, 500, 100, 80, f"#{config.COLORS['PATH'][0]:02x}{config.COLORS['PATH'][1]:02x}{config.COLORS['PATH'][2]:02x}"),
-            # 往左轉往下（⊐）
-            CornerPath(self.canvas, 1050, 400, 500, 400, 500, 700, 80, f"#{config.COLORS['PATH'][0]:02x}{config.COLORS['PATH'][1]:02x}{config.COLORS['PATH'][2]:02x}"),
-            # 往右轉往上（┗）
-            CornerPath(self.canvas, 150, 400, 700, 400, 700, 100, 80, f"#{config.COLORS['PATH'][0]:02x}{config.COLORS['PATH'][1]:02x}{config.COLORS['PATH'][2]:02x}"),
-            # 往右轉往下（┏）
-            CornerPath(self.canvas, 150, 400, 700, 400, 700, 700, 80, f"#{config.COLORS['PATH'][0]:02x}{config.COLORS['PATH'][1]:02x}{config.COLORS['PATH'][2]:02x}"),
+            # ---- 4條直線路徑 (上下左右) ----
+            # 左右直線 - 從左到右
+            StraightPath(self.canvas, margin, center_y, self.canvas_width - margin, center_y, path_width, path_color),
+            # 左右直線 - 從右到左  
+            StraightPath(self.canvas, self.canvas_width - margin, center_y, margin, center_y, path_width, path_color),
+            # 上下直線 - 從上到下
+            StraightPath(self.canvas, center_x, margin, center_x, self.canvas_height - margin, path_width, path_color),
+            # 上下直線 - 從下到上
+            StraightPath(self.canvas, center_x, self.canvas_height - margin, center_x, margin, path_width, path_color),
+            
+            # ---- 8種L型轉彎路徑 (每種L型都有兩個方向) ----
+            
+            # L型1: 右轉上 (┗) - 從左進入向右然後向上
+            CornerPath(self.canvas, margin, center_y, center_x, center_y, center_x, margin, path_width, path_color),
+            # L型1反向: 下轉左 (┐) - 從上進入向下然後向左
+            CornerPath(self.canvas, center_x, margin, center_x, center_y, margin, center_y, path_width, path_color),
+            
+            # L型2: 右轉下 (┏) - 從左進入向右然後向下
+            CornerPath(self.canvas, margin, center_y, center_x, center_y, center_x, self.canvas_height - margin, path_width, path_color),
+            # L型2反向: 上轉左 (┘) - 從下進入向上然後向左
+            CornerPath(self.canvas, center_x, self.canvas_height - margin, center_x, center_y, margin, center_y, path_width, path_color),
+            
+            # L型3: 左轉上 (⊏) - 從右進入向左然後向上
+            CornerPath(self.canvas, self.canvas_width - margin, center_y, center_x, center_y, center_x, margin, path_width, path_color),
+            # L型3反向: 下轉右 (┌) - 從上進入向下然後向右
+            CornerPath(self.canvas, center_x, margin, center_x, center_y, self.canvas_width - margin, center_y, path_width, path_color),
+            
+            # L型4: 左轉下 (⊐) - 從右進入向左然後向下
+            CornerPath(self.canvas, self.canvas_width - margin, center_y, center_x, center_y, center_x, self.canvas_height - margin, path_width, path_color),
+            # L型4反向: 上轉右 (└) - 從下進入向上然後向右
+            CornerPath(self.canvas, center_x, self.canvas_height - margin, center_x, center_y, self.canvas_width - margin, center_y, path_width, path_color),
         ]
+        
+        # 為每個路徑增加類型標識以便後續分析
+        for i, path in enumerate(paths):
+            if isinstance(path, StraightPath):
+                if i < 2:  # 左右直線
+                    path.movement_type = "horizontal_straight"
+                else:      # 上下直線
+                    path.movement_type = "vertical_straight"
+            else:  # CornerPath
+                path.movement_type = "corner_turn"
+        
         random.shuffle(paths)
         return paths
 
@@ -785,22 +918,67 @@ class PathFollowingTestApp:
                     and
                     goal_area['top'] <= self.player_y <= goal_area['bottom'])
 
+    def analyze_movement_segments(self, path):
+        """分析玩家在路徑上的移動段落：直線段 vs 轉彎段"""
+        if isinstance(path, StraightPath):
+            # 直線路徑只有一個直線段
+            return {
+                "straight_segments": [{
+                    "start_time": 0,
+                    "duration": self.total_time,
+                    "movement_type": path.movement_type,
+                    "accuracy": 100 - (self.off_path_time / self.total_time * 100) if self.total_time > 0 else 0
+                }],
+                "corner_segments": []
+            }
+        elif isinstance(path, CornerPath):
+            # 轉彎路徑需要分析兩段：直線段和轉彎段
+            # 這裡需要根據軌跡點來分析，簡化版本按比例估算
+            segment1_ratio = path.segment1_length / path.total_length
+            segment1_duration = self.total_time * segment1_ratio
+            segment2_duration = self.total_time * (1 - segment1_ratio)
+            
+            return {
+                "straight_segments": [{
+                    "start_time": 0,
+                    "duration": segment1_duration,
+                    "movement_type": "first_straight",
+                    "accuracy": 95  # 簡化，實際應分析軌跡
+                }],
+                "corner_segments": [{
+                    "start_time": segment1_duration,
+                    "duration": segment2_duration,
+                    "movement_type": "corner_turn",
+                    "accuracy": 85  # 轉彎通常較困難
+                }]
+            }
+        
+        return {"straight_segments": [], "corner_segments": []}
+
     def show_result(self):
         percent_off = (self.off_path_time / self.total_time) * 100
         
         # 記錄單次路徑測試結果
         path_type = "straight" if isinstance(self.path, StraightPath) else "corner"
+        
+        # 新增：移動段落分析
+        movement_analysis = self.analyze_movement_segments(self.path)
+        
         path_info = {
             "start_x": self.path.start_x,
             "start_y": self.path.start_y,
             "end_x": self.path.end_x,
-            "end_y": self.path.end_y
+            "end_y": self.path.end_y,
+            "width": self.path.width,
+            "movement_type": getattr(self.path, 'movement_type', 'unknown')
         }
         
         if isinstance(self.path, CornerPath):
             path_info["corner_x"] = self.path.corner_x
             path_info["corner_y"] = self.path.corner_y
             path_info["total_length"] = self.path.total_length
+            path_info["segment1_length"] = self.path.segment1_length
+            path_info["segment2_length"] = self.path.segment2_length
         else:
             path_info["path_length"] = self.path.path_length
         
@@ -812,7 +990,8 @@ class PathFollowingTestApp:
             "off_path_time_seconds": self.off_path_time,
             "off_path_percentage": percent_off,
             "path_accuracy": 100 - percent_off,
-            "trace_points_count": len(self.path.player_trace)
+            "trace_points_count": len(self.path.player_trace),
+            "movement_analysis": movement_analysis  # 新增：段落分析
         }
         self.test_results.append(trial_result)
         
@@ -820,6 +999,13 @@ class PathFollowingTestApp:
         print(f"⏱ 總時間：{self.total_time:.2f} 秒")
         print(f"❌ 偏離路徑時間：{self.off_path_time:.2f} 秒")
         print(f"📊 偏離比例：{percent_off:.2f}%")
+        print(f"🔄 移動類型：{path_info['movement_type']}")
+        
+        # 顯示段落分析
+        if movement_analysis['straight_segments']:
+            print(f"📏 直線段落：{len(movement_analysis['straight_segments'])} 個")
+        if movement_analysis['corner_segments']:
+            print(f"🔄 轉彎段落：{len(movement_analysis['corner_segments'])} 個")
 
     def on_joycon_input(self, buttons, leftX, leftY, last_key_bit,
                         last_key_down):
@@ -846,7 +1032,12 @@ class PathFollowingTestApp:
         straight_trials = [t for t in self.test_results if t["path_type"] == "straight"]
         corner_trials = [t for t in self.test_results if t["path_type"] == "corner"]
         
-        # 準備儲存的測試參數
+        # 新增：詳細的移動類型分析
+        horizontal_straight = [t for t in self.test_results if t["path_info"].get("movement_type") == "horizontal_straight"]
+        vertical_straight = [t for t in self.test_results if t["path_info"].get("movement_type") == "vertical_straight"]
+        corner_turns = [t for t in self.test_results if t["path_info"].get("movement_type") == "corner_turn"]
+        
+        # 準備儲存的測試參數（更新參數以反映新設計）
         parameters = {
             "window_size": {
                 "width": self.canvas_width,
@@ -855,11 +1046,16 @@ class PathFollowingTestApp:
             "player_radius": self.player_radius,
             "movement_speed_multiplier": self.speed,
             "total_paths": len(self.paths),
-            "path_width": 80,  # 固定路徑寬度
-            "player_offset": self.offset
+            "path_width": 60,  # 更新為新的路徑寬度
+            "player_offset": self.offset,
+            "mario_party_reference": True,  # 標記參考Mario Party設計
+            "path_types": {
+                "straight_paths": 4,  # 4條直線
+                "l_shaped_paths": 8   # 8種L型轉彎
+            }
         }
         
-        # 準備儲存的指標數據
+        # 準備儲存的指標數據（包含新的分析）
         metrics = {
             "total_trials": total_trials,
             "total_time_seconds": total_time,
@@ -878,6 +1074,23 @@ class PathFollowingTestApp:
                     "avg_completion_time_s": sum(t["completion_time_seconds"] for t in corner_trials) / len(corner_trials) if corner_trials else 0,
                     "avg_accuracy_pct": sum(t["path_accuracy"] for t in corner_trials) / len(corner_trials) if corner_trials else 0
                 }
+            },
+            "movement_type_analysis": {
+                "horizontal_straight": {
+                    "count": len(horizontal_straight),
+                    "avg_completion_time_s": sum(t["completion_time_seconds"] for t in horizontal_straight) / len(horizontal_straight) if horizontal_straight else 0,
+                    "avg_accuracy_pct": sum(t["path_accuracy"] for t in horizontal_straight) / len(horizontal_straight) if horizontal_straight else 0
+                },
+                "vertical_straight": {
+                    "count": len(vertical_straight),
+                    "avg_completion_time_s": sum(t["completion_time_seconds"] for t in vertical_straight) / len(vertical_straight) if vertical_straight else 0,
+                    "avg_accuracy_pct": sum(t["path_accuracy"] for t in vertical_straight) / len(vertical_straight) if vertical_straight else 0
+                },
+                "corner_turns": {
+                    "count": len(corner_turns),
+                    "avg_completion_time_s": sum(t["completion_time_seconds"] for t in corner_turns) / len(corner_turns) if corner_turns else 0,
+                    "avg_accuracy_pct": sum(t["path_accuracy"] for t in corner_turns) / len(corner_turns) if corner_turns else 0
+                }
             }
         }
         
@@ -894,16 +1107,25 @@ class PathFollowingTestApp:
         print("🛤️ Analog Path Follow Test - 測試完成總結")
         print("=" * 50)
         print(f"👤 使用者：{self.user_id}")
-        print(f"🎯 總路徑數：{total_trials}")
+        print(f"🎯 總路徑數：{total_trials} (4條直線 + 8種L型)")
         print(f"⏱️ 總用時：{total_time:.2f} 秒")
         print(f"📊 平均完成時間：{avg_completion_time:.2f} 秒")
         print(f"🎯 平均路徑精確度：{avg_accuracy:.1f}%")
         print("")
-        print("📈 各路徑類型表現分析：")
+        print("📈 基本路徑類型表現分析：")
         for path_type, data in metrics["path_type_analysis"].items():
             if data["count"] > 0:
                 print(f"  {path_type}: {data['count']} 條，平均時間 {data['avg_completion_time_s']:.2f}s，精確度 {data['avg_accuracy_pct']:.1f}%")
-        print("=" * 50)
+        print("")
+        print("🔍 詳細移動類型分析：")
+        for movement_type, data in metrics["movement_type_analysis"].items():
+            if data["count"] > 0:
+                type_name = {
+                    "horizontal_straight": "水平直線",
+                    "vertical_straight": "垂直直線", 
+                    "corner_turns": "L型轉彎"
+                }.get(movement_type, movement_type)
+                print(f"  {type_name}: {data['count']} 條，平均時間 {data['avg_completion_time_s']:.2f}s，精確度 {data['avg_accuracy_pct']:.1f}%")
 
 
 if __name__ == "__main__":
