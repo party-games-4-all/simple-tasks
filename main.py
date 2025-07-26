@@ -15,8 +15,6 @@ from common import config
 def show_menu():
     """顯示測試選單"""
     print("\n" + "="*50)
-    print("手把測試應用程式")
-    print("="*50)
     print("0. 手把連接測試")
     print("")
     print("Button 測試 (按鈕測試 - 由簡單到難):")
