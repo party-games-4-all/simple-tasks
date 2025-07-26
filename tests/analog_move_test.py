@@ -14,8 +14,9 @@ from data.trace_plot import init_trace_output_folder, output_move_trace
 
 class JoystickTargetTestApp:
 
-    def __init__(self, root):
+    def __init__(self, root, user_id=None):
         self.root = root
+        self.user_id = user_id or "default"
         self.root.title("Joystick 移動目標測試")
         self.canvas_width = config.WINDOW_WIDTH
         self.canvas_height = config.WINDOW_HEIGHT
@@ -67,7 +68,7 @@ class JoystickTargetTestApp:
 
         self.trace_points = []  # 當前軌跡
         self.press_trace = []
-        self.output_dir = init_trace_output_folder("analog_move_output")
+        self.output_dir = init_trace_output_folder("analog_move", self.user_id)
 
         # 固定目標組合
         self.fixed_targets = [
@@ -301,11 +302,24 @@ class JoystickTargetTestApp:
 
 
 if __name__ == "__main__":
+    import argparse
     from threading import Thread
     from common.controller_input import ControllerInput
 
+    # 解析命令列參數
+    parser = argparse.ArgumentParser(description="Analog Move Test")
+    parser.add_argument("--user", "-u", default=None, help="使用者 ID")
+    args = parser.parse_args()
+
+    # 如果沒有提供 user_id，則請求輸入
+    user_id = args.user
+    if not user_id:
+        user_id = input("請輸入使用者 ID (例如: P1): ").strip()
+        if not user_id:
+            user_id = "default"
+
     root = tk.Tk()
-    app = JoystickTargetTestApp(root)
+    app = JoystickTargetTestApp(root, user_id)
 
     listener = ControllerInput(analog_callback=app.on_joycon_input,
                                button_callback=app.on_joycon_button)

@@ -553,8 +553,9 @@ class CornerPath(Path):
 
 class PathFollowingTestApp:
 
-    def __init__(self, root):
+    def __init__(self, root, user_id=None):
         self.root = root
+        self.user_id = user_id or "default"
         self.root.title("🎮 Path Following 測試 (簡化版本)")
         self.canvas_width = config.WINDOW_WIDTH
         self.canvas_height = config.WINDOW_HEIGHT
@@ -587,10 +588,9 @@ class PathFollowingTestApp:
         self.setup_player()
         self.load_path(self.current_path_index)
 
-        # 圖片紀錄位置
+        # 圖片紀錄位置 - 改為使用 data/images 結構
         timestamp = time.strftime("%Y%m%d_%H%M%S")
-        self.session_output_dir = os.path.join("analog_path_trace_output",
-                                               timestamp)
+        self.session_output_dir = os.path.join("data", "images", "analog_path_trace", self.user_id, timestamp)
         os.makedirs(self.session_output_dir, exist_ok=True)
         print(f"📂 本次資料儲存於：{self.session_output_dir}")
 
@@ -797,10 +797,23 @@ class PathFollowingTestApp:
 
 
 if __name__ == "__main__":
+    import argparse
     from common.controller_input import ControllerInput
 
+    # 解析命令列參數
+    parser = argparse.ArgumentParser(description="Analog Path Follow Test")
+    parser.add_argument("--user", "-u", default=None, help="使用者 ID")
+    args = parser.parse_args()
+
+    # 如果沒有提供 user_id，則請求輸入
+    user_id = args.user
+    if not user_id:
+        user_id = input("請輸入使用者 ID (例如: P1): ").strip()
+        if not user_id:
+            user_id = "default"
+
     root = tk.Tk()
-    app = PathFollowingTestApp(root)
+    app = PathFollowingTestApp(root, user_id)
 
     try:
         listener = ControllerInput(analog_callback=app.on_joycon_input)

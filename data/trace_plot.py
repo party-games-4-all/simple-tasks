@@ -5,9 +5,17 @@ from matplotlib.patches import Polygon, Rectangle, Circle
 from matplotlib.lines import Line2D
 
 
-def init_trace_output_folder(folder_name="trace_output"):
+def init_trace_output_folder(test_name, user_id=None):
+    """
+    初始化軌跡輸出資料夾，遵循 data/images/test_name/user_id/timestamp 結構
+    """
     timestamp = time.strftime("%Y%m%d_%H%M%S")
-    folder = os.path.join(folder_name, timestamp)
+    
+    if user_id:
+        folder = os.path.join("data", "images", test_name, user_id, timestamp)
+    else:
+        folder = os.path.join("data", "images", test_name, timestamp)
+    
     os.makedirs(folder, exist_ok=True)
     print(f"📂 本次軌跡儲存在：{folder}")
     return folder
@@ -49,7 +57,7 @@ def output_move_trace(trace_points, start, target, radius, player_radius, press_
     print(f"📷 已儲存：{path}")
 
 
-def output_single_trace(path_obj, index, output_dir="trace_output"):
+def output_single_trace(path_obj, index, output_dir="data/images/analog_path_trace"):
     """輸出單一路徑圖：含黑路徑、灰框、紅線、玩家軌跡"""
 
     trace_list = path_obj.player_trace

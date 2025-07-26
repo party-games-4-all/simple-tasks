@@ -55,20 +55,29 @@ uv run python main.py
 project/
 ├── tests/                          # 測試模組目錄
 │   ├── connection_test.py          # 手把連接測試
-│   ├── reaction_time_test.py       # 簡單反應時間測試
-│   ├── prediction_reaction_test.py # 預測反應時間測試
-│   ├── choice_accuracy_test.py     # 選擇反應測試
+│   ├── button_reaction_time_test.py# 簡單反應時間測試
+│   ├── button_prediction_countdown_test.py # 預測反應時間測試
+│   ├── button_accuracy_test.py     # 選擇反應測試
+│   ├── button_smash_test.py        # Button Smash 連打測試
 │   ├── analog_move_test.py         # 類比搖桿移動測試
-│   └── path_follow_test.py         # 路徑追蹤測試
+│   ├── analog_path_follow_test.py  # 路徑追蹤測試
+│   └── analog_path_obstacle_test.py# 路徑追蹤測試 (障礙物版本)
 ├── common/                         # 共用模組
 │   ├── controller_input.py         # 手把輸入處理核心
 │   ├── utils.py                    # 工具函式
 │   └── config.py                   # 參數設定
 ├── data/                           # 資料目錄
 │   ├── results/                    # 測試結果（JSON 格式）
+│   │   └── [user_id]/             # 各使用者的測試結果
 │   └── images/                     # 圖片輸出（軌跡圖等）
+│       ├── analog_move/            # 移動測試軌跡圖
+│       │   └── [user_id]/         # 各使用者的圖片
+│       ├── analog_path_trace/      # 路徑追蹤軌跡圖
+│       │   └── [user_id]/         # 各使用者的圖片  
+│       └── analog_path_obstacle_trace/ # 障礙物路徑軌跡圖
+│           └── [user_id]/         # 各使用者的圖片
 ├── main.py                         # 主控程式
-├── run_all_tests.sh               # 一鍵執行所有測試
+├── run_analog_tests.sh            # 執行所有 Analog Stick 測試
 └── README.md
 ```
 
@@ -77,6 +86,13 @@ project/
 ### 互動式執行
 ```bash
 uv run python main.py
+```
+
+### 執行特定類型測試
+
+**執行所有 Analog Stick 相關測試：**
+```bash
+./run_analog_tests.sh P1  # P1 是使用者 ID
 ```
 啟動互動式選單，可選擇執行單一測試或完整測試套件。
 
@@ -87,25 +103,25 @@ uv run python main.py
 按順序執行所有測試項目，並將結果儲存到 `data/results/<使用者ID>/` 目錄。
 
 ### 執行單一測試
+每個測試都可以獨立執行，並支援指定使用者 ID：
+
 ```bash
 # 手把連接測試
-uv run python tests/connection_test.py
+uv run python common/connection_test.py --user P1
 
-# 簡單反應時間測試
-uv run python tests/reaction_time_test.py
+# Button 測試系列
+uv run python tests/button_reaction_time_test.py --user P1
+uv run python tests/button_prediction_countdown_test.py --user P1
+uv run python tests/button_smash_test.py --user P1
+uv run python tests/button_accuracy_test.py --user P1
 
-# 預測反應時間測試  
-uv run python tests/prediction_reaction_test.py
-
-# 選擇反應測試
-uv run python tests/choice_accuracy_test.py
-
-# 類比搖桿移動測試
-uv run python tests/analog_move_test.py
-
-# 路徑追蹤測試
-uv run python tests/path_follow_test.py
+# Analog Stick 測試系列
+uv run python tests/analog_move_test.py --user P1
+uv run python tests/analog_path_follow_test.py --user P1
+uv run python tests/analog_path_obstacle_test.py --user P1
 ```
+
+如果不提供 `--user` 參數，程式會要求您輸入使用者 ID。
 
 ## 測試說明
 
@@ -129,13 +145,30 @@ uv run python tests/path_follow_test.py
 
 ## 測試結果
 
-所有測試結果以 JSON 格式儲存在 `data/results/` 目錄下，包含：
-- 使用者 ID
-- 測試名稱
-- 時間戳記
-- 詳細測試指標（反應時間、準確度、點擊次數等）
+### 資料儲存結構
+所有測試結果以統一格式儲存，便於後續分析和比較：
 
-部分測試（如路徑追蹤）會在 `data/images/` 目錄產生視覺化軌跡圖。
+**JSON 結果檔案**
+- 儲存位置：`data/results/[user_id]/`
+- 格式：每個測試產生一個 JSON 檔案
+- 內容包含：使用者 ID、測試名稱、時間戳記、詳細測試指標
+
+**視覺化圖片**
+- 儲存位置：`data/images/[test_type]/[user_id]/[timestamp]/`
+- Analog Stick 測試會產生軌跡圖，顯示：
+  - 玩家移動路徑
+  - 目標區域
+  - 按鍵點擊位置
+  - 路徑偏離情況
+
+### 支援的資料格式
+- **JSON**：數值資料、統計結果、時間戳記
+- **PNG**：軌跡圖、路徑圖、視覺化結果
+
+這種結構化的資料儲存方式便於：
+- 跨使用者的資料比較分析
+- 自動化資料處理和統計
+- 長期的研究資料保存
 
 ## 設計特色
 
