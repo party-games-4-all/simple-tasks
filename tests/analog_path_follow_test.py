@@ -1,3 +1,8 @@
+"""
+路徑追蹤測試 - 簡化版本
+- 已禁用路徑收縮功能以降低複雜度
+- 玩家需要沿著固定路徑移動到達終點
+"""
 import random
 import tkinter as tk
 import time, os
@@ -549,7 +554,7 @@ class PathFollowingTestApp:
 
     def __init__(self, root):
         self.root = root
-        self.root.title("🎮 Path Following 測試")
+        self.root.title("🎮 Path Following 測試 (簡化版本)")
         self.canvas_width = 1200
         self.canvas_height = 800
         self.canvas = tk.Canvas(root,
@@ -717,7 +722,8 @@ class PathFollowingTestApp:
                 else:
                     self.canvas.itemconfig(self.player, fill="red")
 
-            self.path.shrink()
+            # 🔒 禁用路徑收縮功能以降低複雜度
+            # self.path.shrink()
 
             now = time.time()
             if self.start_time is None:

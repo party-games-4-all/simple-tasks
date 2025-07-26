@@ -1,3 +1,9 @@
+"""
+路徑追蹤測試 (障礙物版本) - 簡化版本
+- 已禁用灰色區域和紅線障礙物功能以降低複雜度
+- 已禁用路徑收縮功能以降低複雜度
+- 現在只是基本的路徑追蹤測試
+"""
 import random
 import tkinter as tk
 import time, os
@@ -112,82 +118,83 @@ class StraightPath(Path):
 
         self.path_elements.append(self.path_rect)
 
+        # 🔒 禁用檢查點創建以降低複雜度
         # 準備灰色區域與紅線
         self.checkpoints = []
-        trigger_half_length = self.trigger_width / 2
-        trigger_half_width = self.width / 2
+        # trigger_half_length = self.trigger_width / 2
+        # trigger_half_width = self.width / 2
 
         # 單位向量
-        ux = self.dx / self.path_length
-        uy = self.dy / self.path_length
-        perp_x = -uy
-        perp_y = ux
+        # ux = self.dx / self.path_length
+        # uy = self.dy / self.path_length
+        # perp_x = -uy
+        # perp_y = ux
 
-        for pos in self.checkpoint_positions:
-            # 中心點
-            cx = self.start_x + self.dx * pos
-            cy = self.start_y + self.dy * pos
+        # for pos in self.checkpoint_positions:
+        #     # 中心點
+        #     cx = self.start_x + self.dx * pos
+        #     cy = self.start_y + self.dy * pos
 
-            # 四個角
-            p1x = cx - ux * trigger_half_length + perp_x * trigger_half_width
-            p1y = cy - uy * trigger_half_length + perp_y * trigger_half_width
-            p2x = cx + ux * trigger_half_length + perp_x * trigger_half_width
-            p2y = cy + uy * trigger_half_length + perp_y * trigger_half_width
-            p3x = cx + ux * trigger_half_length - perp_x * trigger_half_width
-            p3y = cy + uy * trigger_half_length - perp_y * trigger_half_width
-            p4x = cx - ux * trigger_half_length - perp_x * trigger_half_width
-            p4y = cy - uy * trigger_half_length - perp_y * trigger_half_width
+        #     # 四個角
+        #     p1x = cx - ux * trigger_half_length + perp_x * trigger_half_width
+        #     p1y = cy - uy * trigger_half_length + perp_y * trigger_half_width
+        #     p2x = cx + ux * trigger_half_length + perp_x * trigger_half_width
+        #     p2y = cy + uy * trigger_half_length + perp_y * trigger_half_width
+        #     p3x = cx + ux * trigger_half_length - perp_x * trigger_half_width
+        #     p3y = cy + uy * trigger_half_length - perp_y * trigger_half_width
+        #     p4x = cx - ux * trigger_half_length - perp_x * trigger_half_width
+        #     p4y = cy - uy * trigger_half_length - perp_y * trigger_half_width
 
-            # 灰色區域
-            rect_id = self.canvas.create_polygon(p1x,
-                                                 p1y,
-                                                 p2x,
-                                                 p2y,
-                                                 p3x,
-                                                 p3y,
-                                                 p4x,
-                                                 p4y,
-                                                 fill="",
-                                                 outline="gray",
-                                                 width=5)
+        #     # 灰色區域
+        #     rect_id = self.canvas.create_polygon(p1x,
+        #                                          p1y,
+        #                                          p2x,
+        #                                          p2y,
+        #                                          p3x,
+        #                                          p3y,
+        #                                          p4x,
+        #                                          p4y,
+        #                                          fill="",
+        #                                          outline="gray",
+        #                                          width=5)
 
-            # 紅線：畫在區塊前端（從 cx + dx * 半長）
-            # 找出紅線兩端：與區域前緣重合
-            front_cx = cx + ux * trigger_half_length
-            front_cy = cy + uy * trigger_half_length
-            line_half = trigger_half_width
+        #     # 紅線：畫在區塊前端（從 cx + dx * 半長）
+        #     # 找出紅線兩端：與區域前緣重合
+        #     front_cx = cx + ux * trigger_half_length
+        #     front_cy = cy + uy * trigger_half_length
+        #     line_half = trigger_half_width
 
-            lx1 = front_cx + perp_x * line_half
-            ly1 = front_cy + perp_y * line_half
-            lx2 = front_cx - perp_x * line_half
-            ly2 = front_cy - perp_y * line_half
+        #     lx1 = front_cx + perp_x * line_half
+        #     ly1 = front_cy + perp_y * line_half
+        #     lx2 = front_cx - perp_x * line_half
+        #     ly2 = front_cy - perp_y * line_half
 
-            red_line_id = self.canvas.create_line(lx1,
-                                                  ly1,
-                                                  lx2,
-                                                  ly2,
-                                                  fill="red",
-                                                  width=3)
+        #     red_line_id = self.canvas.create_line(lx1,
+        #                                           ly1,
+        #                                           lx2,
+        #                                           ly2,
+        #                                           fill="red",
+        #                                           width=3)
 
-            # 判斷封鎖方向：用主軸最大值來決定
-            axis = "x" if abs(self.dx) >= abs(self.dy) else "y"
-            line_pos = front_cx if axis == "x" else front_cy
+        #     # 判斷封鎖方向：用主軸最大值來決定
+        #     axis = "x" if abs(self.dx) >= abs(self.dy) else "y"
+        #     line_pos = front_cx if axis == "x" else front_cy
 
-            self.path_elements.extend([rect_id, red_line_id])
-            self.checkpoints.append({
-                "rect_id":
-                rect_id,
-                "line_id":
-                red_line_id,
-                "area": (min(p1x, p2x, p3x, p4x), min(p1y, p2y, p3y, p4y),
-                         max(p1x, p2x, p3x, p4x), max(p1y, p2y, p3y, p4y)),
-                "cleared":
-                False,
-                "line_pos":
-                line_pos,
-                "axis":
-                axis
-            })
+        #     self.path_elements.extend([rect_id, red_line_id])
+        #     self.checkpoints.append({
+        #         "rect_id":
+        #         rect_id,
+        #         "line_id":
+        #         red_line_id,
+        #         "area": (min(p1x, p2x, p3x, p4x), min(p1y, p2y, p3y, p4y),
+        #                  max(p1x, p2x, p3x, p4x), max(p1y, p2y, p3y, p4y)),
+        #         "cleared":
+        #         False,
+        #         "line_pos":
+        #         line_pos,
+        #         "axis":
+        #         axis
+        #     })
 
     def _calculate_path_points(self):
         """計算路徑的多邊形點座標（從起點收縮到終點）"""
@@ -313,7 +320,7 @@ class PathFollowingTestApp:
 
     def __init__(self, root):
         self.root = root
-        self.root.title("🎮 Path Following 測試")
+        self.root.title("🎮 Path Following 測試 (簡化版本 - 無障礙物)")
         self.canvas_width = 1200
         self.canvas_height = 800
         self.canvas = tk.Canvas(root,
@@ -442,19 +449,19 @@ class PathFollowingTestApp:
             next_x = self.player_x + dx
             next_y = self.player_y + dy
 
-            # 🟥 紅線封鎖邏輯
-            for cp in self.path.checkpoints:
-                if not cp["cleared"]:
-                    axis = cp["axis"]
-                    pos = cp["line_pos"]
-                    if axis == "x":
-                        if ((self.path.dx > 0 and next_x > pos)
-                                or (self.path.dx < 0 and next_x < pos)):
-                            next_x = pos
-                    elif axis == "y":
-                        if ((self.path.dy > 0 and next_y > pos)
-                                or (self.path.dy < 0 and next_y < pos)):
-                            next_y = pos
+            # 🟥 禁用紅線封鎖邏輯以降低複雜度
+            # for cp in self.path.checkpoints:
+            #     if not cp["cleared"]:
+            #         axis = cp["axis"]
+            #         pos = cp["line_pos"]
+            #         if axis == "x":
+            #             if ((self.path.dx > 0 and next_x > pos)
+            #                     or (self.path.dx < 0 and next_x < pos)):
+            #                 next_x = pos
+            #         elif axis == "y":
+            #             if ((self.path.dy > 0 and next_y > pos)
+            #                     or (self.path.dy < 0 and next_y < pos)):
+            #                 next_y = pos
 
             # 邊界限制
             next_x = max(self.player_radius,
@@ -479,8 +486,8 @@ class PathFollowingTestApp:
                 else:
                     self.canvas.itemconfig(self.player, fill="red")
 
-            # 更新路徑收縮
-            self.path.shrink()
+            # 🔒 禁用路徑收縮功能以降低複雜度
+            # self.path.shrink()
 
             # 時間紀錄
             now = time.time()
@@ -550,19 +557,20 @@ class PathFollowingTestApp:
             self.running = True
             print("✅ 開始測試！請沿著路徑前進")
 
-    def on_joycon_button(self, buttons, leftX, leftY, last_key_bit,
-                         last_key_down):
-        if not last_key_down:
-            return
+    # 🔒 禁用按鈕解鎖功能以降低複雜度
+    # def on_joycon_button(self, buttons, leftX, leftY, last_key_bit,
+    #                      last_key_down):
+    #     if not last_key_down:
+    #         return
 
-        for cp in self.path.checkpoints:
-            if not cp["cleared"]:
-                x1, y1, x2, y2 = cp["area"]
-                if x1 <= self.player_x <= x2 and y1 <= self.player_y <= y2:
-                    cp["cleared"] = True
-                    self.canvas.delete(cp["line_id"])
-                    self.canvas.delete(cp["rect_id"])
-                    print("🟢 檢查點解除：灰色區域與紅線已移除")
+    #     for cp in self.path.checkpoints:
+    #         if not cp["cleared"]:
+    #             x1, y1, x2, y2 = cp["area"]
+    #             if x1 <= self.player_x <= x2 and y1 <= self.player_y <= y2:
+    #                 cp["cleared"] = True
+    #                 self.canvas.delete(cp["line_id"])
+    #                 self.canvas.delete(cp["rect_id"])
+    #                 print("🟢 檢查點解除：灰色區域與紅線已移除")
 
 
 if __name__ == "__main__":
@@ -572,8 +580,10 @@ if __name__ == "__main__":
     app = PathFollowingTestApp(root)
 
     try:
-        listener = ControllerInput(analog_callback=app.on_joycon_input,
-                                   button_callback=app.on_joycon_button)
+        # 🔒 禁用按鈕回調以降低複雜度
+        listener = ControllerInput(analog_callback=app.on_joycon_input)
+        # listener = ControllerInput(analog_callback=app.on_joycon_input,
+        #                           button_callback=app.on_joycon_button)
         Thread(target=listener.run, daemon=True).start()
 
         root.mainloop()
