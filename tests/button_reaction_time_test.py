@@ -2,18 +2,21 @@ import tkinter as tk
 import random
 import time
 import sys
+import argparse
 from pathlib import Path
 
 # 添加父目錄到 Python 路徑以便導入共用模組
 sys.path.append(str(Path(__file__).parent.parent))
 
 from common import config
+from common.result_saver import save_test_result
 
 
 class ReactionTestApp:
     """簡單的反應時間測試應用程式"""
-    def __init__(self, root):
+    def __init__(self, root, user_id=None):
         self.root = root
+        self.user_id = user_id or "default"
         self.root.title("Reaction Test")
         self.canvas = tk.Canvas(root, width=config.WINDOW_WIDTH, height=config.WINDOW_HEIGHT, 
                                bg=f"#{config.COLORS['BACKGROUND'][0]:02x}{config.COLORS['BACKGROUND'][1]:02x}{config.COLORS['BACKGROUND'][2]:02x}")
@@ -23,6 +26,7 @@ class ReactionTestApp:
         self.start_time = None
         self.after_id = None
         self.reaction_times = []
+        self.test_results = []  # 儲存詳細的測試結果
 
         # 中央圓形（先畫成預設按鈕顏色）
         center_x, center_y = config.WINDOW_WIDTH // 2, config.WINDOW_HEIGHT // 2
@@ -87,6 +91,14 @@ class ReactionTestApp:
         elif self.state == "go":
             reaction_time = time.time() - self.start_time
             self.reaction_times.append(reaction_time)
+            
+            # 記錄詳細的測試結果
+            self.test_results.append({
+                "trial_number": len(self.test_results) + 1,
+                "reaction_time_ms": reaction_time * 1000,
+                "reaction_time_seconds": reaction_time
+            })
+            
             # self.label.config(text=f"反應時間：{reaction_time:.3f} 秒。請再按一次開始", font=("Arial", 24))
             print(f"反應時間：{reaction_time:.3f} 秒")
             success_color = f"#{config.COLORS['SUCCESS'][0]:02x}{config.COLORS['SUCCESS'][1]:02x}{config.COLORS['SUCCESS'][2]:02x}"
@@ -99,6 +111,10 @@ class ReactionTestApp:
             else:
                 avg_time = sum(self.reaction_times) / len(self.reaction_times)
                 print(f"平均反應時間：{avg_time:.3f} 秒")
+                
+                # 儲存測試結果
+                self.save_test_results()
+                
                 self.reaction_times.clear()
                 text_color = f"#{config.COLORS['TEXT'][0]:02x}{config.COLORS['TEXT'][1]:02x}{config.COLORS['TEXT'][2]:02x}"
                 background_color = f"#{config.COLORS['BACKGROUND'][0]:02x}{config.COLORS['BACKGROUND'][1]:02x}{config.COLORS['BACKGROUND'][2]:02x}"
@@ -107,13 +123,71 @@ class ReactionTestApp:
                 self.label.place(relx=0.5, rely=0.2, anchor='center')
                 self.start_button.place(relx=0.5, rely=0.8, anchor='center')
 
+    def save_test_results(self):
+        """儲存測試結果為 JSON 檔案"""
+        if not self.test_results:
+            print("⚠️ 無測試結果可儲存")
+            return
+        
+        # 計算統計數據
+        reaction_times_ms = [t["reaction_time_ms"] for t in self.test_results]
+        avg_reaction_time_ms = sum(reaction_times_ms) / len(reaction_times_ms)
+        min_reaction_time_ms = min(reaction_times_ms)
+        max_reaction_time_ms = max(reaction_times_ms)
+        
+        # 準備儲存的測試參數
+        parameters = {
+            "window_size": {
+                "width": config.WINDOW_WIDTH,
+                "height": config.WINDOW_HEIGHT
+            },
+            "total_trials": 5,
+            "stimulus_delay_range_ms": [1000, 3000]
+        }
+        
+        # 準備儲存的指標數據
+        metrics = {
+            "total_trials": len(self.test_results),
+            "average_reaction_time_ms": avg_reaction_time_ms,
+            "minimum_reaction_time_ms": min_reaction_time_ms,
+            "maximum_reaction_time_ms": max_reaction_time_ms,
+            "trials": self.test_results
+        }
+        
+        # 儲存結果
+        save_test_result(
+            user_id=self.user_id,
+            test_name="button_reaction_time",
+            metrics=metrics,
+            parameters=parameters
+        )
+        
+        print("=" * 50)
+        print("📊 測試結果統計")
+        print(f"平均反應時間: {avg_reaction_time_ms:.1f} ms")
+        print(f"最快反應時間: {min_reaction_time_ms:.1f} ms")
+        print(f"最慢反應時間: {max_reaction_time_ms:.1f} ms")
+        print("=" * 50)
+
 
 if __name__ == "__main__":
     from threading import Thread
     from common.controller_input import ControllerInput
 
+    # 解析命令列參數
+    parser = argparse.ArgumentParser(description="Button Reaction Time Test")
+    parser.add_argument("--user", "-u", default=None, help="使用者 ID")
+    args = parser.parse_args()
+
+    # 如果沒有提供 user_id，則請求輸入
+    user_id = args.user
+    if not user_id:
+        user_id = input("請輸入使用者 ID (例如: P1): ").strip()
+        if not user_id:
+            user_id = "default"
+
     root = tk.Tk()
-    app = ReactionTestApp(root)
+    app = ReactionTestApp(root, user_id)
 
     # 把所有輸入都交給 app 處理（不過濾按鍵）
     listener = ControllerInput(button_callback=app.on_joycon_input)

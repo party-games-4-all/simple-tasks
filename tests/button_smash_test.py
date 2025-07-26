@@ -1,12 +1,14 @@
 import tkinter as tk
 import time
 import sys
+import argparse
 from pathlib import Path
 
 # 添加父目錄到 Python 路徑以便導入共用模組
 sys.path.append(str(Path(__file__).parent.parent))
 
 from common import config
+from common.result_saver import save_test_result
 
 
 class ButtonSmashTestApp:
@@ -25,8 +27,9 @@ class ButtonSmashTestApp:
     - 顏色變化：按下時淺藍色，放開時白色（避免紅綠色盲問題）
     """
     
-    def __init__(self, root):
+    def __init__(self, root, user_id=None):
         self.root = root
+        self.user_id = user_id or "default"
         self.root.title("Button Smash Test")
         background_color = f"#{config.COLORS['BACKGROUND'][0]:02x}{config.COLORS['BACKGROUND'][1]:02x}{config.COLORS['BACKGROUND'][2]:02x}"
         self.canvas = tk.Canvas(root, width=config.WINDOW_WIDTH, height=config.WINDOW_HEIGHT, bg=background_color)
@@ -158,6 +161,9 @@ class ButtonSmashTestApp:
         # 計算 CPS (Clicks Per Second)
         cps = self.click_count / self.test_duration
         
+        # 儲存測試結果
+        self.save_test_results(cps)
+        
         # 顯示結果
         self.canvas.itemconfig(self.timer_text, text="測試完成！")
         self.canvas.itemconfig(self.cps_text, 
@@ -181,6 +187,59 @@ class ButtonSmashTestApp:
         print(f"⏱️ 測試時間: {self.test_duration} 秒")
         print(f"🖱️ CPS (Clicks Per Second): {cps:.2f}")
         print(f"📈 計算方式: {self.click_count} ÷ {self.test_duration} = {cps:.2f}")
+
+    def save_test_results(self, cps):
+        """儲存測試結果為 JSON 檔案"""
+        # 準備儲存的測試參數
+        parameters = {
+            "window_size": {
+                "width": config.WINDOW_WIDTH,
+                "height": config.WINDOW_HEIGHT
+            },
+            "test_duration_seconds": self.test_duration,
+            "button_position": {
+                "x": self.circle_x,
+                "y": self.circle_y,
+                "radius": self.circle_radius
+            }
+        }
+        
+        # 準備儲存的指標數據
+        metrics = {
+            "total_clicks": self.click_count,
+            "test_duration_seconds": self.test_duration,
+            "clicks_per_second": cps,
+            "performance_rating": self.get_performance_rating(cps)
+        }
+        
+        # 儲存結果
+        save_test_result(
+            user_id=self.user_id,
+            test_name="button_smash",
+            metrics=metrics,
+            parameters=parameters
+        )
+        
+        print("=" * 50)
+        print("📊 測試結果統計")
+        print(f"總點擊數: {self.click_count}")
+        print(f"測試時間: {self.test_duration} 秒")
+        print(f"點擊率: {cps:.2f} CPS")
+        print(f"表現評級: {self.get_performance_rating(cps)}")
+        print("=" * 50)
+
+    def get_performance_rating(self, cps):
+        """根據 CPS 給出表現評級"""
+        if cps >= 10:
+            return "優秀"
+        elif cps >= 8:
+            return "良好"
+        elif cps >= 6:
+            return "普通"
+        elif cps >= 4:
+            return "需要練習"
+        else:
+            return "初學者"
 
     def on_joycon_input(self, buttons, leftX, leftY, last_key_bit, last_key_down):
         """處理 Joy-Con 輸入"""
@@ -253,11 +312,24 @@ if __name__ == "__main__":
     from threading import Thread
     from common.controller_input import ControllerInput
 
+    # 解析命令列參數
+    parser = argparse.ArgumentParser(description="Button Smash Test")
+    parser.add_argument("--user", "-u", default=None, help="使用者 ID")
+    parser.add_argument("--test", action="store_true", help="測試模式")
+    args = parser.parse_args()
+
+    # 如果沒有提供 user_id，則請求輸入
+    user_id = args.user
+    if not user_id and not args.test:
+        user_id = input("請輸入使用者 ID (例如: P1): ").strip()
+        if not user_id:
+            user_id = "default"
+
     root = tk.Tk()
-    app = ButtonSmashTestApp(root)
+    app = ButtonSmashTestApp(root, user_id)
 
     # 檢查是否有測試參數
-    if len(sys.argv) > 1 and sys.argv[1] == "--test":
+    if args.test:
         # 測試模式：模擬點擊來驗證 CPS 計算
         print("🧪 測試模式：驗證 CPS 計算...")
         

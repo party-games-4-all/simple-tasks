@@ -2,18 +2,21 @@ import tkinter as tk
 import random
 import time
 import sys
+import argparse
 from pathlib import Path
 
 # 添加父目錄到 Python 路徑以便導入共用模組
 sys.path.append(str(Path(__file__).parent.parent))
 
 from common import config
+from common.result_saver import save_test_result
 
 
 class AccuracyDirectionTestApp:
 
-    def __init__(self, root):
+    def __init__(self, root, user_id=None):
         self.root = root
+        self.user_id = user_id or "default"
         self.root.title("按鍵準確度測試")
         background_color = f"#{config.COLORS['BACKGROUND'][0]:02x}{config.COLORS['BACKGROUND'][1]:02x}{config.COLORS['BACKGROUND'][2]:02x}"
         self.canvas = tk.Canvas(root, width=config.WINDOW_WIDTH, height=config.WINDOW_HEIGHT, bg=background_color)
@@ -81,6 +84,7 @@ class AccuracyDirectionTestApp:
         self.total = 0
         self.response_times = []
         self.error_count = 0
+        self.test_results = []  # 儲存詳細的測試結果
         self.next_round()
 
     def start_measurement(self):
@@ -137,6 +141,10 @@ class AccuracyDirectionTestApp:
                         avg_time = sum(self.response_times) / len(
                             self.response_times)
                         error_rate = self.error_count / (self.total - 1)
+                        
+                        # 儲存測試結果
+                        self.save_test_results(avg_time, error_rate)
+                        
                         # 更新畫面上方 label
                         background_color = f"#{config.COLORS['BACKGROUND'][0]:02x}{config.COLORS['BACKGROUND'][1]:02x}{config.COLORS['BACKGROUND'][2]:02x}"
                         text_color = f"#{config.COLORS['TEXT'][0]:02x}{config.COLORS['TEXT'][1]:02x}{config.COLORS['TEXT'][2]:02x}"
@@ -150,6 +158,16 @@ class AccuracyDirectionTestApp:
                         self.reset()
                         break
                     if self.total > 1:  # 第 1 回合不記錄
+                        # 記錄詳細的測試結果
+                        self.test_results.append({
+                            "trial_number": self.total - 1,
+                            "target_direction": self.current_target,
+                            "response_direction": direction,
+                            "correct": correct,
+                            "response_time_ms": response_time * 1000,
+                            "response_time_seconds": response_time
+                        })
+                        
                         self.response_times.append(response_time)
                         # # 更新畫面上方 label
                         # self.label.config(
@@ -164,13 +182,76 @@ class AccuracyDirectionTestApp:
                 self.root.after(1000, self.next_round)  # 等待 1 秒後開始下一回合
                 break
 
+    def save_test_results(self, avg_time, error_rate):
+        """儲存測試結果為 JSON 檔案"""
+        if not self.test_results:
+            print("⚠️ 無測試結果可儲存")
+            return
+        
+        # 計算統計數據
+        correct_count = sum(1 for t in self.test_results if t["correct"])
+        total_trials = len(self.test_results)
+        accuracy_percentage = (correct_count / total_trials) * 100
+        
+        # 準備儲存的測試參數
+        parameters = {
+            "window_size": {
+                "width": config.WINDOW_WIDTH,
+                "height": config.WINDOW_HEIGHT
+            },
+            "total_trials": 5,  # 第1回合是熱身，實際5回合
+            "directions": list(self.directions.keys()),
+            "response_delay_range_ms": [1000, 3000]
+        }
+        
+        # 準備儲存的指標數據
+        metrics = {
+            "total_trials": total_trials,
+            "correct_responses": correct_count,
+            "incorrect_responses": total_trials - correct_count,
+            "accuracy_percentage": accuracy_percentage,
+            "error_rate": error_rate,
+            "average_response_time_ms": avg_time * 1000,
+            "average_response_time_seconds": avg_time,
+            "trials": self.test_results
+        }
+        
+        # 儲存結果
+        save_test_result(
+            user_id=self.user_id,
+            test_name="button_accuracy",
+            metrics=metrics,
+            parameters=parameters
+        )
+        
+        print("=" * 50)
+        print("📊 測試結果統計")
+        print(f"總回合數: {total_trials}")
+        print(f"正確回合: {correct_count}")
+        print(f"錯誤回合: {total_trials - correct_count}")
+        print(f"正確率: {accuracy_percentage:.1f}%")
+        print(f"平均反應時間: {avg_time:.3f} 秒")
+        print("=" * 50)
+
 
 if __name__ == "__main__":
     from threading import Thread
     from common.controller_input import ControllerInput
 
+    # 解析命令列參數
+    parser = argparse.ArgumentParser(description="Button Accuracy Test")
+    parser.add_argument("--user", "-u", default=None, help="使用者 ID")
+    args = parser.parse_args()
+
+    # 如果沒有提供 user_id，則請求輸入
+    user_id = args.user
+    if not user_id:
+        user_id = input("請輸入使用者 ID (例如: P1): ").strip()
+        if not user_id:
+            user_id = "default"
+
     root = tk.Tk()
-    app = AccuracyDirectionTestApp(root)
+    app = AccuracyDirectionTestApp(root, user_id)
 
     # 根據你的 Joy-Con 對應設定 bit 值
     app.directions["up"]["bit"] = 3

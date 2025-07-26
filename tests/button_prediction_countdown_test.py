@@ -17,17 +17,20 @@
 import tkinter as tk
 import time
 import sys
+import argparse
 from pathlib import Path
 
 # 添加父目錄到 Python 路徑以便導入共用模組
 sys.path.append(str(Path(__file__).parent.parent))
 
 from common import config
+from common.result_saver import save_test_result
 
 class CountdownReactionTestApp:
 
-    def __init__(self, root):
+    def __init__(self, root, user_id=None):
         self.root = root
+        self.user_id = user_id or "default"
         self.root.title("🎮 預測反應時間測試 - 遊戲化版本")
         background_color = f"#{config.COLORS['BACKGROUND'][0]:02x}{config.COLORS['BACKGROUND'][1]:02x}{config.COLORS['BACKGROUND'][2]:02x}"
         self.canvas = tk.Canvas(root, width=config.WINDOW_WIDTH, height=config.WINDOW_HEIGHT, bg=background_color)
@@ -65,6 +68,7 @@ class CountdownReactionTestApp:
         self.start_button.place(relx=0.5, rely=0.8, anchor='center')
 
         self.reaction_results = []
+        self.test_results = []  # 儲存詳細的測試結果
         self.total_balls = 8  # 增加測試次數以獲得更穩定的數據
         self.current_ball_index = 0
 
@@ -87,6 +91,7 @@ class CountdownReactionTestApp:
         self.ball_active = False
         self.animation_id = None
         self.reaction_results.clear()
+        self.test_results.clear()  # 清空詳細結果
         self.schedule_next_ball()
 
     def schedule_next_ball(self):
@@ -173,6 +178,17 @@ class CountdownReactionTestApp:
         direction = "快了" if error < 0 else "慢了"
         print(f"{feedback} {direction} {accuracy_ms:.0f} 毫秒")
         
+        # 記錄詳細的測試結果
+        self.test_results.append({
+            "trial_number": self.current_ball_index,
+            "response_time_seconds": elapsed,
+            "target_time_seconds": target_time,
+            "error_seconds": error,
+            "error_ms": error * 1000,
+            "accuracy_ms": accuracy_ms,
+            "feedback": feedback
+        })
+        
         self.reaction_results.append(error)
         if self.current_ball_index >= self.total_balls:
             self.finish_test()
@@ -188,11 +204,73 @@ class CountdownReactionTestApp:
         valid_errors = [abs(e) for e in self.reaction_results if e is not None]
         if valid_errors:
             avg_error_ms = (sum(valid_errors) / len(valid_errors)) * 1000
+            
+            # 儲存測試結果
+            self.save_test_results(avg_error_ms, valid_errors)
+            
             print(f"\n🎮 測試完成統計：")
             print(f"平均誤差：{avg_error_ms:.0f} 毫秒")
             print(f"成功次數：{len(valid_errors)}/{self.total_balls}")
         else:
             print("所有測試皆未按下按鈕，請再試一次！")
+
+    def save_test_results(self, avg_error_ms, valid_errors):
+        """儲存測試結果為 JSON 檔案"""
+        if not self.test_results:
+            print("⚠️ 無測試結果可儲存")
+            return
+        
+        # 計算統計數據
+        success_count = len(valid_errors)
+        success_rate = (success_count / self.total_balls) * 100
+        min_error_ms = min(valid_errors) * 1000 if valid_errors else 0
+        max_error_ms = max(valid_errors) * 1000 if valid_errors else 0
+        
+        # 準備儲存的測試參數
+        parameters = {
+            "window_size": {
+                "width": config.WINDOW_WIDTH,
+                "height": config.WINDOW_HEIGHT
+            },
+            "total_balls": self.total_balls,
+            "ball_movement_time_ms": self.CUE_VIEWING_TIME,
+            "interval_between_balls_ms": self.PERIOD,
+            "ball_path": {
+                "start_x": self.start_x,
+                "target_x": self.target_x,
+                "end_x": self.end_x,
+                "y_position": self.y_pos
+            }
+        }
+        
+        # 準備儲存的指標數據
+        metrics = {
+            "total_trials": self.total_balls,
+            "successful_responses": success_count,
+            "missed_responses": self.total_balls - success_count,
+            "success_rate_percentage": success_rate,
+            "average_error_ms": avg_error_ms,
+            "minimum_error_ms": min_error_ms,
+            "maximum_error_ms": max_error_ms,
+            "trials": self.test_results
+        }
+        
+        # 儲存結果
+        save_test_result(
+            user_id=self.user_id,
+            test_name="button_prediction_countdown",
+            metrics=metrics,
+            parameters=parameters
+        )
+        
+        print("=" * 50)
+        print("📊 測試結果統計")
+        print(f"總測試次數: {self.total_balls}")
+        print(f"成功響應: {success_count}")
+        print(f"錯過響應: {self.total_balls - success_count}")
+        print(f"成功率: {success_rate:.1f}%")
+        print(f"平均誤差: {avg_error_ms:.1f} ms")
+        print("=" * 50)
 
     # ← Joy-Con 按鍵會呼叫這個函數
     def on_joycon_input(self, buttons, leftX, leftY, last_key_bit, last_key_down):
@@ -203,8 +281,20 @@ if __name__ == "__main__":
     from threading import Thread
     from common.controller_input import ControllerInput
 
+    # 解析命令列參數
+    parser = argparse.ArgumentParser(description="Button Prediction Countdown Test")
+    parser.add_argument("--user", "-u", default=None, help="使用者 ID")
+    args = parser.parse_args()
+
+    # 如果沒有提供 user_id，則請求輸入
+    user_id = args.user
+    if not user_id:
+        user_id = input("請輸入使用者 ID (例如: P1): ").strip()
+        if not user_id:
+            user_id = "default"
+
     root = tk.Tk()
-    app = CountdownReactionTestApp(root)
+    app = CountdownReactionTestApp(root, user_id)
 
     listener = ControllerInput(button_callback=app.on_joycon_input)
     Thread(target=listener.run, daemon=True).start()
