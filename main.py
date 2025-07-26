@@ -37,7 +37,7 @@ def show_menu():
 def run_single_test(test_num, user_id="test_user"):
     """執行單一測試"""
     test_commands = {
-        0: f"uv run python tests/connection_test.py --user {user_id}",
+        0: f"uv run python common/connection_test.py --user {user_id}",
         1: f"uv run python tests/button_reaction_time_test.py --user {user_id}",
         2: f"uv run python tests/button_prediction_countdown_test.py --user {user_id}",
         3: f"uv run python tests/button_smash_test.py --user {user_id}",

@@ -4,7 +4,7 @@ Tests package
 """
 
 # 可以在這裡匯入所有測試模組，方便統一調用
-from . import connection_test
+from ..common import connection_test
 from . import button_reaction_time_test
 from . import button_prediction_countdown_test
 from . import button_accuracy_test
