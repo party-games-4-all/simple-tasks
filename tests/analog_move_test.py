@@ -8,7 +8,7 @@ from pathlib import Path
 # 添加父目錄到 Python 路徑以便導入共用模組
 sys.path.append(str(Path(__file__).parent.parent))
 
-from trace_plot import init_trace_output_folder, output_move_trace
+from data.trace_plot import init_trace_output_folder, output_move_trace
 
 
 class JoystickTargetTestApp:

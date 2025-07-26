@@ -15,8 +15,8 @@ from pathlib import Path
 # 添加父目錄到 Python 路徑以便導入共用模組
 sys.path.append(str(Path(__file__).parent.parent))
 
-from utils import get_directional_offset
-from trace_plot import output_single_trace
+from common.utils import get_directional_offset
+from data.trace_plot import output_single_trace
 
 DEBUG = False  # 是否啟用除錯模式
 
