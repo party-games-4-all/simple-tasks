@@ -21,14 +21,37 @@ class ControllerInput:
         self.button_callback = button_callback
         self.analog_callback = analog_callback
 
-        # 嘗試使用已存在的遙控器，如果沒有則進行配對
-        if use_existing_controller and controller_manager.is_controller_ready():
-            self.joystick = controller_manager.get_controller()
-            print(f"🎮 使用已配對的遙控器：{self.joystick.get_name()}")
-        else:
-            self.joystick = controller_manager.setup_controller()
+        # 自動配對遙控器（使用已選擇的遙控器或自動選擇第一個）
+        if use_existing_controller and controller_manager.is_controller_selected():
+            # 使用已選擇的遙控器
+            self.joystick = controller_manager.create_controller()
             if self.joystick is None:
-                print("❌ 無法配對遙控器")
+                print("❌ 無法連接已選擇的遙控器，嘗試自動選擇...")
+                self.joystick = self._auto_select_controller()
+        else:
+            # 自動選擇第一個可用的遙控器
+            self.joystick = self._auto_select_controller()
+        
+        if self.joystick is None:
+            print("❌ 無法配對任何遙控器")
+
+    def _auto_select_controller(self):
+        """自動選擇第一個可用的遙控器"""
+        count = pygame.joystick.get_count()
+        
+        if count == 0:
+            print("❌ 未偵測到任何🎮手把")
+            return None
+        
+        # 自動選擇第一個遙控器
+        try:
+            j = pygame.joystick.Joystick(0)
+            j.init()
+            print(f"🎮 自動連接遙控器：{j.get_name()}")
+            return j
+        except Exception as e:
+            print(f"❌ 自動連接遙控器失敗：{e}")
+            return None
 
     def detect_joycon(self):
         count = pygame.joystick.get_count()

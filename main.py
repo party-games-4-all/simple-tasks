@@ -59,15 +59,16 @@ def main():
         controller.run()
         return
     
-    # 在開始測試之前先配對遙控器
+    # 在開始測試之前先選擇遙控器
     print("🎮 正在初始化遙控器...")
-    controller_instance = controller_manager.setup_controller()
-    if controller_instance is None:
-        print("❌ 無法配對遙控器，某些測試可能無法正常運行")
+    controller_selected = controller_manager.setup_controller()
+    if not controller_selected:
+        print("❌ 無法選擇遙控器，某些測試可能無法正常運行")
         print("您仍然可以進入測試選單，但建議先解決遙控器連接問題")
         input("\n按 Enter 繼續...")
     else:
-        print("🎮 遙控器配對成功！")
+        info = controller_manager.get_selected_controller_info()
+        print(f"🎮 遙控器選擇成功！已選擇：{info['name']}")
     
     # 互動式選單模式
     user_id = input("請輸入使用者ID (預設: test_user): ").strip()
