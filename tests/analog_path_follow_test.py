@@ -16,8 +16,9 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 
 from common import config
+from common.result_saver import save_test_result
 from common.utils import get_directional_offset
-from data.trace_plot import output_single_trace
+from common.trace_plot import output_single_trace
 
 DEBUG = False  # 是否啟用除錯模式
 
@@ -582,6 +583,9 @@ class PathFollowingTestApp:
         self.running = False
         self.reached_goal = False
 
+        # 記錄所有測試結果用於 JSON 儲存
+        self.test_results = []
+
         # 創建路徑（可以選擇不同類型的路徑）
         self.paths = self.create_paths()
         self.current_path_index = 0
@@ -756,6 +760,7 @@ class PathFollowingTestApp:
         self.current_path_index += 1
         if self.current_path_index >= len(self.paths):
             print("✅ 所有路徑測試完成")
+            self.save_test_results()
         else:
             self.load_path(self.current_path_index)
 
@@ -782,6 +787,35 @@ class PathFollowingTestApp:
 
     def show_result(self):
         percent_off = (self.off_path_time / self.total_time) * 100
+        
+        # 記錄單次路徑測試結果
+        path_type = "straight" if isinstance(self.path, StraightPath) else "corner"
+        path_info = {
+            "start_x": self.path.start_x,
+            "start_y": self.path.start_y,
+            "end_x": self.path.end_x,
+            "end_y": self.path.end_y
+        }
+        
+        if isinstance(self.path, CornerPath):
+            path_info["corner_x"] = self.path.corner_x
+            path_info["corner_y"] = self.path.corner_y
+            path_info["total_length"] = self.path.total_length
+        else:
+            path_info["path_length"] = self.path.path_length
+        
+        trial_result = {
+            "trial_number": self.current_path_index + 1,
+            "path_type": path_type,
+            "path_info": path_info,
+            "completion_time_seconds": self.total_time,
+            "off_path_time_seconds": self.off_path_time,
+            "off_path_percentage": percent_off,
+            "path_accuracy": 100 - percent_off,
+            "trace_points_count": len(self.path.player_trace)
+        }
+        self.test_results.append(trial_result)
+        
         print("🎯 到達終點")
         print(f"⏱ 總時間：{self.total_time:.2f} 秒")
         print(f"❌ 偏離路徑時間：{self.off_path_time:.2f} 秒")
@@ -794,6 +828,82 @@ class PathFollowingTestApp:
         if not self.running and last_key_down:
             self.running = True
             print("✅ 開始測試！請沿著路徑前進")
+
+    def save_test_results(self):
+        """儲存測試結果為 JSON 檔案"""
+        if not self.test_results:
+            print("⚠️ 無測試結果可儲存")
+            return
+        
+        # 計算總體統計
+        total_trials = len(self.test_results)
+        total_time = sum(t["completion_time_seconds"] for t in self.test_results)
+        total_off_path_time = sum(t["off_path_time_seconds"] for t in self.test_results)
+        avg_completion_time = total_time / total_trials
+        avg_accuracy = sum(t["path_accuracy"] for t in self.test_results) / total_trials
+        
+        # 分析不同路徑類型的表現
+        straight_trials = [t for t in self.test_results if t["path_type"] == "straight"]
+        corner_trials = [t for t in self.test_results if t["path_type"] == "corner"]
+        
+        # 準備儲存的測試參數
+        parameters = {
+            "window_size": {
+                "width": self.canvas_width,
+                "height": self.canvas_height
+            },
+            "player_radius": self.player_radius,
+            "movement_speed_multiplier": self.speed,
+            "total_paths": len(self.paths),
+            "path_width": 80,  # 固定路徑寬度
+            "player_offset": self.offset
+        }
+        
+        # 準備儲存的指標數據
+        metrics = {
+            "total_trials": total_trials,
+            "total_time_seconds": total_time,
+            "total_off_path_time_seconds": total_off_path_time,
+            "average_completion_time_seconds": avg_completion_time,
+            "average_accuracy_percentage": avg_accuracy,
+            "trials": self.test_results,
+            "path_type_analysis": {
+                "straight_paths": {
+                    "count": len(straight_trials),
+                    "avg_completion_time_s": sum(t["completion_time_seconds"] for t in straight_trials) / len(straight_trials) if straight_trials else 0,
+                    "avg_accuracy_pct": sum(t["path_accuracy"] for t in straight_trials) / len(straight_trials) if straight_trials else 0
+                },
+                "corner_paths": {
+                    "count": len(corner_trials),
+                    "avg_completion_time_s": sum(t["completion_time_seconds"] for t in corner_trials) / len(corner_trials) if corner_trials else 0,
+                    "avg_accuracy_pct": sum(t["path_accuracy"] for t in corner_trials) / len(corner_trials) if corner_trials else 0
+                }
+            }
+        }
+        
+        # 儲存結果
+        save_test_result(
+            user_id=self.user_id,
+            test_name="analog_path_follow",
+            metrics=metrics,
+            parameters=parameters,
+            image_files=[f"軌跡圖片儲存在: {self.session_output_dir}"]
+        )
+        
+        print("=" * 50)
+        print("🛤️ Analog Path Follow Test - 測試完成總結")
+        print("=" * 50)
+        print(f"👤 使用者：{self.user_id}")
+        print(f"🎯 總路徑數：{total_trials}")
+        print(f"⏱️ 總用時：{total_time:.2f} 秒")
+        print(f"📊 平均完成時間：{avg_completion_time:.2f} 秒")
+        print(f"🎯 平均路徑精確度：{avg_accuracy:.1f}%")
+        print("")
+        print("📈 各路徑類型表現分析：")
+        for path_type, data in metrics["path_type_analysis"].items():
+            if data["count"] > 0:
+                print(f"  {path_type}: {data['count']} 條，平均時間 {data['avg_completion_time_s']:.2f}s，精確度 {data['avg_accuracy_pct']:.1f}%")
+        print("=" * 50)
 
 
 if __name__ == "__main__":

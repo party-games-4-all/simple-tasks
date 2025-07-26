@@ -9,7 +9,8 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 
 from common import config
-from data.trace_plot import init_trace_output_folder, output_move_trace
+from common.result_saver import save_test_result
+from common.trace_plot import init_trace_output_folder, output_move_trace
 
 
 class JoystickTargetTestApp:
@@ -56,6 +57,9 @@ class JoystickTargetTestApp:
         self.success_count = 0
         self.testing = False
         self.total_efficiency = 0  # 用來計算時間 / 距離
+        
+        # 記錄所有測試結果用於 JSON 儲存
+        self.test_results = []
 
         self.player_x = self.canvas_width // 2
         self.player_y = self.canvas_height // 2
@@ -278,6 +282,20 @@ class JoystickTargetTestApp:
             avg_time = self.total_time / (self.success_count)
             avg_efficiency = self.total_efficiency / (self.success_count)
 
+            # 記錄單次測試結果
+            trial_result = {
+                "trial_number": self.success_count,
+                "target_x": self.target_x,
+                "target_y": self.target_y,
+                "target_radius": self.target_radius,
+                "initial_distance": self.initial_distance,
+                "completion_time_ms": elapsed * 1000,  # 轉換為毫秒
+                "efficiency_s_per_px": efficiency,
+                "trace_points_count": len(self.trace_points),
+                "press_points_count": len(self.press_trace)
+            }
+            self.test_results.append(trial_result)
+
             print(f"✅ 第 {self.success_count} 次成功")
             print(f"⏱ 用時：{elapsed:.2f} 秒")
             print(f"📏 初始距離：{self.initial_distance:.1f} px")
@@ -297,8 +315,92 @@ class JoystickTargetTestApp:
             )
             self.trace_points = []  # 清空以便下次測試
             self.press_trace = []
+            
+            # 如果測試完成，儲存 JSON 結果
+            if self.success_count >= len(self.fixed_targets):
+                self.save_test_results()
+            
             time.sleep(1)  # 等待 1 秒後再開始下一個目標
             self.start_test()  # 重新開始測試
+
+    def save_test_results(self):
+        """儲存測試結果為 JSON 檔案"""
+        if not self.test_results:
+            print("⚠️ 無測試結果可儲存")
+            return
+        
+        # 計算總體統計
+        total_trials = len(self.test_results)
+        avg_time = self.total_time / total_trials
+        avg_efficiency = self.total_efficiency / total_trials
+        
+        # 分析不同難度的表現
+        d100_w20_trials = [t for t in self.test_results if t["initial_distance"] <= 150 and t["target_radius"] == 20]
+        d100_w50_trials = [t for t in self.test_results if t["initial_distance"] <= 150 and t["target_radius"] == 50]
+        d400_w20_trials = [t for t in self.test_results if t["initial_distance"] > 150 and t["target_radius"] == 20]
+        d400_w50_trials = [t for t in self.test_results if t["initial_distance"] > 150 and t["target_radius"] == 50]
+        
+        # 準備儲存的測試參數
+        parameters = {
+            "window_size": {
+                "width": self.canvas_width,
+                "height": self.canvas_height
+            },
+            "player_radius": self.player_radius,
+            "movement_speed_multiplier": 13,
+            "total_targets": len(self.fixed_targets)
+        }
+        
+        # 準備儲存的指標數據
+        metrics = {
+            "total_trials": total_trials,
+            "total_time_seconds": self.total_time,
+            "average_time_seconds": avg_time,
+            "average_efficiency_s_per_px": avg_efficiency,
+            "trials": self.test_results,
+            "difficulty_analysis": {
+                "d100_w20": {
+                    "count": len(d100_w20_trials),
+                    "avg_time_ms": sum(t["completion_time_ms"] for t in d100_w20_trials) / len(d100_w20_trials) if d100_w20_trials else 0
+                },
+                "d100_w50": {
+                    "count": len(d100_w50_trials),
+                    "avg_time_ms": sum(t["completion_time_ms"] for t in d100_w50_trials) / len(d100_w50_trials) if d100_w50_trials else 0
+                },
+                "d400_w20": {
+                    "count": len(d400_w20_trials),
+                    "avg_time_ms": sum(t["completion_time_ms"] for t in d400_w20_trials) / len(d400_w20_trials) if d400_w20_trials else 0
+                },
+                "d400_w50": {
+                    "count": len(d400_w50_trials),
+                    "avg_time_ms": sum(t["completion_time_ms"] for t in d400_w50_trials) / len(d400_w50_trials) if d400_w50_trials else 0
+                }
+            }
+        }
+        
+        # 儲存結果
+        save_test_result(
+            user_id=self.user_id,
+            test_name="analog_move",
+            metrics=metrics,
+            parameters=parameters,
+            image_files=[f"軌跡圖片儲存在: {self.output_dir}"]
+        )
+        
+        print("=" * 50)
+        print("🎯 Analog Move Test - 測試完成總結")
+        print("=" * 50)
+        print(f"👤 使用者：{self.user_id}")
+        print(f"🎯 總試驗次數：{total_trials}")
+        print(f"⏱️ 總用時：{self.total_time:.2f} 秒")
+        print(f"📊 平均用時：{avg_time:.2f} 秒")
+        print(f"⚡ 平均效率：{avg_efficiency:.4f} 秒/像素")
+        print("")
+        print("📈 各難度表現分析：")
+        for difficulty, data in metrics["difficulty_analysis"].items():
+            if data["count"] > 0:
+                print(f"  {difficulty}: {data['count']} 次，平均 {data['avg_time_ms']:.0f} ms")
+        print("=" * 50)
 
 
 if __name__ == "__main__":
