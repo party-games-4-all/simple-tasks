@@ -1,8 +1,8 @@
 """
-路徑追蹤測試 (障礙物版本) - 簡化版本
-- 已禁用灰色區域和紅線障礙物功能以降低複雜度
-- 已禁用路徑收縮功能以降低複雜度
-- 現在只是基本的路徑追蹤測試
+路徑追蹤測試 (障礙物版本)
+- 包含藍色區域和紅線障礙物功能
+- 路徑收縮功能已禁用
+- 玩家需要按按鈕解除障礙物才能繼續前進
 """
 import random
 import tkinter as tk
@@ -87,7 +87,7 @@ class StraightPath(Path):
         # 當前路徑長度（用於收縮）
         self.current_length = self.path_length
 
-        self.checkpoints = []  # 每個 checkpoint 含灰色區、紅線、範圍座標、狀態
+        self.checkpoints = []  # 每個 checkpoint 含藍色區、紅線、範圍座標、狀態
         self.checkpoint_positions = [0.3, 0.6]
         self.trigger_width = 50
 
@@ -103,7 +103,7 @@ class StraightPath(Path):
         return [[(points[i], points[i + 1]) for i in range(0, 8, 2)]]
 
     def create_path(self):
-        """創建直線路徑與灰區＋紅線檢查點（方向適應）"""
+        """創建直線路徑與藍區＋紅線檢查點（方向適應）"""
         if self.path_length > 0:
             points = self._calculate_path_points()
             self.path_rect = self.canvas.create_polygon(points,
@@ -120,83 +120,82 @@ class StraightPath(Path):
 
         self.path_elements.append(self.path_rect)
 
-        # 🔒 禁用檢查點創建以降低複雜度
-        # 準備灰色區域與紅線
+        # 準備藍色區域與紅線
         self.checkpoints = []
-        # trigger_half_length = self.trigger_width / 2
-        # trigger_half_width = self.width / 2
+        trigger_half_length = self.trigger_width / 2
+        trigger_half_width = self.width / 2
 
         # 單位向量
-        # ux = self.dx / self.path_length
-        # uy = self.dy / self.path_length
-        # perp_x = -uy
-        # perp_y = ux
+        ux = self.dx / self.path_length
+        uy = self.dy / self.path_length
+        perp_x = -uy
+        perp_y = ux
 
-        # for pos in self.checkpoint_positions:
-        #     # 中心點
-        #     cx = self.start_x + self.dx * pos
-        #     cy = self.start_y + self.dy * pos
+        for pos in self.checkpoint_positions:
+            # 中心點
+            cx = self.start_x + self.dx * pos
+            cy = self.start_y + self.dy * pos
 
-        #     # 四個角
-        #     p1x = cx - ux * trigger_half_length + perp_x * trigger_half_width
-        #     p1y = cy - uy * trigger_half_length + perp_y * trigger_half_width
-        #     p2x = cx + ux * trigger_half_length + perp_x * trigger_half_width
-        #     p2y = cy + uy * trigger_half_length + perp_y * trigger_half_width
-        #     p3x = cx + ux * trigger_half_length - perp_x * trigger_half_width
-        #     p3y = cy + uy * trigger_half_length - perp_y * trigger_half_width
-        #     p4x = cx - ux * trigger_half_length - perp_x * trigger_half_width
-        #     p4y = cy - uy * trigger_half_length - perp_y * trigger_half_width
+            # 四個角
+            p1x = cx - ux * trigger_half_length + perp_x * trigger_half_width
+            p1y = cy - uy * trigger_half_length + perp_y * trigger_half_width
+            p2x = cx + ux * trigger_half_length + perp_x * trigger_half_width
+            p2y = cy + uy * trigger_half_length + perp_y * trigger_half_width
+            p3x = cx + ux * trigger_half_length - perp_x * trigger_half_width
+            p3y = cy + uy * trigger_half_length - perp_y * trigger_half_width
+            p4x = cx - ux * trigger_half_length - perp_x * trigger_half_width
+            p4y = cy - uy * trigger_half_length - perp_y * trigger_half_width
 
-        #     # 灰色區域
-        #     rect_id = self.canvas.create_polygon(p1x,
-        #                                          p1y,
-        #                                          p2x,
-        #                                          p2y,
-        #                                          p3x,
-        #                                          p3y,
-        #                                          p4x,
-        #                                          p4y,
-        #                                          fill="",
-        #                                          outline="gray",
-        #                                          width=5)
+            # 藍色按鈕觸發區域
+            rect_id = self.canvas.create_polygon(p1x,
+                                                 p1y,
+                                                 p2x,
+                                                 p2y,
+                                                 p3x,
+                                                 p3y,
+                                                 p4x,
+                                                 p4y,
+                                                 fill="lightblue",
+                                                 outline="blue",
+                                                 width=3)
 
-        #     # 紅線：畫在區塊前端（從 cx + dx * 半長）
-        #     # 找出紅線兩端：與區域前緣重合
-        #     front_cx = cx + ux * trigger_half_length
-        #     front_cy = cy + uy * trigger_half_length
-        #     line_half = trigger_half_width
+            # 紅線：畫在區塊前端（從 cx + dx * 半長）
+            # 找出紅線兩端：與區域前緣重合
+            front_cx = cx + ux * trigger_half_length
+            front_cy = cy + uy * trigger_half_length
+            line_half = trigger_half_width
 
-        #     lx1 = front_cx + perp_x * line_half
-        #     ly1 = front_cy + perp_y * line_half
-        #     lx2 = front_cx - perp_x * line_half
-        #     ly2 = front_cy - perp_y * line_half
+            lx1 = front_cx + perp_x * line_half
+            ly1 = front_cy + perp_y * line_half
+            lx2 = front_cx - perp_x * line_half
+            ly2 = front_cy - perp_y * line_half
 
-        #     red_line_id = self.canvas.create_line(lx1,
-        #                                           ly1,
-        #                                           lx2,
-        #                                           ly2,
-        #                                           fill="red",
-        #                                           width=3)
+            red_line_id = self.canvas.create_line(lx1,
+                                                  ly1,
+                                                  lx2,
+                                                  ly2,
+                                                  fill="red",
+                                                  width=3)
 
-        #     # 判斷封鎖方向：用主軸最大值來決定
-        #     axis = "x" if abs(self.dx) >= abs(self.dy) else "y"
-        #     line_pos = front_cx if axis == "x" else front_cy
+            # 判斷封鎖方向：用主軸最大值來決定
+            axis = "x" if abs(self.dx) >= abs(self.dy) else "y"
+            line_pos = front_cx if axis == "x" else front_cy
 
-        #     self.path_elements.extend([rect_id, red_line_id])
-        #     self.checkpoints.append({
-        #         "rect_id":
-        #         rect_id,
-        #         "line_id":
-        #         red_line_id,
-        #         "area": (min(p1x, p2x, p3x, p4x), min(p1y, p2y, p3y, p4y),
-        #                  max(p1x, p2x, p3x, p4x), max(p1y, p2y, p3y, p4y)),
-        #         "cleared":
-        #         False,
-        #         "line_pos":
-        #         line_pos,
-        #         "axis":
-        #         axis
-        #     })
+            self.path_elements.extend([rect_id, red_line_id])
+            self.checkpoints.append({
+                "rect_id":
+                rect_id,
+                "line_id":
+                red_line_id,
+                "area": (min(p1x, p2x, p3x, p4x), min(p1y, p2y, p3y, p4y),
+                         max(p1x, p2x, p3x, p4x), max(p1y, p2y, p3y, p4y)),
+                "cleared":
+                False,
+                "line_pos":
+                line_pos,
+                "axis":
+                axis
+            })
 
     def _calculate_path_points(self):
         """計算路徑的多邊形點座標（從起點收縮到終點）"""
@@ -225,23 +224,17 @@ class StraightPath(Path):
         ]
 
     def is_inside(self, x, y):
-        """檢查點是否在收縮後的直線路徑內"""
+        """檢查點是否在完整路徑內 (不考慮收縮)"""
         if self.path_length == 0:
             distance = math.hypot(x - self.start_x, y - self.start_y)
             return distance <= self.width / 2
 
-        # 目前黑色段的起點（從 end 回推）
-        ratio = self.current_length / self.path_length
-        current_start_x = self.end_x - self.dx * ratio
-        current_start_y = self.end_y - self.dy * ratio
+        # 使用完整路徑 start → end 進行檢查
+        dx = x - self.start_x
+        dy = y - self.start_y
 
-        # 使用 current_start → end 這段作為合法區段
-        # 玩家若跑在 current_start 前面（已被收掉），也要算偏離
-        dx = x - current_start_x
-        dy = y - current_start_y
-
-        segment_dx = self.end_x - current_start_x
-        segment_dy = self.end_y - current_start_y
+        segment_dx = self.end_x - self.start_x
+        segment_dy = self.end_y - self.start_y
         segment_len_sq = segment_dx**2 + segment_dy**2
 
         if segment_len_sq == 0:
@@ -250,13 +243,13 @@ class StraightPath(Path):
         # 投影參數 t：投影在 segment 上的相對位置（0~1）
         t = (dx * segment_dx + dy * segment_dy) / segment_len_sq
 
-        # ⛔ 超出 segment 範圍（不是黑色段）
+        # 超出路徑範圍
         if t < 0 or t > 1:
             return False
 
         # 找到投影點
-        nearest_x = current_start_x + t * segment_dx
-        nearest_y = current_start_y + t * segment_dy
+        nearest_x = self.start_x + t * segment_dx
+        nearest_y = self.start_y + t * segment_dy
 
         distance = math.hypot(x - nearest_x, y - nearest_y)
         return distance <= self.width / 2
@@ -323,7 +316,7 @@ class PathFollowingTestApp:
     def __init__(self, root, user_id=None):
         self.root = root
         self.user_id = user_id or "default"
-        self.root.title("🎮 Path Following 測試 (簡化版本 - 無障礙物)")
+        self.root.title("🎮 Path Following 測試 (障礙物版本)")
         self.canvas_width = config.WINDOW_WIDTH
         self.canvas_height = config.WINDOW_HEIGHT
         background_color = f"#{config.COLORS['BACKGROUND'][0]:02x}{config.COLORS['BACKGROUND'][1]:02x}{config.COLORS['BACKGROUND'][2]:02x}"
@@ -457,19 +450,19 @@ class PathFollowingTestApp:
             next_x = self.player_x + dx
             next_y = self.player_y + dy
 
-            # 🟥 禁用紅線封鎖邏輯以降低複雜度
-            # for cp in self.path.checkpoints:
-            #     if not cp["cleared"]:
-            #         axis = cp["axis"]
-            #         pos = cp["line_pos"]
-            #         if axis == "x":
-            #             if ((self.path.dx > 0 and next_x > pos)
-            #                     or (self.path.dx < 0 and next_x < pos)):
-            #                 next_x = pos
-            #         elif axis == "y":
-            #             if ((self.path.dy > 0 and next_y > pos)
-            #                     or (self.path.dy < 0 and next_y < pos)):
-            #                 next_y = pos
+            # 紅線封鎖邏輯
+            for cp in self.path.checkpoints:
+                if not cp["cleared"]:
+                    axis = cp["axis"]
+                    pos = cp["line_pos"]
+                    if axis == "x":
+                        if ((self.path.dx > 0 and next_x > pos)
+                                or (self.path.dx < 0 and next_x < pos)):
+                            next_x = pos
+                    elif axis == "y":
+                        if ((self.path.dy > 0 and next_y > pos)
+                                or (self.path.dy < 0 and next_y < pos)):
+                            next_y = pos
 
             # 邊界限制
             next_x = max(self.player_radius,
@@ -496,7 +489,7 @@ class PathFollowingTestApp:
                 else:
                     self.canvas.itemconfig(self.player, fill=error_color)
 
-            # 🔒 禁用路徑收縮功能以降低複雜度
+            # 路徑收縮功能 (已禁用)
             # self.path.shrink()
 
             # 時間紀錄
@@ -626,84 +619,8 @@ class PathFollowingTestApp:
             "movement_speed_multiplier": self.speed,
             "total_paths": len(self.paths),
             "path_width": 80,  # 固定路徑寬度
-            "player_offset": self.offset
-        }
-        
-        # 準備儲存的指標數據
-        metrics = {
-            "total_trials": total_trials,
-            "total_time_seconds": total_time,
-            "total_off_path_time_seconds": total_off_path_time,
-            "average_completion_time_seconds": avg_completion_time,
-            "average_accuracy_percentage": avg_accuracy,
-            "trials": self.test_results,
-            "path_type_analysis": {
-                "straight_paths": {
-                    "count": len(straight_trials),
-                    "avg_completion_time_s": sum(t["completion_time_seconds"] for t in straight_trials) / len(straight_trials) if straight_trials else 0,
-                    "avg_accuracy_pct": sum(t["path_accuracy"] for t in straight_trials) / len(straight_trials) if straight_trials else 0
-                },
-                "corner_paths": {
-                    "count": len(corner_trials),
-                    "avg_completion_time_s": sum(t["completion_time_seconds"] for t in corner_trials) / len(corner_trials) if corner_trials else 0,
-                    "avg_accuracy_pct": sum(t["path_accuracy"] for t in corner_trials) / len(corner_trials) if corner_trials else 0
-                }
-            }
-        }
-        
-        # 儲存結果
-        save_test_result(
-            user_id=self.user_id,
-            test_name="analog_path_obstacle",
-            metrics=metrics,
-            parameters=parameters,
-            image_files=[f"軌跡圖片儲存在: {self.session_output_dir}"]
-        )
-        
-        print("=" * 50)
-        print("🚧 Analog Path Obstacle Test - 測試完成總結")
-        print("=" * 50)
-        print(f"👤 使用者：{self.user_id}")
-        print(f"🎯 總路徑數：{total_trials}")
-        print(f"⏱️ 總用時：{total_time:.2f} 秒")
-        print(f"📊 平均完成時間：{avg_completion_time:.2f} 秒")
-        print(f"🎯 平均路徑精確度：{avg_accuracy:.1f}%")
-        print("")
-        print("📈 各路徑類型表現分析：")
-        for path_type, data in metrics["path_type_analysis"].items():
-            if data["count"] > 0:
-                print(f"  {path_type}: {data['count']} 條，平均時間 {data['avg_completion_time_s']:.2f}s，精確度 {data['avg_accuracy_pct']:.1f}%")
-        print("=" * 50)
-
-    def save_test_results(self):
-        """儲存測試結果為 JSON 檔案"""
-        if not self.test_results:
-            print("⚠️ 無測試結果可儲存")
-            return
-        
-        # 計算總體統計
-        total_trials = len(self.test_results)
-        total_time = sum(t["completion_time_seconds"] for t in self.test_results)
-        total_off_path_time = sum(t["off_path_time_seconds"] for t in self.test_results)
-        avg_completion_time = total_time / total_trials
-        avg_accuracy = sum(t["path_accuracy"] for t in self.test_results) / total_trials
-        
-        # 分析不同路徑類型的表現
-        straight_trials = [t for t in self.test_results if t["path_type"] == "straight"]
-        corner_trials = [t for t in self.test_results if t["path_type"] == "corner"]
-        
-        # 準備儲存的測試參數
-        parameters = {
-            "window_size": {
-                "width": self.canvas_width,
-                "height": self.canvas_height
-            },
-            "player_radius": self.player_radius,
-            "movement_speed_multiplier": self.speed,
-            "total_paths": len(self.paths),
-            "path_width": 80,  # 固定路徑寬度
             "player_offset": self.offset,
-            "test_variant": "obstacle_simplified"  # 區分這是障礙物簡化版
+            "test_variant": "obstacle_full"  # 完整障礙物版本
         }
         
         # 準備儲存的指標數據
@@ -752,20 +669,19 @@ class PathFollowingTestApp:
                 print(f"  {path_type}: {data['count']} 條，平均時間 {data['avg_completion_time_s']:.2f}s，精確度 {data['avg_accuracy_pct']:.1f}%")
         print("=" * 50)
 
-    # 🔒 禁用按鈕解鎖功能以降低複雜度
-    # def on_joycon_button(self, buttons, leftX, leftY, last_key_bit,
-    #                      last_key_down):
-    #     if not last_key_down:
-    #         return
+    def on_joycon_button(self, buttons, leftX, leftY, last_key_bit,
+                         last_key_down):
+        if not last_key_down:
+            return
 
-    #     for cp in self.path.checkpoints:
-    #         if not cp["cleared"]:
-    #             x1, y1, x2, y2 = cp["area"]
-    #             if x1 <= self.player_x <= x2 and y1 <= self.player_y <= y2:
-    #                 cp["cleared"] = True
-    #                 self.canvas.delete(cp["line_id"])
-    #                 self.canvas.delete(cp["rect_id"])
-    #                 print("🟢 檢查點解除：灰色區域與紅線已移除")
+        for cp in self.path.checkpoints:
+            if not cp["cleared"]:
+                x1, y1, x2, y2 = cp["area"]
+                if x1 <= self.player_x <= x2 and y1 <= self.player_y <= y2:
+                    cp["cleared"] = True
+                    self.canvas.delete(cp["line_id"])
+                    self.canvas.delete(cp["rect_id"])
+                    print("🟢 檢查點解除：藍色區域與紅線已移除")
 
 
 if __name__ == "__main__":
@@ -788,10 +704,9 @@ if __name__ == "__main__":
     app = PathFollowingTestApp(root, user_id)
 
     try:
-        # 🔒 禁用按鈕回調以降低複雜度
-        listener = ControllerInput(analog_callback=app.on_joycon_input)
-        # listener = ControllerInput(analog_callback=app.on_joycon_input,
-        #                           button_callback=app.on_joycon_button)
+        # 恢復按鈕回調以支持障礙物解除功能
+        listener = ControllerInput(analog_callback=app.on_joycon_input,
+                                  button_callback=app.on_joycon_button)
         Thread(target=listener.run, daemon=True).start()
 
         root.mainloop()

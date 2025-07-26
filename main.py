@@ -30,7 +30,6 @@ def show_menu():
     print("6. 路徑追蹤測試")
     print("7. 路徑追蹤測試 (有障礙物)")
     print("")
-    print("8. 執行完整測試套件")
     print("9. 退出")
     print("="*50)
 
