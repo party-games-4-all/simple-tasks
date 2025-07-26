@@ -1,84 +1,96 @@
 # Simple Tasks - 手把測試應用程式
 
-這是一個使用 Python 和 pygame 開發的手把測試應用程式集合，包含多種反應時間和精準度測試。
+這是一個使用 Python 和 pygame 開發的手把測試應用程式集合，用於測試使用者的反應時間、精準度和協調能力。包含多種從簡單到複雜的互動測試，適用於遊戲研究、使用者體驗測試和能力評估。
 
-## 系統需求
+## 前置需求
 
-- Python 3.8+
-- macOS 或 Linux 系統
-- 支援的遊戲手把（如 Joy-Con、Xbox 控制器等）
+在開始使用之前，請確保您的系統已安裝以下軟體：
 
-## 安裝與設定
+### 必要系統需求
+- **Python 3.8 或更高版本**
+- **macOS 10.14+ 或 Linux** (Windows 可能需要額外設定)
+- **支援的遊戲手把** (Joy-Con、PlayStation 控制器、Xbox 控制器等)
 
-### 使用 uv（推薦）
+### 安裝 uv (強烈推薦)
+uv 是一個高效能的 Python 套件管理工具，提供快速的依賴安裝和環境管理：
 
-1. **安裝 uv**
-   ```bash
-   curl -LsSf https://astral.sh/uv/install.sh | sh
-   ```
+```bash
+# macOS 和 Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
 
-2. **Clone 專案**
+# 或使用 Homebrew (macOS)
+brew install uv
+
+# 或使用 pip
+pip install uv
+```
+
+安裝後請重新啟動終端機，或執行：
+```bash
+source ~/.bashrc  # Linux
+source ~/.zshrc   # macOS (如果使用 zsh)
+```
+
+### 驗證安裝
+```bash
+uv --version
+```
+
+## 快速開始
+
+1. **Clone 專案並進入目錄**
    ```bash
    git clone <your-repo-url>
    cd simple-tasks
    ```
 
-3. **使用 uv 安裝依賴並執行**
+2. **連接手把裝置**
+   - 確保手把已正確連接到電腦
+   - 對於 Joy-Con：確保已透過藍牙配對
+   - 對於其他手把：確保驅動程式已安裝
+
+3. **執行程式**
    ```bash
-   # uv 會自動建立虛擬環境並安裝依賴
-   uv run main.py
+   # uv 會自動建立虛擬環境並安裝所有依賴
+   uv run python main.py
    ```
-
-### 傳統方式
-
-如果您偏好使用傳統的 pip 方式：
-
-```bash
-# 建立虛擬環境
-python -m venv venv
-
-# 啟動虛擬環境
-source venv/bin/activate
-
-# 安裝依賴
-pip install pygame
-
-# 執行程式
-uv run python main.py
-```
 
 ## 專案架構
 
 本專案採用模組化架構，方便維護與擴充：
 
 ```
-project/
-├── tests/                          # 測試模組目錄
-│   ├── connection_test.py          # 手把連接測試
-│   ├── button_reaction_time_test.py# 簡單反應時間測試
-│   ├── button_prediction_countdown_test.py # 預測反應時間測試
-│   ├── button_accuracy_test.py     # 選擇反應測試
-│   ├── button_smash_test.py        # Button Smash 連打測試
-│   ├── analog_move_test.py         # 類比搖桿移動測試
-│   ├── analog_path_follow_test.py  # 路徑追蹤測試
-│   └── analog_path_obstacle_test.py# 路徑追蹤測試 (障礙物版本)
-├── common/                         # 共用模組
-│   ├── controller_input.py         # 手把輸入處理核心
-│   ├── utils.py                    # 工具函式
-│   └── config.py                   # 參數設定
-├── data/                           # 資料目錄
-│   ├── results/                    # 測試結果（JSON 格式）
-│   │   └── [user_id]/             # 各使用者的測試結果
-│   └── images/                     # 圖片輸出（軌跡圖等）
-│       ├── analog_move/            # 移動測試軌跡圖
-│       │   └── [user_id]/         # 各使用者的圖片
-│       ├── analog_path_trace/      # 路徑追蹤軌跡圖
-│       │   └── [user_id]/         # 各使用者的圖片  
+simple-tasks/
+├── main.py                         # 主控程式 - 互動式測試選單
+├── pyproject.toml                  # 專案配置和依賴管理
+├── uv.lock                        # 依賴版本鎖定檔案
+├── README.md                      # 專案說明文件
+├── tests/                         # 測試模組目錄
+│   ├── __init__.py               # Python 套件初始化
+│   ├── button_reaction_time_test.py    # 簡單反應時間測試
+│   ├── button_prediction_countdown_test.py # 預測反應時間測試  
+│   ├── button_smash_test.py       # Button Smash 連打測試
+│   ├── button_accuracy_test.py    # 方向選擇反應測試
+│   ├── analog_move_test.py        # 類比搖桿移動測試
+│   ├── analog_path_follow_test.py # 路徑追蹤測試
+│   └── analog_path_obstacle_test.py # 路徑追蹤測試 (障礙物版本)
+├── common/                        # 共用模組
+│   ├── __init__.py               # Python 套件初始化
+│   ├── config.py                 # 全域配置設定
+│   ├── controller_input.py       # 手把輸入處理核心
+│   ├── connection_test.py        # 手把連接測試工具
+│   ├── result_saver.py           # 測試結果儲存模組
+│   ├── trace_plot.py             # 軌跡圖表生成工具
+│   └── utils.py                  # 通用工具函式
+├── data/                         # 資料儲存目錄
+│   ├── results/                  # 測試結果 (JSON 格式)
+│   │   └── [user_id]/           # 各使用者的測試結果
+│   └── images/                   # 圖片輸出 (軌跡圖等)
+│       ├── analog_move/          # 移動測試軌跡圖
+│       ├── analog_path_trace/    # 路徑追蹤軌跡圖
 │       └── analog_path_obstacle_trace/ # 障礙物路徑軌跡圖
-│           └── [user_id]/         # 各使用者的圖片
-├── main.py                         # 主控程式
-├── run_analog_tests.sh            # 執行所有 Analog Stick 測試
-└── README.md
+├── docs/                         # 開發文件
+└── __pycache__/                  # Python 編譯快取 (自動生成)
 ```
 
 ## 執行測試
@@ -87,20 +99,6 @@ project/
 ```bash
 uv run python main.py
 ```
-
-### 執行特定類型測試
-
-**執行所有 Analog Stick 相關測試：**
-```bash
-./run_analog_tests.sh P1  # P1 是使用者 ID
-```
-啟動互動式選單，可選擇執行單一測試或完整測試套件。
-
-### 執行完整測試套件
-```bash
-./run_all_tests.sh <使用者ID>
-```
-按順序執行所有測試項目，並將結果儲存到 `data/results/<使用者ID>/` 目錄。
 
 ### 執行單一測試
 每個測試都可以獨立執行，並支援指定使用者 ID：
@@ -123,25 +121,81 @@ uv run python tests/analog_path_obstacle_test.py --user P1
 
 如果不提供 `--user` 參數，程式會要求您輸入使用者 ID。
 
+### 執行完整測試套件
+```bash
+# 執行所有測試 (從主選單選擇選項 8)
+uv run python main.py
+```
+
+進入互動選單後選擇選項 8 即可依序執行所有測試。
+
+**注意**：目前選項 8 (執行完整測試套件) 的功能需要手動依序執行各個測試。未來版本將會加入自動化腳本。
+
 ## 測試說明
 
-### 1. 手把連接測試
-測試手把是否正確連接並顯示輸入事件。
+本應用程式包含 8 種不同類型的測試，從簡單到複雜循序漸進，全面評估使用者的反應能力和操作技巧。
 
-### 2. 簡單反應時間測試 (SRT)
-測試對紅色圓形出現的反應時間。
+### Button 測試系列 (按鈕測試)
 
-### 3. 預測反應時間測試 (TP)
-測試對移動球體到達目標位置的預測反應能力。
+按照難度由簡單到困難的順序排列：
 
-### 4. 選擇反應時間測試 (CRT)
-測試對不同方向指示的選擇反應準確度和速度。
+#### 1. 簡單反應時間測試 (`button_reaction_time_test.py`)
+- **目的**：測試基礎反應速度
+- **操作**：當畫面顯示提示時立即按下任意按鈕
+- **測量指標**：反應時間（毫秒）
+- **測試次數**：10 次試驗
+- **說明**：這是最基本的反應速度測試，評估大腦接收視覺訊號並做出反應的時間
 
-### 5. 類比搖桿移動測試
-測試使用類比搖桿移動到目標位置的精準度（Fitts' Law）。
+#### 2. 預測反應時間測試 (`button_prediction_countdown_test.py`)
+- **目的**：測試預測和時間感知能力
+- **操作**：觀察移動的球，在它到達目標區域的瞬間按下按鈕
+- **測量指標**：預測準確度、提前/延遲時間
+- **設計特色**：參考 Mario Party 遊戲機制，球移動時間為 1200ms
+- **說明**：評估玩家在動態情境中的視覺追蹤和時間預測能力
 
-### 6. 路徑追蹤測試
-測試沿指定路徑移動的能力和精準度。
+#### 3. Button Smash 連打測試 (`button_smash_test.py`)
+- **目的**：測試快速連續點擊能力
+- **操作**：在 10 秒內盡可能快速地重複按下按鈕
+- **測量指標**：CPS (Clicks Per Second)、總點擊數
+- **視覺回饋**：按鈕按下時顯示 X 符號和顏色變化
+- **說明**：評估玩家的肌肉協調性和持續操作能力
+
+#### 4. 方向選擇反應測試 (`button_accuracy_test.py`)
+- **目的**：測試選擇性反應和準確度
+- **操作**：根據畫面指示按下對應方向的按鈕（上下左右）
+- **測量指標**：準確率、反應時間、錯誤率
+- **測試次數**：20 次試驗
+- **說明**：評估認知處理能力和精確操作技巧
+
+### Analog 測試系列 (搖桿測試)
+
+按照難度由簡單到困難的順序排列：
+
+#### 5. 類比搖桿移動測試 (`analog_move_test.py`)
+- **目的**：測試基礎搖桿控制能力
+- **操作**：使用搖桿將游標移動到隨機出現的目標圓圈內
+- **測量指標**：移動時間、移動距離、軌跡效率
+- **視覺輸出**：產生移動軌跡圖，顯示玩家的移動路徑
+- **說明**：評估基本的搖桿操作技巧和手眼協調能力
+
+#### 6. 路徑追蹤測試 (`analog_path_follow_test.py`)
+- **目的**：測試精確路徑追蹤能力
+- **操作**：沿著指定路徑從起點移動到終點，不能偏離路徑
+- **測量指標**：完成時間、路徑偏離次數、偏離距離
+- **路徑類型**：直線路徑、S 型曲線路徑
+- **說明**：評估精細運動控制和路徑規劃能力
+
+#### 7. 路徑追蹤測試 (障礙物版本) (`analog_path_obstacle_test.py`)
+- **目的**：測試複雜環境下的導航能力
+- **操作**：在有障礙物的情況下沿路徑移動到目標
+- **測量指標**：完成時間、碰撞次數、路徑效率
+- **難度特色**：增加了固定和移動障礙物
+- **說明**：評估空間認知、避障能力和動態決策能力
+
+### 手把連接測試 (`connection_test.py`)
+- **目的**：驗證手把連接狀態
+- **功能**：檢測已連接的手把裝置、顯示按鈕和搖桿輸入狀態
+- **說明**：在進行正式測試前確保手把正常工作
 
 ## 測試結果
 
@@ -224,15 +278,77 @@ uv pip list
 
 ## 故障排除
 
-### 手把無法偵測
-- 確認手把已正確連接並配對
-- 嘗試重新連接手把
-- 檢查系統是否識別手把裝置
+### 手把連接問題
+- **手把無法偵測**：
+  - 確認手把已正確連接並配對
+  - 嘗試重新連接手把或重新配對藍牙
+  - 檢查系統是否識別手把裝置 (系統設定 → 控制器)
+  - 執行 `uv run python common/connection_test.py` 進行連接診斷
+
+- **Joy-Con 特定問題**：
+  - 確保 Joy-Con 電池電量充足
+  - 嘗試關閉並重新開啟 Joy-Con (按住同步按鈕)
+  - 在 macOS 中可能需要重新配對藍牙裝置
+
+- **其他手把問題**：
+  - PS4/PS5 控制器：確認驅動程式已安裝
+  - Xbox 控制器：確認已連接或配對成功
+  - 通用 USB 手把：檢查 USB 連接和相容性
+
+### 程式執行問題
+- **Python 版本錯誤**：
+  - 確認 Python 版本為 3.8 或更高
+  - 使用 `python3 --version` 檢查版本
+
+- **pygame 相關錯誤**：
+  - macOS 可能需要安裝額外套件：`brew install sdl2`
+  - 若出現音效錯誤，程式已設定忽略音效輸出
+
+- **tkinter 顯示問題**：
+  - macOS：確認已安裝 Tkinter：`python3 -m tkinter`
+  - Linux：可能需要安裝 `python3-tk`
 
 ### uv 相關問題
-- 確認 uv 已正確安裝：`uv --version`
-- 清除快取：`uv cache clean`
-- 重新建立環境：刪除 `.venv` 資料夾後重新執行 `uv run`
+- **uv 安裝失敗**：
+  - 確認網路連接正常
+  - 嘗試使用 pip 安裝：`pip install uv`
+  - 檢查系統權限，可能需要 sudo
+
+- **虛擬環境問題**：
+  - 確認 uv 已正確安裝：`uv --version`
+  - 清除快取：`uv cache clean`
+  - 重新建立環境：刪除 `.venv` 資料夾後重新執行 `uv run`
+
+- **依賴安裝問題**：
+  - 檢查 `pyproject.toml` 檔案完整性
+  - 嘗試手動安裝：`uv add pygame matplotlib`
+
+### 測試結果問題
+- **無法儲存結果**：
+  - 檢查 `data/` 目錄權限
+  - 確認硬碟空間充足
+  - 檢查檔案系統是否支援檔名中的時間戳記格式
+
+- **圖片無法生成**：
+  - 確認 matplotlib 正確安裝
+  - 檢查 `data/images/` 目錄權限
+  - 確認系統支援 PNG 格式輸出
+
+### 效能問題
+- **程式運行緩慢**：
+  - 關閉其他佔用系統資源的應用程式
+  - 確認系統記憶體充足
+  - 嘗試降低顯示解析度 (修改 `config.py` 中的視窗大小)
+
+- **畫面卡頓**：
+  - 檢查系統 CPU 使用率
+  - 確認顯示卡驅動程式為最新版本
+
+### 獲取幫助
+如果問題仍未解決，請：
+1. 檢查錯誤訊息的完整內容
+2. 確認系統環境 (作業系統版本、Python 版本等)
+3. 嘗試在不同環境下執行測試
 
 ## 開發
 
@@ -244,23 +360,154 @@ uv shell
 
 # 之後可以直接使用 python 指令
 python main.py
+
+# 安裝開發依賴
+uv add --dev pytest black flake8
+
+# 執行程式碼格式化
+black .
+
+# 執行語法檢查
+flake8 .
 ```
+
+### 開發建議
+- **新增測試**：參考現有測試模組的結構和設計模式
+- **修改配置**：所有可調整參數都在 `common/config.py` 中
+- **新增功能**：遵循現有的模組化架構
+- **測試變更**：先使用 `connection_test.py` 確保手把功能正常
 
 ## 檔案說明
 
-### 核心檔案
-- [`main.py`](main.py) - 主控程式，提供互動式選單
-- [`run_all_tests.sh`](run_all_tests.sh) - 一鍵執行所有測試的腳本
+### 主程式檔案
 
-### 共用模組 (common/)
-- [`controller_input.py`](common/controller_input.py) - 手把輸入處理核心
-- [`utils.py`](common/utils.py) - 工具函式
-- [`config.py`](common/config.py) - 參數設定和色盲友善配色
+#### `main.py`
+- **功能**：應用程式主入口點
+- **特色**：提供互動式選單系統，可選擇執行單一測試或完整測試套件
+- **使用方式**：直接執行可進入選單模式，也可以命令列參數方式執行
 
-### 測試模組 (tests/)
-- [`connection_test.py`](tests/connection_test.py) - 手把連接診斷工具
-- [`reaction_time_test.py`](tests/reaction_time_test.py) - 簡單反應時間測試
-- [`prediction_reaction_test.py`](tests/prediction_reaction_test.py) - 預測反應時間測試
-- [`choice_accuracy_test.py`](tests/choice_accuracy_test.py) - 選擇反應測試
-- [`analog_move_test.py`](tests/analog_move_test.py) - 類比搖桿移動測試
-- [`path_follow_test.py`](tests/path_follow_test.py) - 路徑追蹤測試
+#### `pyproject.toml`
+- **功能**：專案配置檔案 (Python 標準)
+- **內容**：定義專案依賴 (pygame, matplotlib)、Python 版本需求等
+- **重要性**：uv 會根據此檔案自動管理虛擬環境和依賴安裝
+
+### 測試模組 (`tests/` 目錄)
+
+所有測試模組都遵循統一的設計模式：
+- 支援 `--user` 命令列參數指定使用者 ID
+- 自動儲存測試結果為 JSON 格式
+- 使用色盲友善的視覺設計
+- 支援手把和鍵盤輸入 (作為備用)
+
+#### `button_reaction_time_test.py`
+- **測試類型**：簡單反應時間測試
+- **UI 框架**：tkinter
+- **輸入方式**：任意按鈕/鍵盤空白鍵
+- **結果檔案**：`button_reaction_time_YYYYMMDD_HHMMSS.json`
+
+#### `button_prediction_countdown_test.py`
+- **測試類型**：預測反應時間測試
+- **特殊功能**：動畫球移動、預測時間計算
+- **遊戲化設計**：參考 Mario Party 機制
+- **結果檔案**：`button_prediction_countdown_YYYYMMDD_HHMMSS.json`
+
+#### `button_smash_test.py`
+- **測試類型**：快速連打測試
+- **計時機制**：從第一次點擊開始計時 10 秒
+- **視覺回饋**：即時顯示點擊計數和 CPS
+- **結果檔案**：`button_smash_YYYYMMDD_HHMMSS.json`
+
+#### `button_accuracy_test.py`
+- **測試類型**：方向選擇反應測試
+- **按鈕排列**：菱形排列模擬真實手把配置
+- **評估指標**：準確率、平均反應時間
+- **結果檔案**：`button_accuracy_YYYYMMDD_HHMMSS.json`
+
+#### `analog_move_test.py`
+- **測試類型**：搖桿移動測試
+- **圖形輸出**：自動產生移動軌跡圖
+- **測量指標**：移動效率、軌跡分析
+- **結果檔案**：JSON + PNG 軌跡圖
+
+#### `analog_path_follow_test.py`
+- **測試類型**：路徑追蹤測試
+- **路徑類型**：直線路徑、S 型曲線路徑
+- **圖形輸出**：路徑追蹤軌跡圖，顯示偏離情況
+- **結果檔案**：JSON + PNG 軌跡圖
+
+#### `analog_path_obstacle_test.py`
+- **測試類型**：障礙物路徑測試
+- **複雜度**：最高難度測試，包含障礙物避障
+- **圖形輸出**：包含障礙物位置的完整軌跡圖
+- **結果檔案**：JSON + PNG 軌跡圖
+
+### 共用模組 (`common/` 目錄)
+
+#### `config.py`
+- **功能**：全域配置設定
+- **內容**：
+  - 測試時間設定 (如連打測試的 10 秒限制)
+  - 視窗尺寸設定 (1200x800)
+  - 色盲友善配色方案 (藍色/橘色組合)
+  - 反應時間相關參數
+- **設計原則**：集中管理所有可調整參數，便於維護
+
+#### `controller_input.py`
+- **功能**：手把輸入處理核心模組
+- **特色**：
+  - 自動偵測並連接可用的手把裝置
+  - 統一的按鈕和搖桿事件處理
+  - 支援多種手把類型 (Joy-Con、PlayStation、Xbox 等)
+  - 提供除錯模式便於開發測試
+- **重要性**：所有測試的手把輸入都依賴此模組
+
+#### `connection_test.py`
+- **功能**：手把連接診斷工具
+- **用途**：
+  - 檢測已連接的手把裝置
+  - 即時顯示按鈕和搖桿輸入狀態
+  - 手把功能驗證
+- **建議**：執行正式測試前先使用此工具確認手把正常
+
+#### `result_saver.py`
+- **功能**：測試結果儲存管理
+- **特色**：
+  - 統一的 JSON 格式儲存
+  - 自動建立使用者專屬目錄
+  - 時間戳記檔案命名
+  - 標準化的資料結構
+- **資料結構**：包含使用者 ID、測試名稱、時間戳記、詳細測試指標
+
+#### `trace_plot.py`
+- **功能**：軌跡圖表生成工具
+- **支援圖表類型**：
+  - 移動軌跡圖 (analog_move_test)
+  - 路徑追蹤圖 (analog_path_follow_test)
+  - 障礙物路徑圖 (analog_path_obstacle_test)
+- **圖表特色**：高解析度 PNG 輸出、清晰的視覺標示
+- **使用技術**：matplotlib
+
+#### `utils.py`
+- **功能**：通用工具函式庫
+- **包含功能**：數學計算、資料處理、檔案操作等輔助函式
+- **設計原則**：避免重複程式碼，提供可重用的工具函式
+
+### 資料目錄 (`data/`)
+
+#### `results/[user_id]/`
+- **功能**：儲存各使用者的測試結果
+- **檔案格式**：JSON
+- **命名規則**：`[測試名稱]_YYYYMMDD_HHMMSS.json`
+- **資料保存**：長期研究資料保存，便於統計分析
+
+#### `images/[test_type]/[user_id]/[timestamp]/`
+- **功能**：儲存視覺化圖表
+- **檔案格式**：PNG
+- **圖表類型**：
+  - `analog_move/`：移動測試軌跡圖
+  - `analog_path_trace/`：路徑追蹤軌跡圖
+  - `analog_path_obstacle_trace/`：障礙物路徑軌跡圖
+
+### 開發文件 (`docs/`)
+- **內容**：專案開發過程中的會議記錄、技術文件
+- **用途**：記錄設計決策和開發進度
