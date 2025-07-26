@@ -1,2 +1,20 @@
 __pycache__/
 .DS_Store
+
+# Data output directories
+data/results/
+data/images/
+
+# Virtual environment
+.venv/
+
+# uv lock file
+uv.lock
+
+# Output directories for legacy tests
+analog_move_output/
+analog_path_trace_output/
+analog_path_obstacle_trace_output/
+
+# Python compiled files
+*.pyc
