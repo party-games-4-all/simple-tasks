@@ -780,7 +780,7 @@ class PathFollowingTestApp:
 
 
 if __name__ == "__main__":
-    from controller_input import ControllerInput
+    from common.controller_input import ControllerInput
 
     root = tk.Tk()
     app = PathFollowingTestApp(root)

@@ -286,7 +286,7 @@ class JoystickTargetTestApp:
 
 if __name__ == "__main__":
     from threading import Thread
-    from controller_input import ControllerInput
+    from common.controller_input import ControllerInput
 
     root = tk.Tk()
     app = JoystickTargetTestApp(root)
