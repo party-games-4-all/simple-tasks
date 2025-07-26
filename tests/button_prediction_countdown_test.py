@@ -1,6 +1,21 @@
+"""
+預測反應時間測試 - 遊戲化版本
+
+根據 20250721 會議反饋進行調整：
+- 將球移動時間從 250ms 增加到 1200ms，更符合實際 Party Game 節奏
+- 增加球與球之間的間隔時間到 2000ms
+- 參考 Mario Party 等遊戲的時間設計，讓玩家能夠進行視覺追蹤和預測
+- 改進使用者體驗：更友善的反饋訊息和遊戲化介面
+- 測試目標：評估玩家在類似真實遊戲情境下的預測能力
+- 效能優化：使用主線程動畫取代多線程，減少掉幀問題
+
+設計理念：
+不再測試底層的反應速度，而是測試玩家在實際遊戲情境中
+結合視覺追蹤和時間預測的綜合能力表現。
+"""
+
 import tkinter as tk
 import time
-import threading
 import sys
 from pathlib import Path
 
@@ -11,38 +26,39 @@ class CountdownReactionTestApp:
 
     def __init__(self, root):
         self.root = root
-        self.root.title("Reaction Test")
+        self.root.title("🎮 預測反應時間測試 - 遊戲化版本")
         CANVAS_WIDTH = 1600
         CANVAS_HEIGHT = 800
         self.canvas = tk.Canvas(root, width=CANVAS_WIDTH, height=CANVAS_HEIGHT, bg='white')
         self.canvas.pack()
 
-        self.PERIOD = 800  # 1500ms
-        self.CUE_VIEWING_TIME = 250  # 250ms
-        self.SCREEN_UPDATE_INTERVAL = 10  # 每5ms更新一次畫面
+        self.PERIOD = 2000  # 2000ms - 增加球與球之間的間隔時間
+        self.CUE_VIEWING_TIME = 1200  # 1200ms - 大幅增加球移動時間，參考 Mario Party 等遊戲節奏
+        self.FRAME_INTERVAL = 16  # 約60FPS更新頻率 (1000ms/60 ≈ 16.7ms)
 
         self.ball_radius = 30
         self.start_x = 100
-        self.end_x = CANVAS_WIDTH * 0.9
+        self.end_x = CANVAS_WIDTH  # 球移動到畫面最右邊（留一點邊距）
+        self.target_x = CANVAS_WIDTH * 0.9  # 目標判定位置（灰色圓圈位置）
         self.y_pos = 400
 
-        self.gray_x0 = self.end_x - self.ball_radius
-        self.gray_x1 = self.end_x + self.ball_radius
+        self.gray_x0 = self.target_x - self.ball_radius
+        self.gray_x1 = self.target_x + self.ball_radius
         # self.canvas.create_rectangle(self.gray_x0, 0, self.gray_x1, CANVAS_HEIGHT, fill="lightgray", outline="")
-        # 在 __init__ 中新增灰色圓形（與球一樣大小）放在 end_x 處
+        # 在 __init__ 中新增灰色圓形（與球一樣大小）放在 target_x 處
         self.gray_circle = self.canvas.create_oval(
-            self.end_x - self.ball_radius, self.y_pos - self.ball_radius,
-            self.end_x + self.ball_radius, self.y_pos + self.ball_radius,
+            self.target_x - self.ball_radius, self.y_pos - self.ball_radius,
+            self.target_x + self.ball_radius, self.y_pos + self.ball_radius,
             fill="lightgray", outline="")
 
-        self.label = tk.Label(root, text="請按『開始測試』按鈕開始測試", font=("Arial", 24))
+        self.label = tk.Label(root, text="準備好了嗎？請在球到達灰色圓圈時按下按鈕！", font=("Arial", 24))
         self.label.place(relx=0.5, rely=0.2, anchor='center')
 
         self.start_button = tk.Button(root, text="開始測試", font=("Arial", 24), command=self.start_test)
         self.start_button.place(relx=0.5, rely=0.8, anchor='center')
 
         self.reaction_results = []
-        self.total_balls = 5
+        self.total_balls = 8  # 增加測試次數以獲得更穩定的數據
         self.current_ball_index = 0
 
         self.ball = None
@@ -50,6 +66,7 @@ class CountdownReactionTestApp:
         self.ball_timer_id = None
         self.next_ball_id = None
         self.ball_active = False
+        self.animation_id = None  # 用於動畫循環的ID
 
     def start_test(self):
         self.start_button.place_forget()
@@ -61,6 +78,7 @@ class CountdownReactionTestApp:
         self.ball_timer_id = None
         self.next_ball_id = None
         self.ball_active = False
+        self.animation_id = None
         self.reaction_results.clear()
         self.schedule_next_ball()
 
@@ -76,42 +94,77 @@ class CountdownReactionTestApp:
         self.ball = self.canvas.create_oval(
             self.start_x - self.ball_radius, self.y_pos - self.ball_radius,
             self.start_x + self.ball_radius, self.y_pos + self.ball_radius,
-            fill="red", tags="ball"
+            fill="blue", tags="ball"  # 改為藍色，避免與目標區域混淆
         )
         self.ball_start_time = time.time()
         self.ball_active = True
-        thread = threading.Thread(target=self.move_ball_thread, daemon=True)
-        thread.start()
+        self.animate_ball()  # 使用主線程動畫而非多線程
 
-    def move_ball_thread(self):
-        while self.ball_active:
-            elapsed = (time.time() - self.ball_start_time)
-            progress = min(elapsed / (self.CUE_VIEWING_TIME / 1000), 1.0)
-            x = self.start_x + (self.end_x - self.start_x) * progress
+    def animate_ball(self):
+        """在主線程中進行動畫更新，避免掉幀問題"""
+        if not self.ball_active:
+            return
+            
+        elapsed = (time.time() - self.ball_start_time)
+        progress = min(elapsed / (self.CUE_VIEWING_TIME / 1000), 1.0)
+        x = self.start_x + (self.end_x - self.start_x) * progress
 
-            # 更新畫面必須在主線程進行
-            self.root.after(0, self.canvas.coords,
-                self.ball,
-                x - self.ball_radius, self.y_pos - self.ball_radius,
-                x + self.ball_radius, self.y_pos + self.ball_radius
-            )
+        # 更新球的位置
+        self.canvas.coords(self.ball,
+            x - self.ball_radius, self.y_pos - self.ball_radius,
+            x + self.ball_radius, self.y_pos + self.ball_radius
+        )
 
-            if progress >= 1.0:
-                break
-
-        time.sleep(self.SCREEN_UPDATE_INTERVAL / 1000.0)  # 換算成秒
+        # 如果動畫還沒結束，繼續下一幀
+        if progress < 1.0 and self.ball_active:
+            self.animation_id = self.root.after(self.FRAME_INTERVAL, self.animate_ball)
+        elif progress >= 1.0:
+            # 球移動到最右邊，如果還沒被按下則視為錯過
+            if self.ball_active:
+                self.ball_active = False
+                self.canvas.delete("ball")
+                print("⏰ 錯過了！球已經移動到最右邊")
+                self.reaction_results.append(None)
+                if self.current_ball_index >= self.total_balls:
+                    self.finish_test()
 
     def register_press(self):
         if not self.ball_active:
             return
         now = time.time()
         elapsed = now - self.ball_start_time
-        error = elapsed - self.CUE_VIEWING_TIME / 1000  # 計算按下的誤差時間
+        
+        # 計算球在目標位置的理論時間（而非終點時間）
+        target_progress = (self.target_x - self.start_x) / (self.end_x - self.start_x)
+        target_time = target_progress * (self.CUE_VIEWING_TIME / 1000)
+        error = elapsed - target_time  # 計算按下的誤差時間
+        
         self.ball_active = False
         self.canvas.delete("ball")
+        
+        # 取消動畫循環
+        if self.animation_id:
+            self.root.after_cancel(self.animation_id)
+            self.animation_id = None
+            
         if self.ball_timer_id:
             self.root.after_cancel(self.ball_timer_id)
-        print(f"{'快了' if error < 0 else '慢了'} {abs(error):.3f} 秒")
+        
+        # 更友善的反饋訊息
+        accuracy_ms = abs(error) * 1000
+        feedback = ""
+        if accuracy_ms < 50:
+            feedback = "🎯 完美！"
+        elif accuracy_ms < 100:
+            feedback = "👍 很好！"
+        elif accuracy_ms < 200:
+            feedback = "👌 不錯！"
+        else:
+            feedback = "💪 再練習一下！"
+            
+        direction = "快了" if error < 0 else "慢了"
+        print(f"{feedback} {direction} {accuracy_ms:.0f} 毫秒")
+        
         self.reaction_results.append(error)
         if self.current_ball_index >= self.total_balls:
             self.finish_test()
@@ -119,15 +172,19 @@ class CountdownReactionTestApp:
     def finish_test(self):
         self.canvas.delete("ball")
         self.label.place(relx=0.5, rely=0.2, anchor='center')
-        self.label.config(text="測試完成，請按『開始測試』重新開始")
+        self.label.config(text="測試完成！您的表現很棒！點擊重新開始")
         self.start_button.place(relx=0.5, rely=0.8, anchor='center')
-        self.start_button = tk.Button(root, text="開始測試", font=("Arial", 24), command=self.start_test)
+        self.start_button = tk.Button(root, text="重新開始", font=("Arial", 24), command=self.start_test)
+        
+        # 計算並顯示統計結果
         valid_errors = [abs(e) for e in self.reaction_results if e is not None]
         if valid_errors:
-            avg_error = sum(valid_errors) / len(valid_errors)
-            print(f"五次誤差平均（絕對值）：{avg_error:.3f} 秒")
+            avg_error_ms = (sum(valid_errors) / len(valid_errors)) * 1000
+            print(f"\n🎮 測試完成統計：")
+            print(f"平均誤差：{avg_error_ms:.0f} 毫秒")
+            print(f"成功次數：{len(valid_errors)}/{self.total_balls}")
         else:
-            print("五次皆未按")
+            print("所有測試皆未按下按鈕，請再試一次！")
 
     # ← Joy-Con 按鍵會呼叫這個函數
     def on_joycon_input(self, buttons, leftX, leftY, last_key_bit, last_key_down):
@@ -145,4 +202,4 @@ if __name__ == "__main__":
     Thread(target=listener.run, daemon=True).start()
 
     root.mainloop()
-    print("🎮 TP 可預測反應時間測試結束")
+    print("🎮 預測反應時間測試結束")
