@@ -95,7 +95,19 @@ class ControllerInput:
                                              last_key_bit=last_key_bit,
                                              last_key_down=last_key_down)
 
-                # elif event.type
+                elif event.type == pygame.JOYBUTTONUP:
+                    if DEBUG:
+                        print(f"放開按鍵：{event.button}")
+                    self.buttons &= ~(1 << event.button)
+                    last_key_bit = event.button
+                    last_key_down = False
+
+                    if self.button_callback:
+                        self.button_callback(buttons=self.buttons,
+                                             leftX=self.leftX,
+                                             leftY=self.leftY,
+                                             last_key_bit=last_key_bit,
+                                             last_key_down=last_key_down)
 
 
 if __name__ == "__main__":
