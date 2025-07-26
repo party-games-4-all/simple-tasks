@@ -15,7 +15,8 @@ class ReactionTestApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Reaction Test")
-        self.canvas = tk.Canvas(root, width=config.WINDOW_WIDTH, height=config.WINDOW_HEIGHT, bg="white")
+        self.canvas = tk.Canvas(root, width=config.WINDOW_WIDTH, height=config.WINDOW_HEIGHT, 
+                               bg=f"#{config.COLORS['BACKGROUND'][0]:02x}{config.COLORS['BACKGROUND'][1]:02x}{config.COLORS['BACKGROUND'][2]:02x}")
         self.canvas.pack()
 
         self.state = "waiting"
@@ -23,19 +24,25 @@ class ReactionTestApp:
         self.after_id = None
         self.reaction_times = []
 
-        # 中央圓形（先畫成灰色）
+        # 中央圓形（先畫成預設按鈕顏色）
         center_x, center_y = config.WINDOW_WIDTH // 2, config.WINDOW_HEIGHT // 2
         circle_size = 50  # 半徑
+        button_default_color = f"#{config.COLORS['BUTTON_DEFAULT'][0]:02x}{config.COLORS['BUTTON_DEFAULT'][1]:02x}{config.COLORS['BUTTON_DEFAULT'][2]:02x}"
+        text_color = f"#{config.COLORS['TEXT'][0]:02x}{config.COLORS['TEXT'][1]:02x}{config.COLORS['TEXT'][2]:02x}"
         self.circle = self.canvas.create_oval(center_x - circle_size, center_y - circle_size, 
                                             center_x + circle_size, center_y + circle_size, 
-                                            fill="gray", outline="black", width=3)
+                                            fill=button_default_color, outline=text_color, width=3)
 
         self.label = tk.Label(root,
                               text="請按『開始測試』按鈕開始測試",
-                              font=("Arial", 24))
+                              font=("Arial", 24),
+                              bg=f"#{config.COLORS['BACKGROUND'][0]:02x}{config.COLORS['BACKGROUND'][1]:02x}{config.COLORS['BACKGROUND'][2]:02x}",
+                              fg=text_color)
         self.label.place(relx=0.5, rely=0.2, anchor='center')
 
-        self.start_button = tk.Button(root, text="開始測試", font=("Arial", 24), command=self.start_test)
+        self.start_button = tk.Button(root, text="開始測試", font=("Arial", 24), command=self.start_test,
+                                     bg=f"#{config.COLORS['BUTTON_DEFAULT'][0]:02x}{config.COLORS['BUTTON_DEFAULT'][1]:02x}{config.COLORS['BUTTON_DEFAULT'][2]:02x}",
+                                     fg=f"#{config.COLORS['TEXT'][0]:02x}{config.COLORS['TEXT'][1]:02x}{config.COLORS['TEXT'][2]:02x}")
         self.start_button.place(relx=0.5, rely=0.8, anchor='center')
 
     def start_test(self):
@@ -44,7 +51,8 @@ class ReactionTestApp:
         self.label.place_forget()
         # self.label.config(text="準備中...")
         # self.canvas.config(bg="white")
-        self.canvas.itemconfig(self.circle, fill="gray")
+        button_default_color = f"#{config.COLORS['BUTTON_DEFAULT'][0]:02x}{config.COLORS['BUTTON_DEFAULT'][1]:02x}{config.COLORS['BUTTON_DEFAULT'][2]:02x}"
+        self.canvas.itemconfig(self.circle, fill=button_default_color)
         # self.root.after(3000, self.set_random_timer)
         self.set_random_timer()
 
@@ -53,7 +61,8 @@ class ReactionTestApp:
         self.after_id = self.root.after(delay, self.turn_red)
 
     def turn_red(self):
-        self.canvas.itemconfig(self.circle, fill="red")  # 只改變圓形顏色
+        error_color = f"#{config.COLORS['ERROR'][0]:02x}{config.COLORS['ERROR'][1]:02x}{config.COLORS['ERROR'][2]:02x}"
+        self.canvas.itemconfig(self.circle, fill=error_color)  # 使用色盲友善的錯誤顏色
         # self.label.config(text="快按 Joy-Con！", font=("Arial", 32))
         self.state = "go"
         self.start_time = time.time()
@@ -70,7 +79,8 @@ class ReactionTestApp:
             # self.canvas.config(bg="white")
             if self.after_id:
                 self.root.after_cancel(self.after_id)
-            self.canvas.itemconfig(self.circle, fill="white")
+            background_color = f"#{config.COLORS['BACKGROUND'][0]:02x}{config.COLORS['BACKGROUND'][1]:02x}{config.COLORS['BACKGROUND'][2]:02x}"
+            self.canvas.itemconfig(self.circle, fill=background_color)
             self.state = "waiting"
             print(f"太快了！再試一次。")
 
@@ -79,7 +89,8 @@ class ReactionTestApp:
             self.reaction_times.append(reaction_time)
             # self.label.config(text=f"反應時間：{reaction_time:.3f} 秒。請再按一次開始", font=("Arial", 24))
             print(f"反應時間：{reaction_time:.3f} 秒")
-            self.canvas.itemconfig(self.circle, fill="green")
+            success_color = f"#{config.COLORS['SUCCESS'][0]:02x}{config.COLORS['SUCCESS'][1]:02x}{config.COLORS['SUCCESS'][2]:02x}"
+            self.canvas.itemconfig(self.circle, fill=success_color)
             self.state = "waiting"
 
             if len(self.reaction_times) < 5:
@@ -89,7 +100,10 @@ class ReactionTestApp:
                 avg_time = sum(self.reaction_times) / len(self.reaction_times)
                 print(f"平均反應時間：{avg_time:.3f} 秒")
                 self.reaction_times.clear()
-                self.label.config(text="測試完成！請按『開始測試』重新開始。", font=("Arial", 24))
+                text_color = f"#{config.COLORS['TEXT'][0]:02x}{config.COLORS['TEXT'][1]:02x}{config.COLORS['TEXT'][2]:02x}"
+                background_color = f"#{config.COLORS['BACKGROUND'][0]:02x}{config.COLORS['BACKGROUND'][1]:02x}{config.COLORS['BACKGROUND'][2]:02x}"
+                self.label.config(text="測試完成！請按『開始測試』重新開始。", font=("Arial", 24),
+                                bg=background_color, fg=text_color)
                 self.label.place(relx=0.5, rely=0.2, anchor='center')
                 self.start_button.place(relx=0.5, rely=0.8, anchor='center')
 

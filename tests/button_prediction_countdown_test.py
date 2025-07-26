@@ -29,7 +29,8 @@ class CountdownReactionTestApp:
     def __init__(self, root):
         self.root = root
         self.root.title("🎮 預測反應時間測試 - 遊戲化版本")
-        self.canvas = tk.Canvas(root, width=config.WINDOW_WIDTH, height=config.WINDOW_HEIGHT, bg='white')
+        background_color = f"#{config.COLORS['BACKGROUND'][0]:02x}{config.COLORS['BACKGROUND'][1]:02x}{config.COLORS['BACKGROUND'][2]:02x}"
+        self.canvas = tk.Canvas(root, width=config.WINDOW_WIDTH, height=config.WINDOW_HEIGHT, bg=background_color)
         self.canvas.pack()
 
         self.PERIOD = 2000  # 2000ms - 增加球與球之間的間隔時間
@@ -46,15 +47,21 @@ class CountdownReactionTestApp:
         self.gray_x1 = self.target_x + self.ball_radius
         # self.canvas.create_rectangle(self.gray_x0, 0, self.gray_x1, config.WINDOW_HEIGHT, fill="lightgray", outline="")
         # 在 __init__ 中新增灰色圓形（與球一樣大小）放在 target_x 處
+        target_color = f"#{config.COLORS['TARGET'][0]:02x}{config.COLORS['TARGET'][1]:02x}{config.COLORS['TARGET'][2]:02x}"
         self.gray_circle = self.canvas.create_oval(
             self.target_x - self.ball_radius, self.y_pos - self.ball_radius,
             self.target_x + self.ball_radius, self.y_pos + self.ball_radius,
-            fill="lightgray", outline="")
+            fill=target_color, outline="")
 
-        self.label = tk.Label(root, text="準備好了嗎？請在球到達灰色圓圈時按下按鈕！", font=("Arial", 24))
+        background_color = f"#{config.COLORS['BACKGROUND'][0]:02x}{config.COLORS['BACKGROUND'][1]:02x}{config.COLORS['BACKGROUND'][2]:02x}"
+        text_color = f"#{config.COLORS['TEXT'][0]:02x}{config.COLORS['TEXT'][1]:02x}{config.COLORS['TEXT'][2]:02x}"
+        self.label = tk.Label(root, text="準備好了嗎？請在球到達灰色圓圈時按下按鈕！", font=("Arial", 24),
+                             bg=background_color, fg=text_color)
         self.label.place(relx=0.5, rely=0.2, anchor='center')
 
-        self.start_button = tk.Button(root, text="開始測試", font=("Arial", 24), command=self.start_test)
+        button_default_color = f"#{config.COLORS['BUTTON_DEFAULT'][0]:02x}{config.COLORS['BUTTON_DEFAULT'][1]:02x}{config.COLORS['BUTTON_DEFAULT'][2]:02x}"
+        self.start_button = tk.Button(root, text="開始測試", font=("Arial", 24), command=self.start_test,
+                                     bg=button_default_color, fg=text_color)
         self.start_button.place(relx=0.5, rely=0.8, anchor='center')
 
         self.reaction_results = []
@@ -91,10 +98,11 @@ class CountdownReactionTestApp:
         self.current_ball_index += 1
         self.schedule_next_ball()
         self.canvas.delete("ball")
+        primary_color = f"#{config.COLORS['PRIMARY'][0]:02x}{config.COLORS['PRIMARY'][1]:02x}{config.COLORS['PRIMARY'][2]:02x}"
         self.ball = self.canvas.create_oval(
             self.start_x - self.ball_radius, self.y_pos - self.ball_radius,
             self.start_x + self.ball_radius, self.y_pos + self.ball_radius,
-            fill="blue", tags="ball"  # 改為藍色，避免與目標區域混淆
+            fill=primary_color, tags="ball"  # 改為藍色，避免與目標區域混淆
         )
         self.ball_start_time = time.time()
         self.ball_active = True

@@ -28,7 +28,8 @@ class ButtonSmashTestApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Button Smash Test")
-        self.canvas = tk.Canvas(root, width=config.WINDOW_WIDTH, height=config.WINDOW_HEIGHT, bg="white")
+        background_color = f"#{config.COLORS['BACKGROUND'][0]:02x}{config.COLORS['BACKGROUND'][1]:02x}{config.COLORS['BACKGROUND'][2]:02x}"
+        self.canvas = tk.Canvas(root, width=config.WINDOW_WIDTH, height=config.WINDOW_HEIGHT, bg=background_color)
         self.canvas.pack()
 
         # 測試狀態
@@ -44,13 +45,15 @@ class ButtonSmashTestApp:
         self.circle_y = 400
         
         # 創建圓形按鈕（根據會議回饋：初始為白底）
+        button_default_color = f"#{config.COLORS['BUTTON_DEFAULT'][0]:02x}{config.COLORS['BUTTON_DEFAULT'][1]:02x}{config.COLORS['BUTTON_DEFAULT'][2]:02x}"
+        text_color = f"#{config.COLORS['TEXT'][0]:02x}{config.COLORS['TEXT'][1]:02x}{config.COLORS['TEXT'][2]:02x}"
         self.circle = self.canvas.create_oval(
             self.circle_x - self.circle_radius, 
             self.circle_y - self.circle_radius,
             self.circle_x + self.circle_radius, 
             self.circle_y + self.circle_radius,
-            fill="white", 
-            outline="black", 
+            fill=button_default_color, 
+            outline=text_color, 
             width=3
         )
         
@@ -59,7 +62,7 @@ class ButtonSmashTestApp:
             self.circle_x, self.circle_y,
             text="✕",
             font=("Arial", 48, "bold"),
-            fill="black",
+            fill=text_color,
             state="hidden"
         )
         
@@ -68,28 +71,36 @@ class ButtonSmashTestApp:
             600, 200,
             text="",
             font=("Arial", 32),
-            fill="black"
+            fill=text_color
         )
         
         # CPS 顯示
+        primary_color = f"#{config.COLORS['PRIMARY'][0]:02x}{config.COLORS['PRIMARY'][1]:02x}{config.COLORS['PRIMARY'][2]:02x}"
         self.cps_text = self.canvas.create_text(
             600, 600,
             text="",
             font=("Arial", 24),
-            fill="blue"
+            fill=primary_color
         )
 
         # 指示文字
+        background_color = f"#{config.COLORS['BACKGROUND'][0]:02x}{config.COLORS['BACKGROUND'][1]:02x}{config.COLORS['BACKGROUND'][2]:02x}"
+        text_color = f"#{config.COLORS['TEXT'][0]:02x}{config.COLORS['TEXT'][1]:02x}{config.COLORS['TEXT'][2]:02x}"
         self.label = tk.Label(root,
                               text="按『開始測試』開始 10 秒快速點擊測試\n(可使用 Joy-Con 或空白鍵測試)",
-                              font=("Arial", 20))
+                              font=("Arial", 20),
+                              bg=background_color,
+                              fg=text_color)
         self.label.place(relx=0.5, rely=0.1, anchor='center')
 
         # 開始按鈕
+        button_default_color = f"#{config.COLORS['BUTTON_DEFAULT'][0]:02x}{config.COLORS['BUTTON_DEFAULT'][1]:02x}{config.COLORS['BUTTON_DEFAULT'][2]:02x}"
         self.start_button = tk.Button(root, 
                                       text="開始測試", 
                                       font=("Arial", 24), 
-                                      command=self.start_test)
+                                      command=self.start_test,
+                                      bg=button_default_color,
+                                      fg=text_color)
         self.start_button.place(relx=0.5, rely=0.85, anchor='center')
         
         # 按鍵狀態追蹤
@@ -111,7 +122,8 @@ class ButtonSmashTestApp:
         self.label.place_forget()
         
         # 重置視覺元素（根據會議回饋：使用白底，依靠 X 符號而非顏色）
-        self.canvas.itemconfig(self.circle, fill="white")
+        button_default_color = f"#{config.COLORS['BUTTON_DEFAULT'][0]:02x}{config.COLORS['BUTTON_DEFAULT'][1]:02x}{config.COLORS['BUTTON_DEFAULT'][2]:02x}"
+        self.canvas.itemconfig(self.circle, fill=button_default_color)
         self.canvas.itemconfig(self.x_symbol, state="hidden")
         self.canvas.itemconfig(self.timer_text, text="等待第一次點擊...")
         self.canvas.itemconfig(self.cps_text, text="")
@@ -152,11 +164,15 @@ class ButtonSmashTestApp:
                                text=f"總點擊數: {self.click_count}\nCPS: {cps:.2f}\n(點擊數 ÷ {self.test_duration} 秒)")
         
         # 重置圓形和 X 符號（根據會議回饋：使用白底而非灰色）
-        self.canvas.itemconfig(self.circle, fill="white")
+        button_default_color = f"#{config.COLORS['BUTTON_DEFAULT'][0]:02x}{config.COLORS['BUTTON_DEFAULT'][1]:02x}{config.COLORS['BUTTON_DEFAULT'][2]:02x}"
+        self.canvas.itemconfig(self.circle, fill=button_default_color)
         self.canvas.itemconfig(self.x_symbol, state="hidden")
         
         # 顯示重新開始按鈕
-        self.label.config(text=f"測試完成！總點擊: {self.click_count}, CPS: {cps:.2f}")
+        background_color = f"#{config.COLORS['BACKGROUND'][0]:02x}{config.COLORS['BACKGROUND'][1]:02x}{config.COLORS['BACKGROUND'][2]:02x}"
+        text_color = f"#{config.COLORS['TEXT'][0]:02x}{config.COLORS['TEXT'][1]:02x}{config.COLORS['TEXT'][2]:02x}"
+        self.label.config(text=f"測試完成！總點擊: {self.click_count}, CPS: {cps:.2f}",
+                         bg=background_color, fg=text_color)
         self.label.place(relx=0.5, rely=0.1, anchor='center')
         self.start_button.place(relx=0.5, rely=0.85, anchor='center')
         
@@ -205,7 +221,8 @@ class ButtonSmashTestApp:
                 print(f"🖱️ 點擊 #{self.click_count}")
                 
                 # 視覺回饋：按下時顯示 X 符號（色盲友善設計）
-                self.canvas.itemconfig(self.circle, fill="lightblue")  # 使用色盲友善的藍色
+                button_active_color = f"#{config.COLORS['BUTTON_ACTIVE'][0]:02x}{config.COLORS['BUTTON_ACTIVE'][1]:02x}{config.COLORS['BUTTON_ACTIVE'][2]:02x}"
+                self.canvas.itemconfig(self.circle, fill=button_active_color)  # 使用色盲友善的按鈕啟動色
                 self.canvas.itemconfig(self.x_symbol, state="normal")
 
     def on_button_release(self):
@@ -217,7 +234,8 @@ class ButtonSmashTestApp:
         
         if self.state == "testing":
             # 視覺回饋：放開時恢復原色並隱藏 X（主要依靠形狀變化，而非顏色）
-            self.canvas.itemconfig(self.circle, fill="white")
+            button_default_color = f"#{config.COLORS['BUTTON_DEFAULT'][0]:02x}{config.COLORS['BUTTON_DEFAULT'][1]:02x}{config.COLORS['BUTTON_DEFAULT'][2]:02x}"
+            self.canvas.itemconfig(self.circle, fill=button_default_color)
             self.canvas.itemconfig(self.x_symbol, state="hidden")
 
     def on_keyboard_press(self, event):

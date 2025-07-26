@@ -19,21 +19,28 @@ class JoystickTargetTestApp:
         self.root.title("Joystick 移動目標測試")
         self.canvas_width = config.WINDOW_WIDTH
         self.canvas_height = config.WINDOW_HEIGHT
+        background_color = f"#{config.COLORS['BACKGROUND'][0]:02x}{config.COLORS['BACKGROUND'][1]:02x}{config.COLORS['BACKGROUND'][2]:02x}"
         self.canvas = tk.Canvas(root,
                                 width=self.canvas_width,
                                 height=self.canvas_height,
-                                bg='white')
+                                bg=background_color)
         self.canvas.pack()
 
+        text_color = f"#{config.COLORS['TEXT'][0]:02x}{config.COLORS['TEXT'][1]:02x}{config.COLORS['TEXT'][2]:02x}"
         self.label = tk.Label(root,
                               text="按『開始測試』後用搖桿移動到紅圈",
-                              font=("Arial", 24))
+                              font=("Arial", 24),
+                              bg=background_color,
+                              fg=text_color)
         self.label.place(relx=0.5, rely=0.02, anchor='n')
 
+        button_default_color = f"#{config.COLORS['BUTTON_DEFAULT'][0]:02x}{config.COLORS['BUTTON_DEFAULT'][1]:02x}{config.COLORS['BUTTON_DEFAULT'][2]:02x}"
         self.start_button = tk.Button(root,
                                       text="開始測試",
                                       font=("Arial", 24),
-                                      command=self.start_test)
+                                      command=self.start_test,
+                                      bg=button_default_color,
+                                      fg=text_color)
         self.start_button.place(relx=0.5, rely=0.95, anchor='s')
 
         # self.target_radius = 30
@@ -193,18 +200,20 @@ class JoystickTargetTestApp:
         self.initial_distance = ((self.player_x - self.target_x)**2 +
                                  (self.player_y - self.target_y)**2)**0.5
 
+        target_color = f"#{config.COLORS['TARGET'][0]:02x}{config.COLORS['TARGET'][1]:02x}{config.COLORS['TARGET'][2]:02x}"
         self.target = self.canvas.create_oval(
             self.target_x - self.target_radius,
             self.target_y - self.target_radius,
             self.target_x + self.target_radius,
             self.target_y + self.target_radius,
-            fill="red")
+            fill=target_color)
+        primary_color = f"#{config.COLORS['PRIMARY'][0]:02x}{config.COLORS['PRIMARY'][1]:02x}{config.COLORS['PRIMARY'][2]:02x}"
         self.player = self.canvas.create_oval(
             self.player_x - self.player_radius,
             self.player_y - self.player_radius,
             self.player_x + self.player_radius,
             self.player_y + self.player_radius,
-            fill="blue")
+            fill=primary_color)
 
     def update_player_position(self):
         # 將 -1 ~ 1 值轉換為 -13 ~ +13 的速度

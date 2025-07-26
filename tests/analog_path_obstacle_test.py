@@ -324,14 +324,15 @@ class PathFollowingTestApp:
         self.root.title("🎮 Path Following 測試 (簡化版本 - 無障礙物)")
         self.canvas_width = config.WINDOW_WIDTH
         self.canvas_height = config.WINDOW_HEIGHT
+        background_color = f"#{config.COLORS['BACKGROUND'][0]:02x}{config.COLORS['BACKGROUND'][1]:02x}{config.COLORS['BACKGROUND'][2]:02x}"
         self.canvas = tk.Canvas(root,
                                 width=self.canvas_width,
                                 height=self.canvas_height,
-                                bg='white')
+                                bg=background_color)
         self.canvas.pack()
 
         self.player_radius = 8
-        self.goal_color = "red"
+        self.goal_color = f"#{config.COLORS['TARGET'][0]:02x}{config.COLORS['TARGET'][1]:02x}{config.COLORS['TARGET'][2]:02x}"
 
         self.player_trace = []
 
@@ -362,16 +363,17 @@ class PathFollowingTestApp:
 
     def create_paths(self):
         """回傳多條路徑清單"""
+        path_color = f"#{config.COLORS['PATH'][0]:02x}{config.COLORS['PATH'][1]:02x}{config.COLORS['PATH'][2]:02x}"
         paths = [
             # ---- 四條直線 ----
             # 從左往右 →
-            StraightPath(self.canvas, 50, 400, 1150, 400, 80),
+            StraightPath(self.canvas, 50, 400, 1150, 400, 80, path_color),
             # 從右往左 ←
-            StraightPath(self.canvas, 1150, 400, 50, 400, 80),
+            StraightPath(self.canvas, 1150, 400, 50, 400, 80, path_color),
             # 從上往下 ↓
-            StraightPath(self.canvas, 600, 100, 600, 700, 80),
+            StraightPath(self.canvas, 600, 100, 600, 700, 80, path_color),
             # 從下往上 ↑
-            StraightPath(self.canvas, 600, 700, 600, 100, 80),
+            StraightPath(self.canvas, 600, 700, 600, 100, 80, path_color),
         ]
         random.shuffle(paths)
         return paths
@@ -433,12 +435,13 @@ class PathFollowingTestApp:
 
     def setup_player(self):
         """設置玩家"""
+        primary_color = f"#{config.COLORS['PRIMARY'][0]:02x}{config.COLORS['PRIMARY'][1]:02x}{config.COLORS['PRIMARY'][2]:02x}"
         self.player = self.canvas.create_oval(
             self.player_x - self.player_radius,
             self.player_y - self.player_radius,
             self.player_x + self.player_radius,
             self.player_y + self.player_radius,
-            fill="skyblue")
+            fill=primary_color)
         self.canvas.tag_raise(self.player)  # ← 初始時也拉最上面
 
     def player_loop(self):
@@ -482,10 +485,12 @@ class PathFollowingTestApp:
 
             # 顏色：判斷是否在路徑內
             if DEBUG:
+                primary_color = f"#{config.COLORS['PRIMARY'][0]:02x}{config.COLORS['PRIMARY'][1]:02x}{config.COLORS['PRIMARY'][2]:02x}"
+                error_color = f"#{config.COLORS['ERROR'][0]:02x}{config.COLORS['ERROR'][1]:02x}{config.COLORS['ERROR'][2]:02x}"
                 if self.path.is_inside(self.player_x, self.player_y):
-                    self.canvas.itemconfig(self.player, fill="skyblue")
+                    self.canvas.itemconfig(self.player, fill=primary_color)
                 else:
-                    self.canvas.itemconfig(self.player, fill="red")
+                    self.canvas.itemconfig(self.player, fill=error_color)
 
             # 🔒 禁用路徑收縮功能以降低複雜度
             # self.path.shrink()
