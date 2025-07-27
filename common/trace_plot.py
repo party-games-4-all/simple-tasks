@@ -1,8 +1,32 @@
 import os
 import time
+
+# 強制設置 matplotlib 為非互動式後端 - 必須在任何 matplotlib 導入之前執行
+import matplotlib
+# 檢查是否已經設置了後端，如果沒有則設置
+if matplotlib.get_backend() != 'Agg':
+    matplotlib.use('Agg', force=True)
+
+# 額外的安全措施：設置環境變數
+os.environ['MPLBACKEND'] = 'Agg'
+
 import matplotlib.pyplot as plt
 from matplotlib.patches import Polygon, Rectangle, Circle
 from matplotlib.lines import Line2D
+
+# 設置 matplotlib 不使用互動式模式
+plt.ioff()
+
+
+def ensure_matplotlib_thread_safety():
+    """確保 matplotlib 在線程中安全使用"""
+    import threading
+    import matplotlib
+    
+    # 如果不在主線程中，強制使用 Agg 後端
+    if threading.current_thread() != threading.main_thread():
+        matplotlib.use('Agg', force=True)
+        plt.ioff()
 
 
 def init_trace_output_folder(test_name, user_id=None):
@@ -22,6 +46,9 @@ def init_trace_output_folder(test_name, user_id=None):
 
 
 def output_move_trace(trace_points, start, target, radius, player_radius, press_points, index, output_dir):
+    # 確保 matplotlib 線程安全
+    ensure_matplotlib_thread_safety()
+    
     if not trace_points:
         print(f"⚠️ 第 {index} 筆無紀錄資料")
         return
@@ -59,6 +86,8 @@ def output_move_trace(trace_points, start, target, radius, player_radius, press_
 
 def output_single_trace(path_obj, index, output_dir="data/images/analog_path_trace"):
     """輸出單一路徑圖：含黑路徑、灰框、紅線、玩家軌跡"""
+    # 確保 matplotlib 線程安全
+    ensure_matplotlib_thread_safety()
 
     trace_list = path_obj.player_trace
     if not trace_list:
