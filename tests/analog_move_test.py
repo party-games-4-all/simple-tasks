@@ -1,3 +1,12 @@
+"""
+Analog Move Test - ISO9241 九點圓形指向測試
+
+使用者操作設定（標準化測試條件）：
+- 限制使用者僅使用左手搖桿操作
+- 到達目標後可按任何按鍵確認（不僅限於 A 鍵）
+- 此設定用於標準化測試條件，確保所有參與者使用相同的操作方式
+"""
+
 import tkinter as tk
 import random
 import time
@@ -35,7 +44,7 @@ class JoystickTargetTestApp:
 
         text_color = f"#{config.COLORS['TEXT'][0]:02x}{config.COLORS['TEXT'][1]:02x}{config.COLORS['TEXT'][2]:02x}"
         self.label = tk.Label(root,
-                              text="按『開始測試』後先進行暖身，然後正式測試",
+                              text="按『開始測試』後先進行暖身，然後正式測試 (僅使用左手搖桿操作)",
                               font=("Arial", 24),
                               bg=background_color,
                               fg=text_color)
@@ -277,17 +286,14 @@ class JoystickTargetTestApp:
 
     def on_joycon_button(self, buttons, leftX, leftY, last_key_bit,
                          last_key_down):
-        # 若按下任一按鍵（例如 A 鍵），進行位置判定
+        # 標準化測試條件：到達目標後可按任何按鍵確認
         if not last_key_down:
             return  # 只處理按下事件（不處理放開）
 
         if not self.testing:
             return
 
-        # 以 1 號鍵為例，可視需要調整
-        if last_key_bit != 1:  # 你可以改成任意你想用的按鍵編號
-            return
-
+        # 任何按鍵都可以進行位置判定（標準化測試條件）
         self.press_trace.append((self.player_x, self.player_y))
 
         distance = ((self.player_x - self.target_x)**2 +
