@@ -199,13 +199,30 @@ class AccuracyDirectionTestApp:
         
         # 準備儲存的測試參數
         parameters = {
+            "metadata": {
+                "test_version": "1.0",
+                "data_format_version": "1.0",
+                "description": "方向按鍵準確度測試，測試使用者對方向指示的反應準確度",
+                "data_definitions": {
+                    "time_units": "response_time以秒為單位，response_time_ms以毫秒為單位",
+                    "response_time_definition": "從方向指示出現到使用者按下按鍵的時間",
+                    "accuracy_definition": "正確按下目標方向按鍵的比例",
+                    "warmup_excluded": "第1回合為熱身，不計入統計"
+                }
+            },
             "window_size": {
                 "width": config.WINDOW_WIDTH,
                 "height": config.WINDOW_HEIGHT
             },
             "total_trials": 5,  # 第1回合是熱身，實際5回合
             "directions": list(self.directions.keys()),
-            "response_delay_range_ms": [1000, 3000]
+            "response_delay_range_ms": [1000, 3000],
+            "test_flow": {
+                "warmup_trials": 1,
+                "formal_trials": 5,
+                "inter_trial_interval_ms": 1000,
+                "stimulus_randomization": "方向隨機出現"
+            }
         }
         
         # 準備儲存的指標數據

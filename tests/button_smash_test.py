@@ -45,6 +45,8 @@ class ButtonSmashTestApp:
         self.test_duration = 10.0  # 10 秒測試時間
         self.click_count = 0
         self.timer_id = None
+        self.click_timestamps = []  # 記錄每次點擊的時間戳
+        self.button_pressed = False  # 防止重複觸發
         
         # 視覺元素
         self.circle_radius = 80
@@ -123,6 +125,7 @@ class ButtonSmashTestApp:
         self.state = "testing"
         self.start_time = None  # 將在第一次點擊時設定
         self.click_count = 0
+        self.click_timestamps = []  # 清空點擊時間戳記錄
         
         # 隱藏開始按鈕和說明文字
         self.start_button.place_forget()
@@ -196,6 +199,17 @@ class ButtonSmashTestApp:
         """儲存測試結果為 JSON 檔案"""
         # 準備儲存的測試參數
         parameters = {
+            "metadata": {
+                "test_version": "1.0",
+                "data_format_version": "1.0",
+                "description": "按鍵連擊速度測試，測試在固定時間內的最大點擊頻率",
+                "data_definitions": {
+                    "time_units": "test_duration以秒為單位",
+                    "cps_calculation": "CPS = 總點擊數 ÷ 測試持續時間",
+                    "timing_start": "第一次點擊開始計時，而非測試開始時計時",
+                    "click_definition": "任意按鍵按下都計為一次點擊"
+                }
+            },
             "window_size": {
                 "width": config.WINDOW_WIDTH,
                 "height": config.WINDOW_HEIGHT
@@ -205,15 +219,43 @@ class ButtonSmashTestApp:
                 "x": self.circle_x,
                 "y": self.circle_y,
                 "radius": self.circle_radius
+            },
+            "test_mechanics": {
+                "timing_trigger": "第一次點擊開始計時",
+                "duration_fixed": f"{self.test_duration}秒固定時間",
+                "visual_feedback": "X符號顯示點擊，圓形保持白色",
+                "accessibility": "依靠X符號而非顏色變化提供回饋"
             }
         }
         
+        # 計算點擊間隔和節奏分析
+        click_intervals = []
+        if len(self.click_timestamps) > 1:
+            for i in range(1, len(self.click_timestamps)):
+                interval = self.click_timestamps[i]["relative_time_ms"] - self.click_timestamps[i-1]["relative_time_ms"]
+                click_intervals.append(interval)
+        
+        avg_interval = sum(click_intervals) / len(click_intervals) if click_intervals else 0
+        interval_variance = sum((x - avg_interval)**2 for x in click_intervals) / len(click_intervals) if click_intervals else 0
+
         # 準備儲存的指標數據
         metrics = {
             "total_clicks": self.click_count,
             "test_duration_seconds": self.test_duration,
             "clicks_per_second": cps,
-            "performance_rating": self.get_performance_rating(cps)
+            "performance_rating": self.get_performance_rating(cps),
+            "click_timestamps": self.click_timestamps,
+            "rhythm_analysis": {
+                "click_intervals_ms": click_intervals,
+                "average_interval_ms": avg_interval,
+                "interval_variance": interval_variance,
+                "rhythm_consistency": "低變異數表示節奏穩定" if interval_variance < 1000 else "高變異數表示節奏不穩定"
+            },
+            "temporal_distribution": {
+                "first_second_clicks": len([c for c in self.click_timestamps if c["relative_time_ms"] <= 1000]),
+                "last_second_clicks": len([c for c in self.click_timestamps if c["relative_time_ms"] >= 9000]),
+                "middle_period_clicks": len([c for c in self.click_timestamps if 1000 < c["relative_time_ms"] < 9000])
+            }
         }
         
         # 儲存結果
@@ -279,9 +321,19 @@ class ButtonSmashTestApp:
                 print("⏰ 開始計時！")
             
             # 檢查是否還在測試時間內
-            if self.start_time and (time.time() - self.start_time) < self.test_duration:
+            current_time = time.time()
+            if self.start_time and (current_time - self.start_time) < self.test_duration:
                 self.click_count += 1
-                print(f"🖱️ 點擊 #{self.click_count}")
+                
+                # 記錄點擊時間戳
+                click_timestamp = {
+                    "click_number": self.click_count,
+                    "absolute_time": current_time,
+                    "relative_time_ms": (current_time - self.start_time) * 1000
+                }
+                self.click_timestamps.append(click_timestamp)
+                
+                print(f"🖱️ 點擊 #{self.click_count} (t={click_timestamp['relative_time_ms']:.1f}ms)")
                 
                 # 視覺回饋：按下時顯示 X 符號（色盲友善設計）
                 button_active_color = f"#{config.COLORS['BUTTON_ACTIVE'][0]:02x}{config.COLORS['BUTTON_ACTIVE'][1]:02x}{config.COLORS['BUTTON_ACTIVE'][2]:02x}"

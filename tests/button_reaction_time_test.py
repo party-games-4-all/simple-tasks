@@ -142,12 +142,29 @@ class ReactionTestApp:
         
         # 準備儲存的測試參數
         parameters = {
+            "metadata": {
+                "test_version": "1.0",
+                "data_format_version": "1.0",
+                "description": "簡單反應時間測試，測試對視覺刺激的基本反應速度",
+                "data_definitions": {
+                    "time_units": "reaction_time以秒為單位，reaction_time_ms以毫秒為單位",
+                    "reaction_time_definition": "從紅色刺激出現到使用者按下任意按鍵的時間",
+                    "stimulus_description": "圓形從白色變為紅色作為GO信號",
+                    "premature_response": "在刺激出現前按鍵視為無效，需重新測試"
+                }
+            },
             "window_size": {
                 "width": config.WINDOW_WIDTH,
                 "height": config.WINDOW_HEIGHT
             },
             "total_trials": 5,
-            "stimulus_delay_range_ms": [1000, 3000]
+            "stimulus_delay_range_ms": [1000, 3000],
+            "test_procedure": {
+                "wait_signal": "圓形顯示為白色",
+                "go_signal": "圓形變為紅色",
+                "response_window": "刺激出現後無時間限制",
+                "inter_trial_interval": "使用者控制，按鍵開始下一回合"
+            }
         }
         
         # 準備儲存的指標數據

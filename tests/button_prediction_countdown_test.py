@@ -373,6 +373,18 @@ class CountdownReactionTestApp:
         
         # 準備儲存的測試參數
         parameters = {
+            "metadata": {
+                "test_version": "1.0",
+                "data_format_version": "1.0", 
+                "description": "太鼓達人風格預測反應時間測試，球從出現到目標點固定1000ms",
+                "data_definitions": {
+                    "time_units": "所有時間以毫秒為單位，除非特別註明為秒",
+                    "coordinate_system": "畫布座標系統，左上角為(0,0)",
+                    "response_time_definition": "從球出現到使用者按下按鍵的時間（秒）",
+                    "target_time_definition": "球到達目標區域的理想時間（固定1.0秒）",
+                    "error_calculation": "response_time - target_time (負值=提前按，正值=延遲按)"
+                }
+            },
             "window_size": {
                 "width": config.WINDOW_WIDTH,
                 "height": config.WINDOW_HEIGHT
@@ -384,7 +396,12 @@ class CountdownReactionTestApp:
                 "start_x": self.start_x,
                 "target_x": self.target_x,
                 "end_x": self.end_x,
-                "y_position": self.y_pos
+                "y_position": self.y_pos,
+                "movement_description": "球從左側滑入，經過目標區域後滑出"
+            },
+            "timing_definitions": {
+                "ball_spawn_to_target": "球從出現到到達目標線的時間（1000ms）",
+                "continuous_mode": "多個球可同時在畫面上，間隔500ms生成"
             }
         }
         

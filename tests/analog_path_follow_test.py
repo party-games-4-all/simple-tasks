@@ -1053,6 +1053,18 @@ class PathFollowingTestApp:
         
         # 準備儲存的測試參數（更新參數以反映新設計）
         parameters = {
+            "metadata": {
+                "test_version": "1.0",
+                "data_format_version": "1.0",
+                "description": "路徑跟隨測試，參考Mario Party設計，測試joystick路徑跟隨精確度",
+                "data_definitions": {
+                    "completion_time_definition": "從進入起始區域到到達終點區域的時間",
+                    "off_path_time_definition": "玩家中心超出路徑邊界的累計時間",
+                    "path_accuracy_calculation": "(總時間 - 偏離時間) / 總時間 × 100%",
+                    "trajectory_sampling": "玩家移動軌跡以約60fps頻率記錄",
+                    "coordinate_system": "畫布座標系統，左上角為(0,0)"
+                }
+            },
             "window_size": {
                 "width": self.canvas_width,
                 "height": self.canvas_height
@@ -1068,7 +1080,12 @@ class PathFollowingTestApp:
                 "l_shaped_paths": 8   # 8種L型轉彎
             },
             "accessibility_optimized": True,  # 標記已針對不同年齡層優化
-            "speed_reduced_for_accessibility": True  # 標記速度已為了可及性降低
+            "speed_reduced_for_accessibility": True,  # 標記速度已為了可及性降低
+            "path_detection": {
+                "method": "玩家中心點位置檢測",
+                "boundary_definition": "路徑邊界外視為偏離",
+                "real_time_tracking": "即時記錄偏離時間點"
+            }
         }
         
         # 準備儲存的指標數據（包含新的分析）

@@ -321,7 +321,7 @@ class JoystickTargetTestApp:
                 # 記錄起始位置以便軌跡輸出
                 start_position = (self.trace_points[0] if self.trace_points else (self.player_x, self.player_y))
 
-                # 記錄單次測試結果
+                # 記錄單次測試結果（包含完整軌跡資料）
                 trial_result = {
                     "trial_number": formal_count,
                     "target_x": self.target_x,
@@ -335,7 +335,34 @@ class JoystickTargetTestApp:
                     "sequence_index": current_target_info.get("sequence_index", 0),
                     "position_index": current_target_info.get("position_index", 0),
                     "size_type": current_target_info.get("size_type", "unknown"),
-                    "distance_type": current_target_info.get("distance_type", "unknown")
+                    "distance_type": current_target_info.get("distance_type", "unknown"),
+                    "joystick_trajectory": {
+                        "description": "玩家移動軌跡座標序列",
+                        "sampling_note": "約60fps取樣，實際間隔16.67ms",
+                        "coordinate_format": "[x, y] 畫布座標",
+                        "coordinates": self.trace_points.copy() if self.trace_points else [],
+                        "start_position": start_position,
+                        "end_position": (self.player_x, self.player_y)
+                    },
+                    "press_locations": {
+                        "description": "確認按鍵時的位置記錄",
+                        "coordinates": self.press_trace.copy() if self.press_trace else []
+                    },
+                    "movement_analysis": {
+                        "total_distance_pixels": sum(
+                            ((self.trace_points[i][0] - self.trace_points[i-1][0])**2 + 
+                             (self.trace_points[i][1] - self.trace_points[i-1][1])**2)**0.5 
+                            for i in range(1, len(self.trace_points))
+                        ) if len(self.trace_points) > 1 else 0,
+                        "straight_line_distance": self.initial_distance,
+                        "movement_efficiency_ratio": (
+                            self.initial_distance / sum(
+                                ((self.trace_points[i][0] - self.trace_points[i-1][0])**2 + 
+                                 (self.trace_points[i][1] - self.trace_points[i-1][1])**2)**0.5 
+                                for i in range(1, len(self.trace_points))
+                            ) if len(self.trace_points) > 1 else 1.0
+                        )
+                    }
                 }
                 self.test_results.append(trial_result)
 
@@ -413,6 +440,18 @@ class JoystickTargetTestApp:
         
         # 準備儲存的測試參數
         parameters = {
+            "metadata": {
+                "test_version": "1.0",
+                "data_format_version": "1.0",
+                "description": "ISO9241標準九點圓形指向測試，測試joystick精確移動能力",
+                "data_definitions": {
+                    "completion_time_definition": "從使用者開始移動joystick到按下確認按鍵的時間",
+                    "movement_start_detection": "joystick輸入值偏離(0,0)時開始計時",
+                    "efficiency_calculation": "完成時間(秒) ÷ 直線距離(像素)",
+                    "trace_sampling": "移動軌跡以約60fps頻率記錄座標點",
+                    "coordinate_system": "畫布座標系統，左上角為(0,0)"
+                }
+            },
             "window_size": {
                 "width": self.canvas_width,
                 "height": self.canvas_height
@@ -439,6 +478,12 @@ class JoystickTargetTestApp:
                     "short_large": f"距離{self.short_distance}px，目標50px",
                     "short_small": f"距離{self.short_distance}px，目標20px"
                 }
+            },
+            "trajectory_recording": {
+                "enabled": True,
+                "output_format": "PNG圖片 + JSON座標資料",
+                "sampling_rate_target": "60 FPS",
+                "data_includes": ["player_position", "target_position", "press_locations"]
             }
         }
         
