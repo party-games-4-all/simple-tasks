@@ -671,8 +671,8 @@ class PathFollowingTestApp:
                                 bg=background_color)
         self.canvas.pack()
 
-        # 參考Mario Party Lumber Tumble的角色大小和移動速度
-        self.player_radius = 6  # 縮小角色半徑，更接近遊戲比例
+        # 調整角色大小和移動速度，考慮不同年齡層使用者
+        self.player_radius = 15  # 變大為道路寬的 1/4 (120/4 = 30，半徑為 15)
         self.goal_color = f"#{config.COLORS['TARGET'][0]:02x}{config.COLORS['TARGET'][1]:02x}{config.COLORS['TARGET'][2]:02x}"
 
         self.player_x = 100
@@ -680,7 +680,7 @@ class PathFollowingTestApp:
         self.offset = 15  # 減小起始偏移距離
         self.leftX = 0
         self.leftY = 0
-        self.speed = 10  # 調整移動速度，參考Mario Party的節奏
+        self.speed = 7  # 速度放慢，從 10 減為 7
 
         self.off_path_time = 0
         self.total_time = 0
@@ -706,7 +706,7 @@ class PathFollowingTestApp:
     def create_paths(self):
         """回傳多條路徑清單 - 包含4種直線和8種L型轉彎路徑"""
         # 參考Mario Party Lumber Tumble的設計調整參數
-        path_width = 60  # 縮小路徑寬度，參考遊戲中木板寬度
+        path_width = 120  # 道路拓寬一倍，從 60 增加到 120
         margin = 80      # 邊界距離
         center_x = self.canvas_width // 2
         center_y = self.canvas_height // 2
@@ -995,7 +995,17 @@ class PathFollowingTestApp:
             "off_path_percentage": percent_off,
             "path_accuracy": 100 - percent_off,
             "trace_points_count": len(self.path.player_trace),
-            "movement_analysis": movement_analysis  # 新增：段落分析
+            "movement_analysis": movement_analysis,  # 新增：段落分析
+            # 新增：繪圖所需的完整資料
+            "player_trace": self.path.player_trace,  # 完整的玩家移動軌跡
+            "path_shapes": self.path.get_path_shapes(),  # 路徑形狀資料
+            "goal_area": self.path.get_goal_area(),  # 目標區域資料
+            "canvas_dimensions": {
+                "width": self.canvas_width,
+                "height": self.canvas_height
+            },
+            "player_radius": self.player_radius,
+            "path_width": self.path.width
         }
         self.test_results.append(trial_result)
         
@@ -1050,13 +1060,15 @@ class PathFollowingTestApp:
             "player_radius": self.player_radius,
             "movement_speed_multiplier": self.speed,
             "total_paths": len(self.paths),
-            "path_width": 60,  # 更新為新的路徑寬度
+            "path_width": 120,  # 更新為新的路徑寬度（拓寬一倍）
             "player_offset": self.offset,
             "mario_party_reference": True,  # 標記參考Mario Party設計
             "path_types": {
                 "straight_paths": 4,  # 4條直線
                 "l_shaped_paths": 8   # 8種L型轉彎
-            }
+            },
+            "accessibility_optimized": True,  # 標記已針對不同年齡層優化
+            "speed_reduced_for_accessibility": True  # 標記速度已為了可及性降低
         }
         
         # 準備儲存的指標數據（包含新的分析）
