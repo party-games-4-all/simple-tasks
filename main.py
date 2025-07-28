@@ -27,7 +27,6 @@ def show_menu():
     print("Analog 測試 (搖桿測試 - 由簡單到難):")
     print("5. 類比搖桿移動測試")
     print("6. 路徑追蹤測試")
-    print("7. 路徑追蹤測試 (有障礙物)")
     print("")
     print("9. 退出")
     print("="*50)
@@ -42,7 +41,6 @@ def run_single_test(test_num, user_id="test_user"):
         4: f"uv run python tests/button_accuracy_test.py --user {user_id}",
         5: f"uv run python tests/analog_move_test.py --user {user_id}",
         6: f"uv run python tests/analog_path_follow_test.py --user {user_id}",
-        7: f"uv run python tests/analog_path_obstacle_test.py --user {user_id}",
     }
     
     if test_num in test_commands:
@@ -86,7 +84,7 @@ def main():
             elif choice == 8:
                 print(f"\n執行完整測試套件 (使用者: {user_id})...")
                 os.system(f"./run_all_tests.sh {user_id}")
-            elif 0 <= choice <= 7:
+            elif 0 <= choice <= 6:
                 run_single_test(choice, user_id)
             else:
                 print("請輸入有效的選項 (0-9)")

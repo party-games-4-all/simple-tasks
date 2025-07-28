@@ -72,8 +72,7 @@ simple-tasks/
 │   ├── button_smash_test.py       # Button Smash 連打測試
 │   ├── button_accuracy_test.py    # 方向選擇反應測試
 │   ├── analog_move_test.py        # 類比搖桿移動測試
-│   ├── analog_path_follow_test.py # 路徑追蹤測試
-│   └── analog_path_obstacle_test.py # 路徑追蹤測試 (障礙物版本)
+│   └── analog_path_follow_test.py # 路徑追蹤測試
 ├── common/                        # 共用模組
 │   ├── __init__.py               # Python 套件初始化
 │   ├── config.py                 # 全域配置設定
@@ -87,8 +86,7 @@ simple-tasks/
 │   │   └── [user_id]/           # 各使用者的測試結果
 │   └── images/                   # 圖片輸出 (軌跡圖等)
 │       ├── analog_move/          # 移動測試軌跡圖
-│       ├── analog_path_trace/    # 路徑追蹤軌跡圖
-│       └── analog_path_obstacle_trace/ # 障礙物路徑軌跡圖
+│       └── analog_path_trace/    # 路徑追蹤軌跡圖
 ├── docs/                         # 開發文件
 └── __pycache__/                  # Python 編譯快取 (自動生成)
 ```
@@ -116,7 +114,6 @@ uv run python tests/button_accuracy_test.py --user P1
 # Analog Stick 測試系列
 uv run python tests/analog_move_test.py --user P1
 uv run python tests/analog_path_follow_test.py --user P1
-uv run python tests/analog_path_obstacle_test.py --user P1
 ```
 
 如果不提供 `--user` 參數，程式會要求您輸入使用者 ID。
@@ -184,13 +181,6 @@ uv run python main.py
 - **測量指標**：完成時間、路徑偏離次數、偏離距離
 - **路徑類型**：直線路徑、S 型曲線路徑
 - **說明**：評估精細運動控制和路徑規劃能力
-
-#### 7. 路徑追蹤測試 (障礙物版本) (`analog_path_obstacle_test.py`)
-- **目的**：測試複雜環境下的導航能力
-- **操作**：在有障礙物的情況下沿路徑移動到目標
-- **測量指標**：完成時間、碰撞次數、路徑效率
-- **難度特色**：增加了固定和移動障礙物
-- **說明**：評估空間認知、避障能力和動態決策能力
 
 ### 手把連接測試 (`connection_test.py`)
 - **目的**：驗證手把連接狀態
@@ -435,12 +425,6 @@ flake8 .
 - **圖形輸出**：路徑追蹤軌跡圖，顯示偏離情況
 - **結果檔案**：JSON + PNG 軌跡圖
 
-#### `analog_path_obstacle_test.py`
-- **測試類型**：障礙物路徑測試
-- **複雜度**：最高難度測試，包含障礙物避障
-- **圖形輸出**：包含障礙物位置的完整軌跡圖
-- **結果檔案**：JSON + PNG 軌跡圖
-
 ### 共用模組 (`common/` 目錄)
 
 #### `config.py`
@@ -483,7 +467,7 @@ flake8 .
 - **支援圖表類型**：
   - 移動軌跡圖 (analog_move_test)
   - 路徑追蹤圖 (analog_path_follow_test)
-  - 障礙物路徑圖 (analog_path_obstacle_test)
+  - 路徑追蹤軌跡圖 (analog_path_follow_test)
 - **圖表特色**：高解析度 PNG 輸出、清晰的視覺標示
 - **使用技術**：matplotlib
 
@@ -506,7 +490,6 @@ flake8 .
 - **圖表類型**：
   - `analog_move/`：移動測試軌跡圖
   - `analog_path_trace/`：路徑追蹤軌跡圖
-  - `analog_path_obstacle_trace/`：障礙物路徑軌跡圖
 
 ### 開發文件 (`docs/`)
 - **內容**：專案開發過程中的會議記錄、技術文件

@@ -11,7 +11,6 @@ from . import button_accuracy_test
 from . import button_smash_test
 from . import analog_move_test
 from . import analog_path_follow_test
-from . import analog_path_obstacle_test
 
 __all__ = [
     'connection_test',
@@ -20,6 +19,5 @@ __all__ = [
     'button_accuracy_test',
     'button_smash_test',
     'analog_move_test',
-    'analog_path_follow_test',
-    'analog_path_obstacle_test'
+    'analog_path_follow_test'
 ]
