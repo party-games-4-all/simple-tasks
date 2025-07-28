@@ -35,7 +35,7 @@ class JoystickTargetTestApp:
 
         text_color = f"#{config.COLORS['TEXT'][0]:02x}{config.COLORS['TEXT'][1]:02x}{config.COLORS['TEXT'][2]:02x}"
         self.label = tk.Label(root,
-                              text="按『開始測試』後用搖桿移動到紅圈",
+                              text="按『開始測試』後先進行暖身，然後正式測試",
                               font=("Arial", 24),
                               bg=background_color,
                               fg=text_color)
@@ -79,94 +79,70 @@ class JoystickTargetTestApp:
         self.press_trace = []
         self.output_dir = init_trace_output_folder("analog_move", self.user_id)
 
-        # 固定目標組合
-        self.fixed_targets = [
-            # D=100 W=20
-            {
-                "x": 670,
-                "y": 330,
-                "radius": 20
-            },  # 右上
-            {
-                "x": 530,
-                "y": 330,
-                "radius": 20
-            },  # 左上
-            {
-                "x": 530,
-                "y": 470,
-                "radius": 20
-            },  # 左下
-            {
-                "x": 670,
-                "y": 470,
-                "radius": 20
-            },  # 右下
-            # D=100 W=50
-            {
-                "x": 670,
-                "y": 330,
-                "radius": 50
-            },  # 右上
-            {
-                "x": 530,
-                "y": 330,
-                "radius": 50
-            },  # 左上
-            {
-                "x": 530,
-                "y": 470,
-                "radius": 50
-            },  # 左下
-            {
-                "x": 670,
-                "y": 470,
-                "radius": 50
-            },  # 右下
-            # D=400 W=20
-            {
-                "x": 882,
-                "y": 118,
-                "radius": 20
-            },  # 右上
-            {
-                "x": 318,
-                "y": 118,
-                "radius": 20
-            },  # 左上
-            {
-                "x": 318,
-                "y": 682,
-                "radius": 20
-            },  # 左下
-            {
-                "x": 882,
-                "y": 682,
-                "radius": 20
-            },  # 右下
-            # D=400 W=50
-            {
-                "x": 882,
-                "y": 118,
-                "radius": 50
-            },  # 右上
-            {
-                "x": 318,
-                "y": 118,
-                "radius": 50
-            },  # 左上
-            {
-                "x": 318,
-                "y": 682,
-                "radius": 50
-            },  # 左下
-            {
-                "x": 882,
-                "y": 682,
-                "radius": 50
-            },  # 右下
-        ]
-        random.shuffle(self.fixed_targets)
+        # ISO9241 標準九點圓形測試設計
+        # 從中心點 (600, 400) 距離 300 像素的圓周上設置 9 個點
+        # 每個點相隔 40 度 (360/9)
+        self.center_x = self.canvas_width // 2  # 600
+        self.center_y = self.canvas_height // 2  # 400
+        self.distance = 300  # 固定距離
+        
+        # 生成 9 個圓周點的座標
+        import math
+        self.circle_points = []
+        for i in range(9):
+            angle = i * (360 / 9) * math.pi / 180  # 轉換為弧度
+            x = self.center_x + self.distance * math.cos(angle)
+            y = self.center_y + self.distance * math.sin(angle)
+            self.circle_points.append((x, y))
+        
+        # 測試序列：從位置1開始，到對面順時針的下一個位置
+        # 位置編號：0=右(0°), 1=右下(40°), 2=下右(80°), 3=下左(120°), 4=左下(160°), 
+        #          5=左(200°), 6=左上(240°), 7=上左(280°), 8=上右(320°)
+        self.test_sequence = [1, 6, 2, 7, 3, 8, 4, 0, 5]  # 從1開始，每次跳到對面順時針下一個
+        
+        # 固定目標組合：增加第零次測試 + 先測試所有大目標，再測試所有小目標
+        self.fixed_targets = []
+        
+        # 第零次測試：移動到最後一個位置（不計入正式結果）
+        last_pos_index = self.test_sequence[-1]  # 最後一個位置
+        x, y = self.circle_points[last_pos_index]
+        self.fixed_targets.append({
+            "x": x,
+            "y": y,
+            "radius": 30,  # 使用中等大小的目標
+            "sequence_index": 0,
+            "position_index": last_pos_index,
+            "size_type": "warmup",
+            "is_warmup": True
+        })
+        
+        # 先添加大目標 (radius=50) - 完整的9個位置
+        for i, pos_index in enumerate(self.test_sequence):
+            x, y = self.circle_points[pos_index]
+            self.fixed_targets.append({
+                "x": x,
+                "y": y,
+                "radius": 50,
+                "sequence_index": i + 1,
+                "position_index": pos_index,
+                "size_type": "large",
+                "is_warmup": False
+            })
+        
+        # 再添加小目標 (radius=20) - 完整的9個位置
+        for i, pos_index in enumerate(self.test_sequence):
+            x, y = self.circle_points[pos_index]
+            self.fixed_targets.append({
+                "x": x,
+                "y": y,
+                "radius": 20,
+                "sequence_index": i + 1,
+                "position_index": pos_index,
+                "size_type": "small",
+                "is_warmup": False
+            })
+        
+        # 不打亂順序，保持測試的一致性
 
         self.spawn_target()
         Thread(target=self.player_loop, daemon=True).start()
@@ -192,21 +168,22 @@ class JoystickTargetTestApp:
     def spawn_target(self):
         self.canvas.delete("all")
 
-        # 重置玩家位置
-        self.player_x = self.canvas_width // 2
-        self.player_y = self.canvas_height // 2
+        # 只在第一次測試時重置玩家位置到中心點
+        if self.success_count == 0:
+            self.player_x = self.center_x
+            self.player_y = self.center_y
 
         if self.success_count >= len(self.fixed_targets):
             self.label.config(text="✅ 測驗完成")
             return
 
-        target_index = (self.success_count) % len(self.fixed_targets)
+        target_index = self.success_count
         target_info = self.fixed_targets[target_index]
         self.target_x = target_info["x"]
         self.target_y = target_info["y"]
         self.target_radius = target_info["radius"]
 
-        # 計算初始距離
+        # 計算從當前位置到目標的實際距離
         self.initial_distance = ((self.player_x - self.target_x)**2 +
                                  (self.player_y - self.target_y)**2)**0.5
 
@@ -280,44 +257,87 @@ class JoystickTargetTestApp:
             elapsed = time.time() - self.start_time
             self.success_count += 1
 
-            efficiency = elapsed / self.initial_distance
-            self.total_time += elapsed
-            self.total_efficiency += efficiency
+            # 獲取當前目標資訊
+            current_target_info = self.fixed_targets[self.success_count - 1]
+            
+            # 判斷是否為暖身測試
+            is_warmup = current_target_info.get("is_warmup", False)
+            
+            if not is_warmup:
+                # 只有非暖身測試才計入統計
+                efficiency = elapsed / self.initial_distance
+                self.total_time += elapsed
+                self.total_efficiency += efficiency
 
-            avg_time = self.total_time / (self.success_count)
-            avg_efficiency = self.total_efficiency / (self.success_count)
+                formal_count = self.success_count - 1  # 扣除暖身測試
+                avg_time = self.total_time / formal_count if formal_count > 0 else 0
+                avg_efficiency = self.total_efficiency / formal_count if formal_count > 0 else 0
 
-            # 記錄單次測試結果
-            trial_result = {
-                "trial_number": self.success_count,
-                "target_x": self.target_x,
-                "target_y": self.target_y,
-                "target_radius": self.target_radius,
-                "initial_distance": self.initial_distance,
-                "completion_time_ms": elapsed * 1000,  # 轉換為毫秒
-                "efficiency_s_per_px": efficiency,
-                "trace_points_count": len(self.trace_points),
-                "press_points_count": len(self.press_trace)
-            }
-            self.test_results.append(trial_result)
+                # 記錄起始位置以便軌跡輸出
+                start_position = (self.trace_points[0] if self.trace_points else (self.player_x, self.player_y))
 
-            print(f"✅ 第 {self.success_count} 次成功")
-            print(f"⏱ 用時：{elapsed:.2f} 秒")
-            print(f"📏 初始距離：{self.initial_distance:.1f} px")
-            print(f"⚡ 單位距離時間：{efficiency:.4f} 秒/像素")
-            print(f"📊 平均時間：{avg_time:.2f} 秒，平均秒/像素：{avg_efficiency:.4f}")
-            self.label.config(text=(f"第 {self.success_count} 次"))
+                # 記錄單次測試結果
+                trial_result = {
+                    "trial_number": formal_count,
+                    "target_x": self.target_x,
+                    "target_y": self.target_y,
+                    "target_radius": self.target_radius,
+                    "initial_distance": self.initial_distance,
+                    "completion_time_ms": elapsed * 1000,  # 轉換為毫秒
+                    "efficiency_s_per_px": efficiency,
+                    "trace_points_count": len(self.trace_points),
+                    "press_points_count": len(self.press_trace),
+                    "sequence_index": current_target_info.get("sequence_index", 0),
+                    "position_index": current_target_info.get("position_index", 0),
+                    "size_type": current_target_info.get("size_type", "unknown")
+                }
+                self.test_results.append(trial_result)
+
+                print(f"✅ 第 {formal_count} 次成功")
+                print(f"🎯 位置：{current_target_info.get('position_index', 'N/A')} ({current_target_info.get('size_type', 'N/A')})")
+                print(f"⏱ 用時：{elapsed:.2f} 秒")
+                print(f"📏 距離：{self.initial_distance:.1f} px")
+                print(f"⚡ 單位距離時間：{efficiency:.4f} 秒/像素")
+                print(f"📊 平均時間：{avg_time:.2f} 秒，平均秒/像素：{avg_efficiency:.4f}")
+                self.label.config(text=(f"第 {formal_count} 次"))
+            else:
+                # 暖身測試
+                print(f"🏃 暖身測試完成")
+                print(f"⏱ 用時：{elapsed:.2f} 秒")
+                print(f"📏 距離：{self.initial_distance:.1f} px")
+                print(f"🎯 現在開始正式測試...")
+                self.label.config(text="暖身完成，開始正式測試")
+                
             self.testing = False
-            output_move_trace(
-                trace_points=self.trace_points,
-                start=(self.canvas_width // 2, self.canvas_height // 2),
-                target=(self.target_x, self.target_y),
-                radius=self.target_radius,
-                player_radius=self.player_radius,   # ✅ 傳入實際玩家半徑
-                press_points=self.press_trace,
-                index=self.success_count,
-                output_dir=self.output_dir
-            )
+            
+            # 輸出軌跡圖（包括暖身測試）
+            if not is_warmup:
+                # 正式測試使用實際的測試編號
+                start_position = (self.trace_points[0] if self.trace_points else (self.player_x, self.player_y))
+                output_move_trace(
+                    trace_points=self.trace_points,
+                    start=start_position,
+                    target=(self.target_x, self.target_y),
+                    radius=self.target_radius,
+                    player_radius=self.player_radius,
+                    press_points=self.press_trace,
+                    index=formal_count,  # 使用正式測試編號
+                    output_dir=self.output_dir
+                )
+            else:
+                # 暖身測試使用特殊編號
+                start_position = (self.trace_points[0] if self.trace_points else (self.player_x, self.player_y))
+                output_move_trace(
+                    trace_points=self.trace_points,
+                    start=start_position,
+                    target=(self.target_x, self.target_y),
+                    radius=self.target_radius,
+                    player_radius=self.player_radius,
+                    press_points=self.press_trace,
+                    index=0,  # 暖身測試編號為0
+                    output_dir=self.output_dir
+                )
+            
             self.trace_points = []  # 清空以便下次測試
             self.press_trace = []
             
@@ -339,11 +359,9 @@ class JoystickTargetTestApp:
         avg_time = self.total_time / total_trials
         avg_efficiency = self.total_efficiency / total_trials
         
-        # 分析不同難度的表現
-        d100_w20_trials = [t for t in self.test_results if t["initial_distance"] <= 150 and t["target_radius"] == 20]
-        d100_w50_trials = [t for t in self.test_results if t["initial_distance"] <= 150 and t["target_radius"] == 50]
-        d400_w20_trials = [t for t in self.test_results if t["initial_distance"] > 150 and t["target_radius"] == 20]
-        d400_w50_trials = [t for t in self.test_results if t["initial_distance"] > 150 and t["target_radius"] == 50]
+        # 分析不同難度的表現 - 基於新的ISO9241九點測試
+        small_target_trials = [t for t in self.test_results if t["target_radius"] == 20]
+        large_target_trials = [t for t in self.test_results if t["target_radius"] == 50]
         
         # 準備儲存的測試參數
         parameters = {
@@ -353,7 +371,19 @@ class JoystickTargetTestApp:
             },
             "player_radius": self.player_radius,
             "movement_speed_multiplier": 13,
-            "total_targets": len(self.fixed_targets)
+            "total_targets": len(self.fixed_targets),
+            "formal_test_count": len(self.fixed_targets) - 1,  # 扣除暖身測試
+            "has_warmup": True,
+            "iso9241_config": {
+                "standard": "ISO9241多方向指向測試",
+                "center_point": [self.center_x, self.center_y],
+                "circle_radius": self.distance,
+                "total_positions": 9,
+                "angle_separation": 40,  # 度
+                "target_sizes": [20, 50],  # 像素
+                "test_sequence": self.test_sequence,
+                "warmup_target_size": 30  # 暖身測試目標大小
+            }
         }
         
         # 準備儲存的指標數據
@@ -364,22 +394,23 @@ class JoystickTargetTestApp:
             "average_efficiency_s_per_px": avg_efficiency,
             "trials": self.test_results,
             "difficulty_analysis": {
-                "d100_w20": {
-                    "count": len(d100_w20_trials),
-                    "avg_time_ms": sum(t["completion_time_ms"] for t in d100_w20_trials) / len(d100_w20_trials) if d100_w20_trials else 0
+                "small_targets_20px": {
+                    "count": len(small_target_trials),
+                    "avg_time_ms": sum(t["completion_time_ms"] for t in small_target_trials) / len(small_target_trials) if small_target_trials else 0,
+                    "description": "ISO9241九點圓形測試 - 小目標 (半徑20px, 距離300px)"
                 },
-                "d100_w50": {
-                    "count": len(d100_w50_trials),
-                    "avg_time_ms": sum(t["completion_time_ms"] for t in d100_w50_trials) / len(d100_w50_trials) if d100_w50_trials else 0
-                },
-                "d400_w20": {
-                    "count": len(d400_w20_trials),
-                    "avg_time_ms": sum(t["completion_time_ms"] for t in d400_w20_trials) / len(d400_w20_trials) if d400_w20_trials else 0
-                },
-                "d400_w50": {
-                    "count": len(d400_w50_trials),
-                    "avg_time_ms": sum(t["completion_time_ms"] for t in d400_w50_trials) / len(d400_w50_trials) if d400_w50_trials else 0
+                "large_targets_50px": {
+                    "count": len(large_target_trials),
+                    "avg_time_ms": sum(t["completion_time_ms"] for t in large_target_trials) / len(large_target_trials) if large_target_trials else 0,
+                    "description": "ISO9241九點圓形測試 - 大目標 (半徑50px, 距離300px)"
                 }
+            },
+            "iso9241_info": {
+                "standard": "ISO9241多方向指向測試",
+                "total_positions": 9,
+                "circle_radius": self.distance,
+                "test_sequence": self.test_sequence,
+                "position_angles": [i * 40 for i in range(9)]  # 每個位置的角度
             }
         }
         
@@ -393,13 +424,16 @@ class JoystickTargetTestApp:
         )
         
         print("=" * 50)
-        print("🎯 Analog Move Test - 測試完成總結")
+        print("🎯 ISO9241 Analog Move Test - 測試完成總結")
         print("=" * 50)
         print(f"👤 使用者：{self.user_id}")
-        print(f"🎯 總試驗次數：{total_trials}")
+        print(f"🎯 正式測試次數：{total_trials}")
+        print(f"🏃 包含暖身測試：是 (第0次不計入統計)")
         print(f"⏱️ 總用時：{self.total_time:.2f} 秒")
         print(f"📊 平均用時：{avg_time:.2f} 秒")
         print(f"⚡ 平均效率：{avg_efficiency:.4f} 秒/像素")
+        print(f"🎪 測試標準：ISO9241 九點圓形指向測試")
+        print(f"📏 固定距離：{self.distance} 像素")
         print("")
         print("📈 各難度表現分析：")
         for difficulty, data in metrics["difficulty_analysis"].items():
