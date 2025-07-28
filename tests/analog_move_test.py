@@ -84,9 +84,10 @@ class JoystickTargetTestApp:
         # 每個點相隔 40 度 (360/9)
         self.center_x = self.canvas_width // 2  # 600
         self.center_y = self.canvas_height // 2  # 400
-        self.distance = 300  # 固定距離
+        self.distance = 300  # 長距離
+        self.short_distance = 100  # 短距離
         
-        # 生成 9 個圓周點的座標
+        # 生成 9 個長距離圓周點的座標
         import math
         self.circle_points = []
         for i in range(9):
@@ -94,6 +95,14 @@ class JoystickTargetTestApp:
             x = self.center_x + self.distance * math.cos(angle)
             y = self.center_y + self.distance * math.sin(angle)
             self.circle_points.append((x, y))
+        
+        # 生成 9 個短距離圓周點的座標
+        self.short_circle_points = []
+        for i in range(9):
+            angle = i * (360 / 9) * math.pi / 180  # 轉換為弧度
+            x = self.center_x + self.short_distance * math.cos(angle)
+            y = self.center_y + self.short_distance * math.sin(angle)
+            self.short_circle_points.append((x, y))
         
         # 測試序列：從位置1開始，到對面順時針的下一個位置
         # 位置編號：0=右(0°), 1=右下(40°), 2=下右(80°), 3=下左(120°), 4=左下(160°), 
@@ -116,7 +125,7 @@ class JoystickTargetTestApp:
             "is_warmup": True
         })
         
-        # 先添加大目標 (radius=50) - 完整的9個位置
+        # 先添加大目標 (radius=50) - 完整的9個位置 (長距離)
         for i, pos_index in enumerate(self.test_sequence):
             x, y = self.circle_points[pos_index]
             self.fixed_targets.append({
@@ -126,10 +135,11 @@ class JoystickTargetTestApp:
                 "sequence_index": i + 1,
                 "position_index": pos_index,
                 "size_type": "large",
-                "is_warmup": False
+                "is_warmup": False,
+                "distance_type": "long"
             })
         
-        # 再添加小目標 (radius=20) - 完整的9個位置
+        # 再添加小目標 (radius=20) - 完整的9個位置 (長距離)
         for i, pos_index in enumerate(self.test_sequence):
             x, y = self.circle_points[pos_index]
             self.fixed_targets.append({
@@ -139,7 +149,36 @@ class JoystickTargetTestApp:
                 "sequence_index": i + 1,
                 "position_index": pos_index,
                 "size_type": "small",
-                "is_warmup": False
+                "is_warmup": False,
+                "distance_type": "long"
+            })
+        
+        # 添加短距離大目標 (radius=50) - 完整的9個位置 (短距離)
+        for i, pos_index in enumerate(self.test_sequence):
+            x, y = self.short_circle_points[pos_index]
+            self.fixed_targets.append({
+                "x": x,
+                "y": y,
+                "radius": 50,
+                "sequence_index": i + 1,
+                "position_index": pos_index,
+                "size_type": "large",
+                "is_warmup": False,
+                "distance_type": "short"
+            })
+        
+        # 添加短距離小目標 (radius=20) - 完整的9個位置 (短距離)
+        for i, pos_index in enumerate(self.test_sequence):
+            x, y = self.short_circle_points[pos_index]
+            self.fixed_targets.append({
+                "x": x,
+                "y": y,
+                "radius": 20,
+                "sequence_index": i + 1,
+                "position_index": pos_index,
+                "size_type": "small",
+                "is_warmup": False,
+                "distance_type": "short"
             })
         
         # 不打亂順序，保持測試的一致性
@@ -289,12 +328,13 @@ class JoystickTargetTestApp:
                     "press_points_count": len(self.press_trace),
                     "sequence_index": current_target_info.get("sequence_index", 0),
                     "position_index": current_target_info.get("position_index", 0),
-                    "size_type": current_target_info.get("size_type", "unknown")
+                    "size_type": current_target_info.get("size_type", "unknown"),
+                    "distance_type": current_target_info.get("distance_type", "unknown")
                 }
                 self.test_results.append(trial_result)
 
                 print(f"✅ 第 {formal_count} 次成功")
-                print(f"🎯 位置：{current_target_info.get('position_index', 'N/A')} ({current_target_info.get('size_type', 'N/A')})")
+                print(f"🎯 位置：{current_target_info.get('position_index', 'N/A')} ({current_target_info.get('size_type', 'N/A')}-{current_target_info.get('distance_type', 'N/A')})")
                 print(f"⏱ 用時：{elapsed:.2f} 秒")
                 print(f"📏 距離：{self.initial_distance:.1f} px")
                 print(f"⚡ 單位距離時間：{efficiency:.4f} 秒/像素")
@@ -359,9 +399,11 @@ class JoystickTargetTestApp:
         avg_time = self.total_time / total_trials
         avg_efficiency = self.total_efficiency / total_trials
         
-        # 分析不同難度的表現 - 基於新的ISO9241九點測試
-        small_target_trials = [t for t in self.test_results if t["target_radius"] == 20]
-        large_target_trials = [t for t in self.test_results if t["target_radius"] == 50]
+        # 分析不同難度的表現 - 基於新的ISO9241九點測試 (四種組合)
+        long_large_trials = [t for t in self.test_results if t["target_radius"] == 50 and t.get("distance_type", "long") == "long"]
+        long_small_trials = [t for t in self.test_results if t["target_radius"] == 20 and t.get("distance_type", "long") == "long"]
+        short_large_trials = [t for t in self.test_results if t["target_radius"] == 50 and t.get("distance_type", "short") == "short"]
+        short_small_trials = [t for t in self.test_results if t["target_radius"] == 20 and t.get("distance_type", "short") == "short"]
         
         # 準備儲存的測試參數
         parameters = {
@@ -377,12 +419,20 @@ class JoystickTargetTestApp:
             "iso9241_config": {
                 "standard": "ISO9241多方向指向測試",
                 "center_point": [self.center_x, self.center_y],
-                "circle_radius": self.distance,
+                "long_circle_radius": self.distance,
+                "short_circle_radius": self.short_distance,
                 "total_positions": 9,
                 "angle_separation": 40,  # 度
                 "target_sizes": [20, 50],  # 像素
+                "distance_types": ["long", "short"],  # 距離類型
                 "test_sequence": self.test_sequence,
-                "warmup_target_size": 30  # 暖身測試目標大小
+                "warmup_target_size": 30,  # 暖身測試目標大小
+                "test_combinations": {
+                    "long_large": f"距離{self.distance}px，目標50px",
+                    "long_small": f"距離{self.distance}px，目標20px", 
+                    "short_large": f"距離{self.short_distance}px，目標50px",
+                    "short_small": f"距離{self.short_distance}px，目標20px"
+                }
             }
         }
         
@@ -394,21 +444,32 @@ class JoystickTargetTestApp:
             "average_efficiency_s_per_px": avg_efficiency,
             "trials": self.test_results,
             "difficulty_analysis": {
-                "small_targets_20px": {
-                    "count": len(small_target_trials),
-                    "avg_time_ms": sum(t["completion_time_ms"] for t in small_target_trials) / len(small_target_trials) if small_target_trials else 0,
-                    "description": "ISO9241九點圓形測試 - 小目標 (半徑20px, 距離300px)"
+                "long_large_d300_w50": {
+                    "count": len(long_large_trials),
+                    "avg_time_ms": sum(t["completion_time_ms"] for t in long_large_trials) / len(long_large_trials) if long_large_trials else 0,
+                    "description": "ISO9241九點圓形測試 - 長距離大目標 (半徑50px, 距離300px)"
                 },
-                "large_targets_50px": {
-                    "count": len(large_target_trials),
-                    "avg_time_ms": sum(t["completion_time_ms"] for t in large_target_trials) / len(large_target_trials) if large_target_trials else 0,
-                    "description": "ISO9241九點圓形測試 - 大目標 (半徑50px, 距離300px)"
+                "long_small_d300_w20": {
+                    "count": len(long_small_trials),
+                    "avg_time_ms": sum(t["completion_time_ms"] for t in long_small_trials) / len(long_small_trials) if long_small_trials else 0,
+                    "description": "ISO9241九點圓形測試 - 長距離小目標 (半徑20px, 距離300px)"
+                },
+                "short_large_d100_w50": {
+                    "count": len(short_large_trials),
+                    "avg_time_ms": sum(t["completion_time_ms"] for t in short_large_trials) / len(short_large_trials) if short_large_trials else 0,
+                    "description": "ISO9241九點圓形測試 - 短距離大目標 (半徑50px, 距離100px)"
+                },
+                "short_small_d100_w20": {
+                    "count": len(short_small_trials),
+                    "avg_time_ms": sum(t["completion_time_ms"] for t in short_small_trials) / len(short_small_trials) if short_small_trials else 0,
+                    "description": "ISO9241九點圓形測試 - 短距離小目標 (半徑20px, 距離100px)"
                 }
             },
             "iso9241_info": {
                 "standard": "ISO9241多方向指向測試",
                 "total_positions": 9,
-                "circle_radius": self.distance,
+                "long_circle_radius": self.distance,
+                "short_circle_radius": self.short_distance,
                 "test_sequence": self.test_sequence,
                 "position_angles": [i * 40 for i in range(9)]  # 每個位置的角度
             }
@@ -433,7 +494,8 @@ class JoystickTargetTestApp:
         print(f"📊 平均用時：{avg_time:.2f} 秒")
         print(f"⚡ 平均效率：{avg_efficiency:.4f} 秒/像素")
         print(f"🎪 測試標準：ISO9241 九點圓形指向測試")
-        print(f"📏 固定距離：{self.distance} 像素")
+        print(f"📏 長距離：{self.distance} 像素，短距離：{self.short_distance} 像素")
+        print(f"🎯 測試組合：長距離大小目標 + 短距離大小目標")
         print("")
         print("📈 各難度表現分析：")
         for difficulty, data in metrics["difficulty_analysis"].items():
