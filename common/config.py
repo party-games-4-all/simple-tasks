@@ -48,4 +48,12 @@ IMAGES_DIR = "data/images"
 
 # 日誌設定
 LOG_LEVEL = "INFO"
+
+# 使用者資訊 (由 main.py 設定)
+user_info = {
+    "user_id": "test_user",
+    "age": None,
+    "controller_usage_frequency": None,
+    "controller_usage_frequency_description": "1=沒用過, 2=有用過但無習慣, 3=有規律使用"
+}
 DEBUG_MODE = False

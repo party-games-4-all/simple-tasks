@@ -36,6 +36,14 @@ def save_test_result(user_id, test_name, metrics, parameters=None, image_files=N
         "metrics": metrics
     }
     
+    # 加入使用者基本資訊（如果有設定的話）
+    if hasattr(config, 'user_info') and config.user_info:
+        # 確保 user_id 一致
+        if config.user_info.get('user_id') == user_id:
+            result_data["age"] = config.user_info.get('age')
+            result_data["controller_usage_frequency"] = config.user_info.get('controller_usage_frequency')
+            result_data["controller_usage_frequency_description"] = config.user_info.get('controller_usage_frequency_description')
+    
     # 如果有圖片檔案，加入記錄
     if image_files:
         result_data["image_files"] = image_files
