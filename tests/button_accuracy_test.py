@@ -180,7 +180,7 @@ class AccuracyDirectionTestApp:
                         print("❌ 熱身測試答錯，請重新開始熱身測試")
                         self.total = 0  # 重設計數器，重新開始熱身
                         self.root.after(1000, self.next_round)  # 等待 1 秒後重新開始熱身
-                        break
+                        return  # 直接返回，不要繼續執行
                     
                     if self.total > 11:  # 熱身1次 + 正式測試10次 = 總共11次
                         avg_time = sum(self.response_times) / len(
@@ -203,7 +203,7 @@ class AccuracyDirectionTestApp:
                         print(
                             f"📊 平均反應時間：{avg_time:.3f} 秒｜錯誤率：{error_rate:.1%}")
                         self.reset()
-                        break
+                        return  # 直接返回，不要繼續執行下一回合
                     if self.total > 1:  # 第 1 回合不記錄
                         # 記錄詳細的測試結果
                         self.test_results.append({

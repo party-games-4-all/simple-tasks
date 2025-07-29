@@ -354,14 +354,21 @@ class JoystickTargetTestApp:
                              (self.trace_points[i][1] - self.trace_points[i-1][1])**2)**0.5 
                             for i in range(1, len(self.trace_points))
                         ) if len(self.trace_points) > 1 else 0,
-                        "straight_line_distance": self.initial_distance,
+                        "straight_line_distance": (
+                            ((self.trace_points[-1][0] - self.trace_points[0][0])**2 + 
+                             (self.trace_points[-1][1] - self.trace_points[0][1])**2)**0.5 
+                            if len(self.trace_points) >= 2 else self.initial_distance
+                        ),
                         "movement_efficiency_ratio": (
-                            self.initial_distance / sum(
-                                ((self.trace_points[i][0] - self.trace_points[i-1][0])**2 + 
+                            (((self.trace_points[-1][0] - self.trace_points[0][0])**2 + 
+                              (self.trace_points[-1][1] - self.trace_points[0][1])**2)**0.5) / 
+                            sum(((self.trace_points[i][0] - self.trace_points[i-1][0])**2 + 
                                  (self.trace_points[i][1] - self.trace_points[i-1][1])**2)**0.5 
-                                for i in range(1, len(self.trace_points))
-                            ) if len(self.trace_points) > 1 else 1.0
-                        )
+                                for i in range(1, len(self.trace_points)))
+                            if len(self.trace_points) > 1 else 1.0
+                        ),
+                        "initial_distance_reference": self.initial_distance,
+                        "trace_based_calculation": True
                     }
                 }
                 self.test_results.append(trial_result)

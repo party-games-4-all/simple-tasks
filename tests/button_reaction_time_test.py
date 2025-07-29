@@ -66,7 +66,7 @@ class ReactionTestApp:
         """開始整個測試系列"""
         self.label.place_forget()  # 隱藏提示文字
         self.start_button.place_forget()  # 隱藏開始按鈕
-        self.progress_label.place(relx=0.5, rely=0.05, anchor='n')  # 顯示進度標籤
+        # self.progress_label.place(relx=0.5, rely=0.05, anchor='n')  # 顯示進度標籤（已註解以提升專注度）
         
         self.measuring = True
         self.current_trial = 0
@@ -88,11 +88,11 @@ class ReactionTestApp:
         if self.current_trial > self.total_trials:
             return
         
-        # 更新進度顯示
-        progress_text = f"第 {self.current_trial}/{self.total_trials} 次"
-        background_color = f"#{config.COLORS['BACKGROUND'][0]:02x}{config.COLORS['BACKGROUND'][1]:02x}{config.COLORS['BACKGROUND'][2]:02x}"
-        text_color = f"#{config.COLORS['TEXT'][0]:02x}{config.COLORS['TEXT'][1]:02x}{config.COLORS['TEXT'][2]:02x}"
-        self.progress_label.config(text=progress_text, bg=background_color, fg=text_color)
+        # 更新進度顯示（註解化以提升專注度）
+        # progress_text = f"第 {self.current_trial}/{self.total_trials} 次"
+        # background_color = f"#{config.COLORS['BACKGROUND'][0]:02x}{config.COLORS['BACKGROUND'][1]:02x}{config.COLORS['BACKGROUND'][2]:02x}"
+        # text_color = f"#{config.COLORS['TEXT'][0]:02x}{config.COLORS['TEXT'][1]:02x}{config.COLORS['TEXT'][2]:02x}"
+        # self.progress_label.config(text=progress_text, bg=background_color, fg=text_color)
         
         # 重置圓形顏色
         button_default_color = f"#{config.COLORS['BUTTON_DEFAULT'][0]:02x}{config.COLORS['BUTTON_DEFAULT'][1]:02x}{config.COLORS['BUTTON_DEFAULT'][2]:02x}"
@@ -186,7 +186,7 @@ class ReactionTestApp:
         self.state = "waiting"  # 重置狀態
         self.waiting_for_input = False
         self.current_trial = 0  # 重置測試次數
-        self.progress_label.place_forget()  # 隱藏進度標籤
+        # self.progress_label.place_forget()  # 隱藏進度標籤（已註解因為不再顯示）
         
         text_color = f"#{config.COLORS['TEXT'][0]:02x}{config.COLORS['TEXT'][1]:02x}{config.COLORS['TEXT'][2]:02x}"
         background_color = f"#{config.COLORS['BACKGROUND'][0]:02x}{config.COLORS['BACKGROUND'][1]:02x}{config.COLORS['BACKGROUND'][2]:02x}"
