@@ -25,7 +25,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 
 from common import config
-from common.utils import setup_window_topmost
+from common.utils import setup_window_topmost, collect_user_info_if_needed
 from common.result_saver import save_test_result
 
 class CountdownReactionTestApp:
@@ -454,6 +454,8 @@ if __name__ == "__main__":
     # 解析命令列參數
     parser = argparse.ArgumentParser(description="Button Prediction Countdown Test")
     parser.add_argument("--user", "-u", default=None, help="使用者 ID")
+    parser.add_argument("--age", type=int, default=None, help="使用者年齡")
+    parser.add_argument("--controller-freq", type=int, default=None, help="手把使用頻率 (1-3)")
     args = parser.parse_args()
 
     # 如果沒有提供 user_id，則請求輸入
@@ -462,6 +464,19 @@ if __name__ == "__main__":
         user_id = input("請輸入使用者 ID (例如: P1): ").strip()
         if not user_id:
             user_id = "default"
+
+    # 如果通過命令列參數提供了使用者資訊，直接設定到 config
+    if args.age is not None and args.controller_freq is not None:
+        config.user_info = {
+            "user_id": user_id,
+            "age": args.age,
+            "controller_usage_frequency": args.controller_freq,
+            "controller_usage_frequency_description": "1=沒用過, 2=有用過但無習慣, 3=有規律使用"
+        }
+        print(f"✅ 使用者 '{user_id}' 的資訊已從命令列參數載入")
+    else:
+        # 收集使用者基本資訊（如果尚未收集）
+        collect_user_info_if_needed(user_id)
 
     root = tk.Tk()
     app = CountdownReactionTestApp(root, user_id)

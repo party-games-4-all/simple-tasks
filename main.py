@@ -31,8 +31,9 @@ def show_menu():
     print("9. 退出")
     print("="*50)
 
-def run_single_test(test_num, user_id="test_user"):
+def run_single_test(test_num, user_id="test_user", age=None, controller_usage_frequency=None):
     """執行單一測試"""
+    # 建構基本命令
     test_commands = {
         0: f"uv run python common/connection_test.py --user {user_id}",
         1: f"uv run python tests/button_reaction_time_test.py --user {user_id}",
@@ -44,8 +45,16 @@ def run_single_test(test_num, user_id="test_user"):
     }
     
     if test_num in test_commands:
+        command = test_commands[test_num]
+        
+        # 如果有使用者資訊，加入命令列參數
+        if age is not None:
+            command += f" --age {age}"
+        if controller_usage_frequency is not None:
+            command += f" --controller-freq {controller_usage_frequency}"
+            
         print(f"\n執行測試 {test_num}...")
-        os.system(test_commands[test_num])
+        os.system(command)
     else:
         print("無效的測試編號")
 
@@ -126,7 +135,7 @@ def main():
                 print(f"\n執行完整測試套件 (使用者: {user_id})...")
                 os.system(f"./run_all_tests.sh {user_id}")
             elif 0 <= choice <= 6:
-                run_single_test(choice, user_id)
+                run_single_test(choice, user_id, age, controller_usage_frequency)
             else:
                 print("請輸入有效的選項 (0-9)")
                 

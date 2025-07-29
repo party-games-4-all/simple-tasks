@@ -9,7 +9,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 
 from common import config
-from common.utils import setup_window_topmost
+from common.utils import setup_window_topmost, collect_user_info_if_needed
 from common.result_saver import save_test_result
 
 
@@ -69,6 +69,8 @@ class AccuracyDirectionTestApp:
 
         self.label = tk.Label(root, text="請按亮起的方向鍵", font=("Arial", 32),
                              bg=background_color, fg=text_color)
+        self.progress_label = tk.Label(root, text="", font=("Arial", 24),
+                                      bg=background_color, fg=text_color)
         self.start_button = tk.Button(root,
                                       text="開始計算",
                                       font=("Arial", 24),
@@ -79,32 +81,56 @@ class AccuracyDirectionTestApp:
 
     def reset(self):
         self.label.place(relx=0.5, rely=0.05, anchor='n')
+        self.progress_label.place_forget()  # 隱藏進度標籤
         self.start_button.place(relx=0.5, rely=0.92, anchor='s')
 
         self.measuring = False
         self.current_target = None
         self.round_start_time = None
+        self.waiting_for_input = False  # 新增：等待輸入狀態
         self.score = 0
         self.total = 0
         self.response_times = []
         self.error_count = 0
         self.test_results = []  # 儲存詳細的測試結果
-        self.next_round()
+        # 重置所有按鈕顏色
+        button_default_color = f"#{config.COLORS['BUTTON_DEFAULT'][0]:02x}{config.COLORS['BUTTON_DEFAULT'][1]:02x}{config.COLORS['BUTTON_DEFAULT'][2]:02x}"
+        for cid in self.circles.values():
+            self.canvas.itemconfig(cid, fill=button_default_color)
 
     def start_measurement(self):
         self.label.place_forget()  # 隱藏提示文字
         self.start_button.place_forget()  # 隱藏開始按鈕
+        self.progress_label.place(relx=0.5, rely=0.05, anchor='n')  # 顯示進度標籤
         self.response_times.clear()
         self.total = 0
         self.score = 0
         self.error_count = 0
         self.measuring = True
         print("🔄 已重新開始計算！")
+        
+        # 開始第一回合（熱身測試）
+        self.next_round()
 
     def next_round(self):
+        if not self.measuring:
+            return
         button_default_color = f"#{config.COLORS['BUTTON_DEFAULT'][0]:02x}{config.COLORS['BUTTON_DEFAULT'][1]:02x}{config.COLORS['BUTTON_DEFAULT'][2]:02x}"
         for cid in self.circles.values():
             self.canvas.itemconfig(cid, fill=button_default_color)
+        
+        # 更新進度顯示 - 在等待期間就顯示下一輪的進度
+        if self.total == 0:
+            progress_text = "不計分測試"
+        elif self.total >= 1 and self.total <= 10:
+            progress_text = f"第 {self.total}/10 次"
+        else:
+            progress_text = "測試結束"
+        
+        background_color = f"#{config.COLORS['BACKGROUND'][0]:02x}{config.COLORS['BACKGROUND'][1]:02x}{config.COLORS['BACKGROUND'][2]:02x}"
+        text_color = f"#{config.COLORS['TEXT'][0]:02x}{config.COLORS['TEXT'][1]:02x}{config.COLORS['TEXT'][2]:02x}"
+        self.progress_label.config(text=progress_text, bg=background_color, fg=text_color)
+        
         delay = random.randint(1000, 3000)  # 毫秒，1 到 3 秒
         self.root.after(delay, self.start)
 
@@ -113,14 +139,22 @@ class AccuracyDirectionTestApp:
         error_color = f"#{config.COLORS['ERROR'][0]:02x}{config.COLORS['ERROR'][1]:02x}{config.COLORS['ERROR'][2]:02x}"
         self.canvas.itemconfig(self.circles[self.current_target], fill=error_color)
         self.round_start_time = time.time()
+        self.waiting_for_input = True  # 設定等待輸入狀態
 
     def on_joycon_input(self, buttons, leftX, leftY, last_key_bit,
                         last_key_down):
         if not last_key_down or last_key_bit is None:
             return
+        
+        # 如果不在測試狀態或沒有開始計時或不等待輸入，忽略輸入
+        if not self.measuring or self.round_start_time is None or not self.waiting_for_input:
+            return
 
         for direction, info in self.directions.items():
             if info["bit"] == last_key_bit:
+                # 立即設定為不等待輸入，防止重複觸發
+                self.waiting_for_input = False
+                
                 response_time = time.time() - self.round_start_time
 
                 if direction == self.current_target:
@@ -141,7 +175,14 @@ class AccuracyDirectionTestApp:
                 self.total += 1
 
                 if self.measuring:
-                    if self.total > 5:
+                    # 檢查是否為熱身測試且答錯
+                    if self.total == 1 and not correct:
+                        print("❌ 熱身測試答錯，請重新開始熱身測試")
+                        self.total = 0  # 重設計數器，重新開始熱身
+                        self.root.after(1000, self.next_round)  # 等待 1 秒後重新開始熱身
+                        break
+                    
+                    if self.total > 11:  # 熱身1次 + 正式測試10次 = 總共11次
                         avg_time = sum(self.response_times) / len(
                             self.response_times)
                         error_rate = self.error_count / (self.total - 1)
@@ -152,6 +193,8 @@ class AccuracyDirectionTestApp:
                         # 更新畫面上方 label
                         background_color = f"#{config.COLORS['BACKGROUND'][0]:02x}{config.COLORS['BACKGROUND'][1]:02x}{config.COLORS['BACKGROUND'][2]:02x}"
                         text_color = f"#{config.COLORS['TEXT'][0]:02x}{config.COLORS['TEXT'][1]:02x}{config.COLORS['TEXT'][2]:02x}"
+                        self.progress_label.place_forget()  # 隱藏進度標籤
+                        self.label.place(relx=0.5, rely=0.05, anchor='n')  # 顯示結果標籤
                         self.label.config(
                             text=
                             f"測驗結束\n正確率：{(1-error_rate):.1%}｜平均反應時間：{avg_time:.3f} 秒",
@@ -180,8 +223,10 @@ class AccuracyDirectionTestApp:
                         print(
                             f"🔘 回合 {self.total-1}：{'正確' if correct else '錯誤'}，反應時間 {response_time:.3f} 秒"
                         )
-                    else:
-                        print("👟 第 1 回合為熱身，不納入統計。")
+                    elif self.total == 1:  # 第 1 回合是熱身
+                        print(f"👟 熱身測試：{'正確' if correct else '錯誤'}，反應時間 {response_time:.3f} 秒")
+                        if correct:
+                            print("✅ 熱身測試通過，開始正式測試")
 
                 self.root.after(1000, self.next_round)  # 等待 1 秒後開始下一回合
                 break
@@ -214,12 +259,12 @@ class AccuracyDirectionTestApp:
                 "width": config.WINDOW_WIDTH,
                 "height": config.WINDOW_HEIGHT
             },
-            "total_trials": 5,  # 第1回合是熱身，實際5回合
+            "total_trials": 10,  # 第1回合是熱身，實際10回合
             "directions": list(self.directions.keys()),
             "response_delay_range_ms": [1000, 3000],
             "test_flow": {
                 "warmup_trials": 1,
-                "formal_trials": 5,
+                "formal_trials": 10,
                 "inter_trial_interval_ms": 1000,
                 "stimulus_randomization": "方向隨機出現"
             }
@@ -262,6 +307,8 @@ if __name__ == "__main__":
     # 解析命令列參數
     parser = argparse.ArgumentParser(description="Button Accuracy Test")
     parser.add_argument("--user", "-u", default=None, help="使用者 ID")
+    parser.add_argument("--age", type=int, default=None, help="使用者年齡")
+    parser.add_argument("--controller-freq", type=int, default=None, help="手把使用頻率 (1-3)")
     args = parser.parse_args()
 
     # 如果沒有提供 user_id，則請求輸入
@@ -270,6 +317,19 @@ if __name__ == "__main__":
         user_id = input("請輸入使用者 ID (例如: P1): ").strip()
         if not user_id:
             user_id = "default"
+
+    # 如果通過命令列參數提供了使用者資訊，直接設定到 config
+    if args.age is not None and args.controller_freq is not None:
+        config.user_info = {
+            "user_id": user_id,
+            "age": args.age,
+            "controller_usage_frequency": args.controller_freq,
+            "controller_usage_frequency_description": "1=沒用過, 2=有用過但無習慣, 3=有規律使用"
+        }
+        print(f"✅ 使用者 '{user_id}' 的資訊已從命令列參數載入")
+    else:
+        # 收集使用者基本資訊（如果尚未收集）
+        collect_user_info_if_needed(user_id)
 
     root = tk.Tk()
     app = AccuracyDirectionTestApp(root, user_id)
