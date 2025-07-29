@@ -150,7 +150,7 @@ class ButtonSmashTestApp:
         
         if remaining > 0:
             self.canvas.itemconfig(self.timer_text, 
-                                   text=f"剩餘時間: {remaining:.1f}s\n點擊次數: {self.click_count}")
+                                   text=f"剩餘時間: {remaining:.1f}s")
             # 繼續更新計時器
             self.timer_id = self.root.after(100, self.update_timer)
         else:
