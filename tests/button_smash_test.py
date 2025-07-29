@@ -47,6 +47,7 @@ class ButtonSmashTestApp:
         self.timer_id = None
         self.click_timestamps = []  # 記錄每次點擊的時間戳
         self.button_pressed = False  # 防止重複觸發
+        self.designated_button = None  # 指定的按鈕（第一次按下的按鈕）
         
         # 視覺元素
         self.circle_radius = 80
@@ -96,7 +97,7 @@ class ButtonSmashTestApp:
         background_color = f"#{config.COLORS['BACKGROUND'][0]:02x}{config.COLORS['BACKGROUND'][1]:02x}{config.COLORS['BACKGROUND'][2]:02x}"
         text_color = f"#{config.COLORS['TEXT'][0]:02x}{config.COLORS['TEXT'][1]:02x}{config.COLORS['TEXT'][2]:02x}"
         self.label = tk.Label(root,
-                              text="按『開始測試』開始 10 秒快速點擊測試\n(可使用 Joy-Con 或空白鍵測試)",
+                              text="用滑鼠按『開始測試』開始 10 秒快速點擊測試\n測試開始後請用手把同一個按鈕進行點擊\n(也可使用空白鍵作為備用)",
                               font=("Arial", 20),
                               bg=background_color,
                               fg=text_color)
@@ -126,6 +127,7 @@ class ButtonSmashTestApp:
         self.start_time = None  # 將在第一次點擊時設定
         self.click_count = 0
         self.click_timestamps = []  # 清空點擊時間戳記錄
+        self.designated_button = None  # 重置指定按鈕
         
         # 隱藏開始按鈕和說明文字
         self.start_button.place_forget()
@@ -135,10 +137,10 @@ class ButtonSmashTestApp:
         button_default_color = f"#{config.COLORS['BUTTON_DEFAULT'][0]:02x}{config.COLORS['BUTTON_DEFAULT'][1]:02x}{config.COLORS['BUTTON_DEFAULT'][2]:02x}"
         self.canvas.itemconfig(self.circle, fill=button_default_color)
         self.canvas.itemconfig(self.x_symbol, state="hidden")
-        self.canvas.itemconfig(self.timer_text, text="等待第一次點擊...")
+        self.canvas.itemconfig(self.timer_text, text="等待手把第一次點擊...")
         self.canvas.itemconfig(self.cps_text, text="")
         
-        print("🎮 Button Smash 測試開始！等待第一次點擊...")
+        print("🎮 Button Smash 測試開始！用手把按鈕開始第一次點擊...")
 
     def update_timer(self):
         """更新計時器顯示"""
@@ -290,16 +292,28 @@ class ButtonSmashTestApp:
     def on_joycon_input(self, buttons, leftX, leftY, last_key_bit, last_key_down):
         """處理 Joy-Con 輸入"""
         
+        # 如果在等待狀態，不處理手把輸入（開始測試只能用滑鼠）
+        if self.state == "waiting":
+            return
+        
         # 如果不是按鍵事件，忽略
         if last_key_bit is None:
             return
+        
+        # 如果已經指定按鈕，檢查是否為同一按鈕
+        if self.designated_button is not None and last_key_bit != self.designated_button:
+            return  # 不是指定的按鈕，忽略
             
         if last_key_down:
-            # 按鍵按下
+            # 按鍵按下 - 如果是第一次按下，記錄為指定按鈕
+            if self.designated_button is None:
+                self.designated_button = last_key_bit
+                print(f"🎮 指定按鈕: {last_key_bit}")
             self.on_button_press()
         else:
-            # 按鍵放開
-            self.on_button_release()
+            # 按鍵放開 - 只處理指定按鈕的放開事件
+            if last_key_bit == self.designated_button:
+                self.on_button_release()
 
     def on_button_press(self):
         """處理按鍵按下事件"""
@@ -308,12 +322,8 @@ class ButtonSmashTestApp:
             
         self.button_pressed = True
         
-        if self.state == "waiting":
-            # 如果在等待狀態，開始測試
-            self.start_test()
-            return
-        
-        elif self.state == "testing":
+        # 在測試狀態才處理按鈕輸入，等待狀態只能用滑鼠點擊開始按鈕
+        if self.state == "testing":
             # 如果是第一次點擊，開始計時
             if self.start_time is None:
                 self.start_time = time.time()
@@ -355,12 +365,14 @@ class ButtonSmashTestApp:
 
     def on_keyboard_press(self, event):
         """處理鍵盤按下事件（測試備用）"""
-        if event.keysym == 'space':  # 空白鍵
+        # 只在測試狀態才處理鍵盤輸入
+        if event.keysym == 'space' and self.state == "testing":  # 空白鍵
             self.on_button_press()
 
     def on_keyboard_release(self, event):
         """處理鍵盤放開事件（測試備用）"""
-        if event.keysym == 'space':  # 空白鍵
+        # 只在測試狀態才處理鍵盤輸入
+        if event.keysym == 'space' and self.state == "testing":  # 空白鍵
             self.on_button_release()
 
 
