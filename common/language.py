@@ -57,6 +57,65 @@ LANGUAGES = {
         'test_statistics': "📊 測試結果統計",
         'received_interrupt': "🔄 接收到中斷信號，正在關閉...",
         
+        # 控制器相關訊息
+        'controller_unable_connect': "❌ 無法連接已選擇的遙控器，嘗試自動選擇...",
+        'controller_no_pairing': "❌ 無法配對任何遙控器", 
+        'controller_signal_received': "🔄 接收到信號 {signum}，正在安全關閉控制器...",
+        'controller_no_gamepad': "❌ 未偵測到任何🎮手把",
+        'controller_auto_connect': "🎮 自動連接遙控器：{name}",
+        'controller_auto_connect_failed': "❌ 自動連接遙控器失敗：{error}",
+        'controller_detected_count': "🎮 偵測到 {count} 支手把",
+        'controller_detected': "🔍 偵測到手把：{name}",
+        'controller_selected': "✅ 已選擇：{name}",
+        'controller_none_selected': "❌ 沒有選擇任何手把",
+        'controller_listening': "🎮 開始監聽手把事件... (Ctrl+C 中止)",
+        'controller_axis_move': "軸移動：{axis} -> {value}",
+        'controller_analog_error': "⚠️ 處理類比輸入時發生錯誤: {error}",
+        'controller_button_press': "按下按鍵：{button}",
+        'controller_button_press_error': "⚠️ 處理按鍵按下時發生錯誤: {error}",
+        'controller_button_release': "放開按鍵：{button}",
+        'controller_button_release_error': "⚠️ 處理按鍵放開時發生錯誤: {error}",
+        'controller_event_error': "⚠️ 處理事件時發生錯誤: {error}",
+        'controller_thread_error': "❌ 控制器執行緒發生嚴重錯誤: {error}",
+        'controller_thread_ended': "🔄 控制器監聽執行緒已安全結束",
+        'controller_listening_stopped': "🔄 控制器輸入監聽已停止",
+        'controller_use_device': "要使用這個裝置嗎？(Y/n): ",
+        'controller_not_selected_yet': "❌ 尚未選擇遙控器",
+        'controller_not_exist': "❌ 遙控器 {index} 不存在，當前有 {count} 支手把",
+        'controller_connected': "🎮 已連接遙控器：{name}",
+                'controller_connect_failed': "❌ Failed to connect controller: {error}",
+        
+        # Trace plot related
+        'trace_saved_in': "Session trace saved in",
+        'trace_no_data': "Trial {index} has no recorded data",
+        'trace_image_saved': "Saved",
+        'trace_path_no_data': "Path {index} has no trace data",
+        'trace_path_saved': "Saved path {index} trace diagram",
+        
+        # Reaction time test
+        
+        # 軌跡圖相關
+        'trace_saved_in': "本次軌跡儲存在",
+        'trace_no_data': "第 {index} 筆無紀錄資料",
+        'trace_image_saved': "已儲存",
+        'trace_path_no_data': "路徑 {index} 無軌跡資料",
+        'trace_path_saved': "已儲存路徑 {index} 軌跡圖",
+        
+        # 反應時間測試
+        'controller_in_use': "使用中手把",
+        'controller_axis_move_debug': "軸移動：{axis} -> {value}",
+        'controller_button_press_debug': "按下按鍵：{button}",
+        'controller_button_release_debug': "放開按鍵：{button}",
+        'controller_stop_listening': "🎮 停止監聽手把事件",
+        'controller_no_gamepad_detected': "未偵測到手把",
+        
+        # 軌跡繪圖相關
+        'trace_saved_in': "本次軌跡儲存在",
+        'trace_no_data': "第 {index} 筆無紀錄資料",
+        'trace_image_saved': "已儲存：{path}",
+        'trace_no_path_data': "路徑 {index} 無軌跡資料",
+        'trace_path_saved': "已儲存路徑 {index} 軌跡圖：{path}",
+        
         # 反應時間測試
         'reaction_test_started': "🔄 已開始反應時間測試系列！",
         'too_fast_restart': "太快了！重新開始第 {trial} 次測試",
@@ -207,6 +266,47 @@ LANGUAGES = {
         'closing_app': "🔄 Safely closing application...",
         'test_statistics': "📊 Test Result Statistics",
         'received_interrupt': "🔄 Received interrupt signal, closing...",
+        
+        # Controller related messages
+        'controller_unable_connect': "❌ Unable to connect selected controller, trying auto-select...",
+        'controller_no_pairing': "❌ Unable to pair any controller",
+        'controller_signal_received': "🔄 Received signal {signum}, safely closing controller...",
+        'controller_no_gamepad': "❌ No 🎮 gamepad detected",
+        'controller_auto_connect': "🎮 Auto-connected controller: {name}",
+        'controller_auto_connect_failed': "❌ Auto-connect controller failed: {error}",
+        'controller_detected_count': "🎮 Detected {count} gamepad(s)",
+        'controller_detected': "🔍 Detected gamepad: {name}",
+        'controller_selected': "✅ Selected: {name}",
+        'controller_none_selected': "❌ No gamepad selected",
+        'controller_listening': "🎮 Start listening gamepad events... (Ctrl+C to stop)",
+        'controller_axis_move': "Axis move: {axis} -> {value}",
+        'controller_analog_error': "⚠️ Error processing analog input: {error}",
+        'controller_button_press': "Button pressed: {button}",
+        'controller_button_press_error': "⚠️ Error processing button press: {error}",
+        'controller_button_release': "Button released: {button}",
+        'controller_button_release_error': "⚠️ Error processing button release: {error}",
+        'controller_event_error': "⚠️ Error processing event: {error}",
+        'controller_thread_error': "❌ Controller thread critical error: {error}",
+        'controller_thread_ended': "🔄 Controller listening thread ended safely",
+        'controller_listening_stopped': "🔄 Controller input listening stopped",
+        'controller_use_device': "Use this device? (Y/n): ",
+        'controller_not_selected_yet': "❌ No controller selected yet",
+        'controller_not_exist': "❌ Controller {index} does not exist, currently {count} gamepad(s) available",
+        'controller_connected': "🎮 Connected controller: {name}",
+        'controller_connect_failed': "❌ Failed to connect controller: {error}",
+        'controller_in_use': "Controller in use",
+        'controller_axis_move_debug': "Axis move: {axis} -> {value}",
+        'controller_button_press_debug': "Button pressed: {button}",
+        'controller_button_release_debug': "Button released: {button}",
+        'controller_stop_listening': "🎮 Stop listening gamepad events",
+        'controller_no_gamepad_detected': "No gamepad detected",
+        
+        # Trace plotting related
+        'trace_saved_in': "Session trace saved in",
+        'trace_no_data': "No recorded data for trial {index}",
+        'trace_image_saved': "Saved: {path}",
+        'trace_no_path_data': "No trace data for path {index}",
+        'trace_path_saved': "Saved path {index} trace diagram: {path}",
         
         # Reaction time test
         'reaction_test_started': "🔄 Started reaction time test series!",

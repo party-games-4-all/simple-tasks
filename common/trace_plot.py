@@ -1,5 +1,6 @@
 import os
 import time
+from .language import get_text
 
 # 強制設置 matplotlib 為非互動式後端 - 必須在任何 matplotlib 導入之前執行
 import matplotlib
@@ -41,7 +42,7 @@ def init_trace_output_folder(test_name, user_id=None):
         folder = os.path.join("data", "images", test_name, timestamp)
     
     os.makedirs(folder, exist_ok=True)
-    print(f"📂 本次軌跡儲存在：{folder}")
+    print(f"📂 {get_text('trace_saved_in')}：{folder}")
     return folder
 
 
@@ -50,7 +51,7 @@ def output_move_trace(trace_points, start, target, radius, player_radius, press_
     ensure_matplotlib_thread_safety()
     
     if not trace_points:
-        print(f"⚠️ 第 {index} 筆無紀錄資料")
+        print(f"⚠️ {get_text('trace_path_no_data', index=index)}")
         return
 
     xs, ys = zip(*trace_points)
@@ -81,7 +82,7 @@ def output_move_trace(trace_points, start, target, radius, player_radius, press_
     plt.tight_layout()
     plt.savefig(path, dpi=200)
     plt.close()
-    print(f"📷 已儲存：{path}")
+    print(f"📷 {get_text('trace_image_saved')}：{path}")
 
 
 def output_single_trace(path_obj, index, output_dir="data/images/analog_path_trace"):
@@ -91,7 +92,7 @@ def output_single_trace(path_obj, index, output_dir="data/images/analog_path_tra
 
     trace_list = path_obj.player_trace
     if not trace_list:
-        print(f"⚠️ 路徑 {index} 無軌跡資料")
+        print(f"⚠️ {get_text('trace_no_path_data', index=index)}")
         return
 
     os.makedirs(output_dir, exist_ok=True)
@@ -164,4 +165,4 @@ def output_single_trace(path_obj, index, output_dir="data/images/analog_path_tra
     plt.tight_layout()
     plt.savefig(output_path, dpi=200)
     plt.close()
-    print(f"📷 已儲存路徑 {index} 軌跡圖：{output_path}")
+    print(f"📷 {get_text('trace_path_saved', index=index, path=output_path)}")

@@ -8,6 +8,7 @@ import os
 from datetime import datetime
 from pathlib import Path
 from common import config
+from common.language import get_text
 
 
 def save_test_result(user_id, test_name, metrics, parameters=None, image_files=None):
@@ -60,7 +61,7 @@ def save_test_result(user_id, test_name, metrics, parameters=None, image_files=N
     with open(file_path, 'w', encoding='utf-8') as f:
         json.dump(result_data, f, indent=2, ensure_ascii=False)
     
-    print(f"📄 測試結果已儲存：{file_path}")
+    print(f"📄 {get_text('test_results_saved')}：{file_path}")
     return str(file_path)
 
 

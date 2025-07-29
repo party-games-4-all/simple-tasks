@@ -3,6 +3,7 @@
 """
 import pygame
 import os
+from .language import get_text
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 
@@ -36,7 +37,7 @@ class ControllerManager:
         選擇遙控器（只記錄選擇，不實際連接）
         """
         if self._selected_controller_index is not None and not force_setup:
-            print(f"🎮 已選擇遙控器：{self._selected_controller_name}")
+            print(get_text('controller_selected', name=self._selected_controller_name))
             return True
         
         # 重新掃描遙控器
@@ -44,29 +45,29 @@ class ControllerManager:
         pygame.joystick.init()
         
         count = pygame.joystick.get_count()
-        print(f"🎮 偵測到 {count} 支手把")
+        print(get_text('controller_detected_count', count=count))
         
         if count == 0:
-            print("❌ 未偵測到任何🎮手把")
+            print(get_text('controller_no_gamepad'))
             return False
         
         for i in range(count):
             j = pygame.joystick.Joystick(i)
             j.init()
             controller_name = j.get_name()
-            print(f"🔍 偵測到手把：{controller_name}")
+            print(get_text('controller_detected', name=controller_name))
             confirm = input("要使用這個裝置嗎？(Y/n): ").strip().lower()
             if confirm == "y" or confirm == "":
                 # 只記錄選擇，不保持連接
                 self._selected_controller_index = i
                 self._selected_controller_name = controller_name
-                print(f"✅ 已選擇：{controller_name}")
+                print(get_text('controller_selected', name=controller_name))
                 j.quit()  # 立即斷開連接
                 return True
             else:
                 j.quit()
         
-        print("❌ 沒有選擇任何手把")
+        print(get_text('controller_none_selected'))
         return False
     
     def get_selected_controller_info(self):
@@ -83,7 +84,7 @@ class ControllerManager:
     def create_controller(self):
         """為測試程式建立新的遙控器實例"""
         if self._selected_controller_index is None:
-            print("❌ 尚未選擇遙控器")
+            print(get_text('controller_not_selected_yet'))
             return None
         
         # 確保 pygame joystick 已初始化
@@ -92,16 +93,16 @@ class ControllerManager:
         
         count = pygame.joystick.get_count()
         if count <= self._selected_controller_index:
-            print(f"❌ 遙控器 {self._selected_controller_index} 不存在，當前有 {count} 支手把")
+            print(get_text('controller_not_exist', index=self._selected_controller_index, count=count))
             return None
         
         try:
             j = pygame.joystick.Joystick(self._selected_controller_index)
             j.init()
-            print(f"🎮 已連接遙控器：{j.get_name()}")
+            print(get_text('controller_connected', name=j.get_name()))
             return j
         except Exception as e:
-            print(f"❌ 連接遙控器失敗：{e}")
+            print(get_text('controller_connect_failed', error=e))
             return None
     
     def reset(self):
