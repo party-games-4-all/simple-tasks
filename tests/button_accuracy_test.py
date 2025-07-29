@@ -20,6 +20,9 @@ class AccuracyDirectionTestApp:
         self.user_id = user_id or "default"
         self.root.title("按鍵準確度測試")
         
+        # 設定視窗關閉處理
+        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
+        
         # 設定視窗置頂
         setup_window_topmost(self.root)
         background_color = f"#{config.COLORS['BACKGROUND'][0]:02x}{config.COLORS['BACKGROUND'][1]:02x}{config.COLORS['BACKGROUND'][2]:02x}"
@@ -322,6 +325,21 @@ class AccuracyDirectionTestApp:
         print(f"平均反應時間: {avg_time:.3f} 秒")
         print("=" * 50)
 
+    def on_closing(self):
+        """處理視窗關閉事件"""
+        print("🔄 正在安全關閉應用程式...")
+        
+        # 停止測試
+        self.measuring = False
+        
+        # 停止控制器執行緒（如果存在）
+        if hasattr(self, 'listener') and self.listener:
+            self.listener.stop()
+        
+        # 關閉視窗
+        self.root.quit()
+        self.root.destroy()
+
 
 if __name__ == "__main__":
     from threading import Thread
@@ -364,9 +382,16 @@ if __name__ == "__main__":
     app.directions["right"]["bit"] = 1
 
     # 使用新的遙控器管理系統 - 會自動使用已配對的遙控器
-    listener = ControllerInput(button_callback=app.on_joycon_input,
-                               use_existing_controller=True)
-    Thread(target=listener.run, daemon=True).start()
+    app.listener = ControllerInput(button_callback=app.on_joycon_input,
+                                   use_existing_controller=True)
+    Thread(target=app.listener.run, daemon=True).start()
 
-    root.mainloop()
-    print("🎮 CRT 反應時間測試結束")
+    try:
+        root.mainloop()
+    except KeyboardInterrupt:
+        print("\n🔄 接收到中斷信號，正在關閉...")
+    finally:
+        # 確保清理資源
+        if hasattr(app, 'listener') and app.listener:
+            app.listener.stop()
+        print("🎮 按鍵準確度測試結束")

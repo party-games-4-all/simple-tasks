@@ -33,6 +33,9 @@ class ButtonSmashTestApp:
         self.user_id = user_id or "default"
         self.root.title("Button Smash Test")
         
+        # 設定視窗關閉處理
+        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
+        
         # 設定視窗置頂
         setup_window_topmost(self.root)
         background_color = f"#{config.COLORS['BACKGROUND'][0]:02x}{config.COLORS['BACKGROUND'][1]:02x}{config.COLORS['BACKGROUND'][2]:02x}"
@@ -375,6 +378,25 @@ class ButtonSmashTestApp:
         if event.keysym == 'space' and self.state == "testing":  # 空白鍵
             self.on_button_release()
 
+    def on_closing(self):
+        """處理視窗關閉事件"""
+        print("🔄 正在安全關閉應用程式...")
+        
+        # 停止測試
+        self.state = "finished"
+        
+        # 取消任何待執行的計時器
+        if self.timer_id:
+            self.root.after_cancel(self.timer_id)
+        
+        # 停止控制器執行緒（如果存在）
+        if hasattr(self, 'listener') and self.listener:
+            self.listener.stop()
+        
+        # 關閉視窗
+        self.root.quit()
+        self.root.destroy()
+
 
 if __name__ == "__main__":
     from threading import Thread
@@ -428,9 +450,16 @@ if __name__ == "__main__":
 
     # 設定手把輸入監聽
     # 使用新的遙控器管理系統 - 會自動使用已配對的遙控器
-    listener = ControllerInput(button_callback=app.on_joycon_input,
-                               use_existing_controller=True)
-    Thread(target=listener.run, daemon=True).start()
+    app.listener = ControllerInput(button_callback=app.on_joycon_input,
+                                   use_existing_controller=True)
+    Thread(target=app.listener.run, daemon=True).start()
 
-    root.mainloop()
-    print("🎮 Button Smash 測試結束")
+    try:
+        root.mainloop()
+    except KeyboardInterrupt:
+        print("\n🔄 接收到中斷信號，正在關閉...")
+    finally:
+        # 確保清理資源
+        if hasattr(app, 'listener') and app.listener:
+            app.listener.stop()
+        print("🎮 Button Smash 測試結束")

@@ -30,6 +30,9 @@ class JoystickTargetTestApp:
         self.user_id = user_id or "default"
         self.root.title("Joystick 移動目標測試")
         
+        # 設定視窗關閉處理
+        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
+        
         # 設定視窗置頂
         setup_window_topmost(self.root)
         
@@ -77,6 +80,9 @@ class JoystickTargetTestApp:
 
         self.player_x = self.canvas_width // 2
         self.player_y = self.canvas_height // 2
+        
+        # 添加執行緒控制變數
+        self.running = True
 
         self.target_x = 0
         self.target_y = 0
@@ -196,9 +202,14 @@ class JoystickTargetTestApp:
         Thread(target=self.player_loop, daemon=True).start()
 
     def player_loop(self):
-        while True:
-            if self.testing:
-                self.update_player_position()
+        while self.running:
+            if self.testing and self.running:
+                try:
+                    self.update_player_position()
+                except Exception as e:
+                    if self.running:  # 只在仍在運行時報告錯誤
+                        print(f"⚠️ 更新玩家位置時發生錯誤: {e}")
+                    break
             time.sleep(0.016)  # 約 60fps
 
     def start_test(self):
@@ -561,6 +572,22 @@ class JoystickTargetTestApp:
                 print(f"  {difficulty}: {data['count']} 次，平均 {data['avg_time_ms']:.0f} ms")
         print("=" * 50)
 
+    def on_closing(self):
+        """處理視窗關閉事件"""
+        print("🔄 正在安全關閉應用程式...")
+        
+        # 停止所有執行緒
+        self.running = False
+        self.testing = False
+        
+        # 停止控制器執行緒（如果存在）
+        if hasattr(self, 'listener') and self.listener:
+            self.listener.stop()
+        
+        # 關閉視窗
+        self.root.quit()
+        self.root.destroy()
+
 
 if __name__ == "__main__":
     import argparse
@@ -598,11 +625,18 @@ if __name__ == "__main__":
     app = JoystickTargetTestApp(root, user_id)
 
     # 使用新的遙控器管理系統 - 會自動使用已配對的遙控器
-    # 使用新的遙控器管理系統 - 會自動使用已配對的遙控器
-    listener = ControllerInput(analog_callback=app.on_joycon_input,
-                               button_callback=app.on_joycon_button,
-                               use_existing_controller=True)
-    Thread(target=listener.run, daemon=True).start()
+    app.listener = ControllerInput(analog_callback=app.on_joycon_input,
+                                   button_callback=app.on_joycon_button,
+                                   use_existing_controller=True)
+    Thread(target=app.listener.run, daemon=True).start()
 
-    root.mainloop()
-    print("🎮 Fitt's Law 測試結束")
+    try:
+        root.mainloop()
+    except KeyboardInterrupt:
+        print("\n🔄 接收到中斷信號，正在關閉...")
+    finally:
+        # 確保清理資源
+        app.running = False
+        if hasattr(app, 'listener') and app.listener:
+            app.listener.stop()
+        print("🎮 Fitt's Law 測試結束")
