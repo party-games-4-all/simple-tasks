@@ -27,6 +27,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 from common import config
 from common.utils import setup_window_topmost, collect_user_info_if_needed
 from common.result_saver import save_test_result
+from common.language import set_language, get_text
 
 class CountdownReactionTestApp:
 
@@ -66,12 +67,12 @@ class CountdownReactionTestApp:
 
         background_color = f"#{config.COLORS['BACKGROUND'][0]:02x}{config.COLORS['BACKGROUND'][1]:02x}{config.COLORS['BACKGROUND'][2]:02x}"
         text_color = f"#{config.COLORS['TEXT'][0]:02x}{config.COLORS['TEXT'][1]:02x}{config.COLORS['TEXT'][2]:02x}"
-        self.label = tk.Label(root, text="準備好了嗎？請在球到達灰色圓圈時按下按鈕！", font=("Arial", 24),
+        self.label = tk.Label(root, text=get_text('gui_ready_prediction'), font=("Arial", 24),
                              bg=background_color, fg=text_color)
         self.label.place(relx=0.5, rely=0.2, anchor='center')
 
         button_default_color = f"#{config.COLORS['BUTTON_DEFAULT'][0]:02x}{config.COLORS['BUTTON_DEFAULT'][1]:02x}{config.COLORS['BUTTON_DEFAULT'][2]:02x}"
-        self.start_button = tk.Button(root, text="開始測試", font=("Arial", 24), command=self.start_test,
+        self.start_button = tk.Button(root, text=get_text('gui_start_test'), font=("Arial", 24), command=self.start_test,
                                      bg=button_default_color, fg=text_color)
         self.start_button.place(relx=0.5, rely=0.8, anchor='center')
 
@@ -336,13 +337,13 @@ class CountdownReactionTestApp:
         
         # 顯示重新開始界面
         self.label.place(relx=0.5, rely=0.2, anchor='center')
-        self.label.config(text="測試完成！結果已儲存。點擊重新開始")
+        self.label.config(text=get_text('gui_test_complete_saved'))
         
         background_color = f"#{config.COLORS['BACKGROUND'][0]:02x}{config.COLORS['BACKGROUND'][1]:02x}{config.COLORS['BACKGROUND'][2]:02x}"
         text_color = f"#{config.COLORS['TEXT'][0]:02x}{config.COLORS['TEXT'][1]:02x}{config.COLORS['TEXT'][2]:02x}"
         button_default_color = f"#{config.COLORS['BUTTON_DEFAULT'][0]:02x}{config.COLORS['BUTTON_DEFAULT'][1]:02x}{config.COLORS['BUTTON_DEFAULT'][2]:02x}"
         
-        self.start_button = tk.Button(self.root, text="重新開始", font=("Arial", 24), command=self.start_test,
+        self.start_button = tk.Button(self.root, text=get_text('gui_restart_test'), font=("Arial", 24), command=self.start_test,
                                      bg=button_default_color, fg=text_color)
         self.start_button.place(relx=0.5, rely=0.8, anchor='center')
 
@@ -470,11 +471,18 @@ if __name__ == "__main__":
     from threading import Thread
     from common.controller_input import ControllerInput
 
+    # 檢查是否有 --english 參數來提前設定語言
+    if '--english' in sys.argv:
+        set_language('en')
+    else:
+        set_language('zh')
+
     # 解析命令列參數
     parser = argparse.ArgumentParser(description="Button Prediction Countdown Test")
-    parser.add_argument("--user", "-u", default=None, help="使用者 ID")
-    parser.add_argument("--age", type=int, default=None, help="使用者年齡")
-    parser.add_argument("--controller-freq", type=int, default=None, help="手把使用頻率 (1-7)")
+    parser.add_argument("--user", "-u", default=None, help=get_text('arg_user_id'))
+    parser.add_argument("--age", type=int, default=None, help=get_text('arg_age'))
+    parser.add_argument("--controller-freq", type=int, default=None, help=get_text('arg_controller_freq'))
+    parser.add_argument("--english", action="store_true", help=get_text('arg_english'))
     args = parser.parse_args()
 
     # 如果沒有提供 user_id，則請求輸入

@@ -10,25 +10,28 @@ def get_directional_offset(dx, dy, offset):
 
 def setup_window_topmost(root):
     """
+工具函式模組
+包含視窗設定、使用者資訊收集等共用功能
+"""
+import tkinter as tk
+from . import config
+from .language import get_text
+
+def setup_window_topmost(root):
+    """
     設定視窗置頂並取得焦點
-    適用於 tkinter 視窗
+    將視窗設定為指定大小、置於螢幕中央、設定為置頂並取得焦點
     """
     try:
-        # 導入 config 來獲取正確的視窗大小
-        from . import config
-        
-        # 設定視窗大小
+        # 從 config 獲取視窗尺寸
         width = config.WINDOW_WIDTH
         height = config.WINDOW_HEIGHT
-        
-        # 先更新視窗以確保正確計算螢幕大小
-        root.update_idletasks()
         
         # 計算螢幕中央位置
         screen_width = root.winfo_screenwidth()
         screen_height = root.winfo_screenheight()
-        x = (screen_width // 2) - (width // 2)
-        y = (screen_height // 2) - (height // 2)
+        x = (screen_width - width) // 2
+        y = (screen_height - height) // 2
         
         # 設定視窗大小和位置
         root.geometry(f'{width}x{height}+{x}+{y}')
@@ -43,10 +46,10 @@ def setup_window_topmost(root):
         root.focus_force()
         root.lift()
         
-        print(f"🖥️ 視窗設定為：{width}x{height}，位置：({x}, {y})")
+        print(get_text('window_setup_success', width=width, height=height, x=x, y=y))
         
     except Exception as e:
-        print(f"⚠️ 設定視窗置頂失敗: {e}")
+        print(get_text('window_setup_failed', error=e))
         # 備用設定
         try:
             root.geometry('1200x800')
@@ -54,7 +57,7 @@ def setup_window_topmost(root):
             root.attributes('-topmost', True)
             root.focus_force()
         except:
-            print("⚠️ 備用視窗設定也失敗")
+            pass  # 如果連備用設定都失敗，就使用預設設定
 
 
 def setup_pygame_window_topmost():
@@ -66,17 +69,16 @@ def setup_pygame_window_topmost():
         import os
         # 在 macOS 上可以嘗試設定環境變數
         os.environ['SDL_VIDEO_WINDOW_POS'] = 'centered'
-        print("🔝 已嘗試設定 pygame 視窗置頂")
+        print(get_text('pygame_window_topmost'))
     except Exception as e:
-        print(f"⚠️ 設定 pygame 視窗置頂失敗: {e}")
+        print(get_text('pygame_window_failed', error=e))
 
 
 def collect_user_info_if_needed(user_id):
     """
-    如果尚未收集使用者資訊，則收集使用者的年齡和手把使用頻率
-    用於直接執行單個測試時確保資料完整性，也用於 main.py 的初次收集
+    收集使用者基本資訊（如果尚未收集）
+    包括年齡和手把使用頻率
     """
-    from . import config
     
     # 檢查是否已經有完整的使用者資訊
     if (hasattr(config, 'user_info') and config.user_info and 
@@ -84,48 +86,48 @@ def collect_user_info_if_needed(user_id):
         config.user_info.get('age') is not None and
         config.user_info.get('controller_usage_frequency') is not None):
         # 資訊已完整，無需重新收集
-        print(f"✅ 使用者 '{user_id}' 的資訊已存在，無需重複收集")
+        print(get_text('user_info_exists', user_id=user_id))
         return
     
     # 判斷是否為首次收集（從 main.py 呼叫）或補充收集（從個別測試呼叫）
     if not hasattr(config, 'user_info') or not config.user_info:
-        print(f"\n📝 請提供一些基本資訊以協助數據分析：")
+        print(f"\n{get_text('user_info_title')}")
     else:
-        print(f"\n📝 為使用者 '{user_id}' 收集基本資訊以完善測試數據：")
+        print(f"\n{get_text('user_info_supplement', user_id=user_id)}")
     
     # 收集年齡
     while True:
         try:
-            age_input = input("請輸入您的年齡: ").strip()
+            age_input = input(get_text('enter_age')).strip()
             age = int(age_input)
             if age > 0 and age < 150:  # 合理的年齡範圍
                 break
             else:
-                print("請輸入有效的年齡 (1-149)")
+                print(get_text('valid_age'))
         except ValueError:
-            print("請輸入數字")
+            print(get_text('enter_number'))
     
     # 收集手把使用頻率
-    print("\n🎮 手把使用頻率：")
-    print("包含 Nintendo Wii / Switch、PS / Xbox 系列家機、掌機、遊樂場街機等")
-    print("1=從來沒用過  2  3  4  5  6  7=每天使用")
+    print(f"\n{get_text('controller_frequency_title')}")
+    print(get_text('controller_frequency_desc'))
+    print(get_text('controller_frequency_scale'))
     while True:
         try:
-            freq_input = input("請選擇您的手把使用頻率 (1-7): ").strip()
+            freq_input = input(get_text('enter_frequency')).strip()
             controller_usage_frequency = int(freq_input)
             if controller_usage_frequency in [1, 2, 3, 4, 5, 6, 7]:
                 break
             else:
-                print("請輸入 1-7 之間的數字")
+                print(get_text('valid_frequency'))
         except ValueError:
-            print("請輸入數字")
+            print(get_text('enter_number'))
     
     # 更新 config 中的使用者資訊
     config.user_info = {
         "user_id": user_id,
         "age": age,
         "controller_usage_frequency": controller_usage_frequency,
-        "controller_usage_frequency_description": "1=從來沒用過, 7=每天使用"
+        "controller_usage_frequency_description": "1=從來沒用過, 7=每天使用"  # 保持原始說明在 JSON 中
     }
     
-    print(f"✅ 使用者資訊已記錄：{user_id}, 年齡: {age}, 手把使用頻率: {controller_usage_frequency}\n")
+    print(f"\n{get_text('user_info_recorded', user_id=user_id, age=age, frequency=controller_usage_frequency)}")

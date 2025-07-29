@@ -11,6 +11,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 from common import config
 from common.result_saver import save_test_result
 from common.utils import setup_window_topmost, collect_user_info_if_needed
+from common.language import set_language, get_text
 
 
 class ReactionTestApp:
@@ -50,7 +51,7 @@ class ReactionTestApp:
                                             fill=button_default_color, outline=text_color, width=3)
 
         self.label = tk.Label(root,
-                              text="請按『開始測試』按鈕開始測試",
+                              text=get_text('gui_click_start_test'),
                               font=("Arial", 24),
                               bg=f"#{config.COLORS['BACKGROUND'][0]:02x}{config.COLORS['BACKGROUND'][1]:02x}{config.COLORS['BACKGROUND'][2]:02x}",
                               fg=text_color)
@@ -60,7 +61,7 @@ class ReactionTestApp:
                                       bg=f"#{config.COLORS['BACKGROUND'][0]:02x}{config.COLORS['BACKGROUND'][1]:02x}{config.COLORS['BACKGROUND'][2]:02x}",
                                       fg=text_color)
 
-        self.start_button = tk.Button(root, text="開始測試", font=("Arial", 24), command=self.start_test_series,
+        self.start_button = tk.Button(root, text=get_text('gui_start_test'), font=("Arial", 24), command=self.start_test_series,
                                      bg=f"#{config.COLORS['BUTTON_DEFAULT'][0]:02x}{config.COLORS['BUTTON_DEFAULT'][1]:02x}{config.COLORS['BUTTON_DEFAULT'][2]:02x}",
                                      fg=f"#{config.COLORS['TEXT'][0]:02x}{config.COLORS['TEXT'][1]:02x}{config.COLORS['TEXT'][2]:02x}")
         self.start_button.place(relx=0.5, rely=0.8, anchor='center')
@@ -76,7 +77,7 @@ class ReactionTestApp:
         self.reaction_times.clear()
         self.test_results.clear()
         
-        print("🔄 已開始反應時間測試系列！")
+        print(get_text('reaction_test_started'))
         # 開始第一次測試
         self.next_trial()
 
@@ -144,7 +145,7 @@ class ReactionTestApp:
 
         elif self.state == "ready":
             # 在準備狀態按鈕被按下，表示太早
-            print(f"太快了！重新開始第 {self.current_trial} 次測試")
+            print(get_text('too_fast_restart', trial=self.current_trial))
             if self.after_id:
                 self.root.after_cancel(self.after_id)
             # 重新開始當前測試（不改變 current_trial）
@@ -164,7 +165,7 @@ class ReactionTestApp:
                 "reaction_time_seconds": reaction_time
             })
             
-            print(f"🔘 第 {self.current_trial} 次：反應時間 {reaction_time:.3f} 秒")
+            print(get_text('reaction_time_result', trial=self.current_trial, time=reaction_time))
             success_color = f"#{config.COLORS['SUCCESS'][0]:02x}{config.COLORS['SUCCESS'][1]:02x}{config.COLORS['SUCCESS'][2]:02x}"
             self.canvas.itemconfig(self.circle, fill=success_color)
             self.state = "completed_trial"  # 新狀態：完成測試
@@ -175,7 +176,7 @@ class ReactionTestApp:
             else:
                 # 測試完成
                 avg_time = sum(self.reaction_times) / len(self.reaction_times)
-                print(f"📊 平均反應時間：{avg_time:.3f} 秒")
+                print(get_text('average_reaction_time', time=avg_time))
                 
                 # 儲存測試結果
                 self.save_test_results()
@@ -195,7 +196,7 @@ class ReactionTestApp:
         background_color = f"#{config.COLORS['BACKGROUND'][0]:02x}{config.COLORS['BACKGROUND'][1]:02x}{config.COLORS['BACKGROUND'][2]:02x}"
         
         self.label.config(
-            text=f"測試完成！\n平均反應時間：{avg_time:.3f} 秒\n請按『開始測試』重新開始。", 
+            text=get_text('gui_test_complete_reaction', time=avg_time), 
             font=("Arial", 20),
             bg=background_color, 
             fg=text_color
@@ -206,7 +207,7 @@ class ReactionTestApp:
     def save_test_results(self):
         """儲存測試結果為 JSON 檔案"""
         if not self.test_results:
-            print("⚠️ 無測試結果可儲存")
+            print(get_text('no_results_to_save'))
             return
         
         # 計算統計數據
@@ -261,15 +262,15 @@ class ReactionTestApp:
         )
         
         print("=" * 50)
-        print("📊 測試結果統計")
-        print(f"平均反應時間: {avg_reaction_time_ms:.1f} ms")
-        print(f"最快反應時間: {min_reaction_time_ms:.1f} ms")
-        print(f"最慢反應時間: {max_reaction_time_ms:.1f} ms")
+        print(get_text('test_statistics'))
+        print(get_text('avg_reaction_time_ms', time=avg_reaction_time_ms))
+        print(get_text('min_reaction_time_ms', time=min_reaction_time_ms))
+        print(get_text('max_reaction_time_ms', time=max_reaction_time_ms))
         print("=" * 50)
 
     def on_closing(self):
         """處理視窗關閉事件"""
-        print("🔄 正在安全關閉應用程式...")
+        print(get_text('closing_app'))
         
         # 停止測試
         self.measuring = False
@@ -291,11 +292,18 @@ if __name__ == "__main__":
     from threading import Thread
     from common.controller_input import ControllerInput
 
+    # 檢查是否有 --english 參數來提前設定語言
+    if '--english' in sys.argv:
+        set_language('en')
+    else:
+        set_language('zh')
+
     # 解析命令列參數
     parser = argparse.ArgumentParser(description="Button Reaction Time Test")
-    parser.add_argument("--user", "-u", default=None, help="使用者 ID")
-    parser.add_argument("--age", type=int, default=None, help="使用者年齡")
-    parser.add_argument("--controller-freq", type=int, default=None, help="手把使用頻率 (1-7)")
+    parser.add_argument("--user", "-u", default=None, help=get_text('arg_user_id'))
+    parser.add_argument("--age", type=int, default=None, help=get_text('arg_age'))
+    parser.add_argument("--controller-freq", type=int, default=None, help=get_text('arg_controller_freq'))
+    parser.add_argument("--english", action="store_true", help=get_text('arg_english'))
     args = parser.parse_args()
 
     # 如果沒有提供 user_id，則請求輸入
@@ -313,7 +321,7 @@ if __name__ == "__main__":
             "controller_usage_frequency": args.controller_freq,
             "controller_usage_frequency_description": "1=從來沒用過, 7=每天使用"
         }
-        print(f"✅ 使用者 '{user_id}' 的資訊已從命令列參數載入")
+        print(get_text('user_info_from_cli', user_id=user_id))
     else:
         # 收集使用者基本資訊（如果尚未收集）
         collect_user_info_if_needed(user_id)
@@ -328,9 +336,9 @@ if __name__ == "__main__":
     try:
         root.mainloop()
     except KeyboardInterrupt:
-        print("\n🔄 接收到中斷信號，正在關閉...")
+        print(f"\n{get_text('received_interrupt')}")
     finally:
         # 確保清理資源
         if hasattr(app, 'listener') and app.listener:
             app.listener.stop()
-        print("🎮 SRT 反應時間測試結束")
+        print(get_text('reaction_test_end'))

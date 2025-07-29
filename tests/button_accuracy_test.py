@@ -11,6 +11,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 from common import config
 from common.utils import setup_window_topmost, collect_user_info_if_needed
 from common.result_saver import save_test_result
+from common.language import set_language, get_text
 
 
 class AccuracyDirectionTestApp:
@@ -70,12 +71,12 @@ class AccuracyDirectionTestApp:
                                                         width=3)
             # self.canvas.create_text(x, y, text=dir.upper(), font=("Arial", 16))
 
-        self.label = tk.Label(root, text="請按亮起的方向鍵", font=("Arial", 32),
+        self.label = tk.Label(root, text=get_text('gui_press_direction'), font=("Arial", 32),
                              bg=background_color, fg=text_color)
         self.progress_label = tk.Label(root, text="", font=("Arial", 24),
                                       bg=background_color, fg=text_color)
         self.start_button = tk.Button(root,
-                                      text="開始計算",
+                                      text=get_text('gui_start_calculation'),
                                       font=("Arial", 24),
                                       command=self.start_measurement,
                                       bg=button_default_color,
@@ -122,7 +123,7 @@ class AccuracyDirectionTestApp:
         for cid in self.circles.values():
             self.canvas.itemconfig(cid, fill=button_default_color)
         
-        print("🔄 已重新開始計算！")
+        print(get_text('test_restart'))
         
         # 開始第一回合（熱身測試）
         self.next_round()
@@ -192,7 +193,7 @@ class AccuracyDirectionTestApp:
                 if self.measuring:
                     # 檢查是否為熱身測試且答錯
                     if self.total == 1 and not correct:
-                        print("❌ 熱身測試答錯，請重新開始熱身測試")
+                        print(get_text('warmup_failed'))
                         self.total = 0  # 重設計數器，重新開始熱身
                         self.root.after(1000, self.next_round)  # 等待 1 秒後重新開始熱身
                         return  # 直接返回，不要繼續執行
@@ -221,7 +222,7 @@ class AccuracyDirectionTestApp:
                         )
                         
                         # 重新顯示開始按鈕，讓使用者可以重新開始測試
-                        self.start_button.config(text="重新開始")
+                        self.start_button.config(text=get_text('gui_restart'))
                         self.start_button.place(relx=0.5, rely=0.92, anchor='s')
                         
                         print(
@@ -345,11 +346,18 @@ if __name__ == "__main__":
     from threading import Thread
     from common.controller_input import ControllerInput
 
+    # 檢查是否有 --english 參數來提前設定語言
+    if '--english' in sys.argv:
+        set_language('en')
+    else:
+        set_language('zh')
+
     # 解析命令列參數
     parser = argparse.ArgumentParser(description="Button Accuracy Test")
-    parser.add_argument("--user", "-u", default=None, help="使用者 ID")
-    parser.add_argument("--age", type=int, default=None, help="使用者年齡")
-    parser.add_argument("--controller-freq", type=int, default=None, help="手把使用頻率 (1-7)")
+    parser.add_argument("--user", "-u", default=None, help=get_text('arg_user_id'))
+    parser.add_argument("--age", type=int, default=None, help=get_text('arg_age'))
+    parser.add_argument("--controller-freq", type=int, default=None, help=get_text('arg_controller_freq'))
+    parser.add_argument("--english", action="store_true", help=get_text('arg_english'))
     args = parser.parse_args()
 
     # 如果沒有提供 user_id，則請求輸入

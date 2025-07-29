@@ -4,6 +4,7 @@
 """
 import sys
 import os
+import argparse
 from pathlib import Path
 
 # 添加 common 模組到 Python 路徑
@@ -13,26 +14,27 @@ from common.controller_input import ControllerInput
 from common.controller_manager import controller_manager
 from common import config
 from common.utils import collect_user_info_if_needed
+from common.language import set_language, get_text
 
 def show_menu():
     """顯示測試選單"""
     print("\n" + "="*50)
-    print("0. 手把連接測試")
+    print(f"0. {get_text('menu_connection_test')}")
     print("")
-    print("Button 測試 (按鈕測試 - 由簡單到難):")
-    print("1. 簡單反應時間測試")
-    print("2. 預測反應時間測試") 
-    print("3. Button Smash 連打測試")
-    print("4. 選擇反應測試")
+    print(get_text('menu_button_tests'))
+    print(f"1. {get_text('menu_simple_reaction')}")
+    print(f"2. {get_text('menu_prediction_reaction')}")
+    print(f"3. {get_text('menu_button_smash')}")
+    print(f"4. {get_text('menu_choice_reaction')}")
     print("")
-    print("Analog 測試 (搖桿測試 - 由簡單到難):")
-    print("5. 類比搖桿移動測試")
-    print("6. 路徑追蹤測試")
+    print(get_text('menu_analog_tests'))
+    print(f"5. {get_text('menu_analog_move')}")
+    print(f"6. {get_text('menu_path_follow')}")
     print("")
-    print("9. 退出")
+    print(f"9. {get_text('menu_exit')}")
     print("="*50)
 
-def run_single_test(test_num, user_id="test_user", age=None, controller_usage_frequency=None):
+def run_single_test(test_num, user_id="test_user", age=None, controller_usage_frequency=None, use_english=False):
     """執行單一測試"""
     # 建構基本命令
     test_commands = {
@@ -53,33 +55,48 @@ def run_single_test(test_num, user_id="test_user", age=None, controller_usage_fr
             command += f" --age {age}"
         if controller_usage_frequency is not None:
             command += f" --controller-freq {controller_usage_frequency}"
+        
+        # 如果使用英文，加入 --english 參數
+        if use_english:
+            command += " --english"
             
-        print(f"\n執行測試 {test_num}...")
+        print(f"\n{get_text('running_test', num=test_num)}")
         os.system(command)
     else:
-        print("無效的測試編號")
+        print(get_text('invalid_test_number'))
 
 def main():
     """主函式"""
-    if len(sys.argv) > 1:
-        # 如果有命令列參數，直接執行手把輸入測試
+    # 檢查是否有 --english 參數來提前設定語言
+    if '--english' in sys.argv:
+        set_language('en')
+    else:
+        set_language('zh')
+    
+    # 解析命令列參數
+    parser = argparse.ArgumentParser(description=get_text('menu_title'))
+    parser.add_argument("--english", action="store_true", help=get_text('arg_english'))
+    args = parser.parse_args()
+    
+    if len(sys.argv) > 1 and not args.english:
+        # 如果有其他命令列參數（非語言參數），直接執行手把輸入測試
         controller = ControllerInput()
         controller.run()
         return
     
     # 在開始測試之前先選擇遙控器
-    print("🎮 正在初始化遙控器...")
+    print(get_text('controller_initializing'))
     controller_selected = controller_manager.setup_controller()
     if not controller_selected:
-        print("❌ 無法選擇遙控器，某些測試可能無法正常運行")
-        print("您仍然可以進入測試選單，但建議先解決遙控器連接問題")
-        input("\n按 Enter 繼續...")
+        print(get_text('controller_failed'))
+        print(get_text('controller_failed_continue'))
+        input(f"\n{get_text('press_enter')}")
     else:
         info = controller_manager.get_selected_controller_info()
-        print(f"🎮 遙控器選擇成功！已選擇：{info['name']}")
+        print(get_text('controller_success', name=info['name']))
     
     # 互動式選單模式
-    user_id = input("請輸入使用者ID (預設: test_user): ").strip()
+    user_id = input(get_text('enter_user_id')).strip()
     if not user_id:
         user_id = "test_user"
     
@@ -90,31 +107,31 @@ def main():
     age = config.user_info.get('age')
     controller_usage_frequency = config.user_info.get('controller_usage_frequency')
     
-    print(f"\n✅ 使用者資訊已記錄：{user_id}, 年齡: {age}, 手把使用頻率: {controller_usage_frequency}")
+    print(f"\n{get_text('user_info_recorded', user_id=user_id, age=age, frequency=controller_usage_frequency)}")
     
     while True:
         show_menu()
         try:
-            choice = int(input("\n請選擇測試項目 (0-9): "))
+            choice = int(input(f"\n{get_text('choose_test')}"))
             
             if choice == 9:
-                print("感謝使用！")
+                print(get_text('thank_you'))
                 break
             elif choice == 8:
-                print(f"\n執行完整測試套件 (使用者: {user_id})...")
+                print(f"\n{get_text('running_full_suite', user_id=user_id)}")
                 os.system(f"./run_all_tests.sh {user_id}")
             elif 0 <= choice <= 6:
-                run_single_test(choice, user_id, age, controller_usage_frequency)
+                run_single_test(choice, user_id, age, controller_usage_frequency, args.english)
             else:
-                print("請輸入有效的選項 (0-9)")
+                print(get_text('invalid_option'))
                 
         except ValueError:
-            print("請輸入數字")
+            print(get_text('enter_number'))
         except KeyboardInterrupt:
-            print("\n\n程式已中斷")
+            print(f"\n\n{get_text('program_interrupted')}")
             break
         
-        input("\n按 Enter 繼續...")
+        input(f"\n{get_text('press_enter')}")
 
 if __name__ == "__main__":
     main()

@@ -10,6 +10,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 from common import config
 from common.utils import setup_window_topmost, collect_user_info_if_needed
 from common.result_saver import save_test_result
+from common.language import set_language, get_text
 
 
 class ButtonSmashTestApp:
@@ -100,7 +101,7 @@ class ButtonSmashTestApp:
         background_color = f"#{config.COLORS['BACKGROUND'][0]:02x}{config.COLORS['BACKGROUND'][1]:02x}{config.COLORS['BACKGROUND'][2]:02x}"
         text_color = f"#{config.COLORS['TEXT'][0]:02x}{config.COLORS['TEXT'][1]:02x}{config.COLORS['TEXT'][2]:02x}"
         self.label = tk.Label(root,
-                              text="用滑鼠按『開始測試』開始 10 秒快速點擊測試\n測試開始後請用手把同一個按鈕進行點擊\n(也可使用空白鍵作為備用)",
+                              text=get_text('gui_smash_instructions'),
                               font=("Arial", 20),
                               bg=background_color,
                               fg=text_color)
@@ -109,7 +110,7 @@ class ButtonSmashTestApp:
         # 開始按鈕
         button_default_color = f"#{config.COLORS['BUTTON_DEFAULT'][0]:02x}{config.COLORS['BUTTON_DEFAULT'][1]:02x}{config.COLORS['BUTTON_DEFAULT'][2]:02x}"
         self.start_button = tk.Button(root, 
-                                      text="開始測試", 
+                                      text=get_text('gui_start_test'), 
                                       font=("Arial", 24), 
                                       command=self.start_test,
                                       bg=button_default_color,
@@ -140,7 +141,7 @@ class ButtonSmashTestApp:
         button_default_color = f"#{config.COLORS['BUTTON_DEFAULT'][0]:02x}{config.COLORS['BUTTON_DEFAULT'][1]:02x}{config.COLORS['BUTTON_DEFAULT'][2]:02x}"
         self.canvas.itemconfig(self.circle, fill=button_default_color)
         self.canvas.itemconfig(self.x_symbol, state="hidden")
-        self.canvas.itemconfig(self.timer_text, text="等待手把第一次點擊...")
+        self.canvas.itemconfig(self.timer_text, text=get_text('gui_waiting_first_click'))
         self.canvas.itemconfig(self.cps_text, text="")
         
         print("🎮 Button Smash 測試開始！用手把按鈕開始第一次點擊...")
@@ -155,7 +156,7 @@ class ButtonSmashTestApp:
         
         if remaining > 0:
             self.canvas.itemconfig(self.timer_text, 
-                                   text=f"剩餘時間: {remaining:.1f}s")
+                                   text=get_text('gui_remaining_time', time=remaining))
             # 繼續更新計時器
             self.timer_id = self.root.after(100, self.update_timer)
         else:
@@ -177,9 +178,9 @@ class ButtonSmashTestApp:
         self.save_test_results(cps)
         
         # 顯示結果
-        self.canvas.itemconfig(self.timer_text, text="測試完成！")
+        self.canvas.itemconfig(self.timer_text, text=get_text('gui_test_complete_smash'))
         self.canvas.itemconfig(self.cps_text, 
-                               text=f"總點擊數: {self.click_count}\nCPS: {cps:.2f}\n(點擊數 ÷ {self.test_duration} 秒)")
+                               text=get_text('gui_smash_results', count=self.click_count, cps=cps, duration=self.test_duration))
         
         # 重置圓形和 X 符號（根據會議回饋：使用白底而非灰色）
         button_default_color = f"#{config.COLORS['BUTTON_DEFAULT'][0]:02x}{config.COLORS['BUTTON_DEFAULT'][1]:02x}{config.COLORS['BUTTON_DEFAULT'][2]:02x}"
@@ -189,7 +190,7 @@ class ButtonSmashTestApp:
         # 顯示重新開始按鈕
         background_color = f"#{config.COLORS['BACKGROUND'][0]:02x}{config.COLORS['BACKGROUND'][1]:02x}{config.COLORS['BACKGROUND'][2]:02x}"
         text_color = f"#{config.COLORS['TEXT'][0]:02x}{config.COLORS['TEXT'][1]:02x}{config.COLORS['TEXT'][2]:02x}"
-        self.label.config(text=f"測試完成！總點擊: {self.click_count}, CPS: {cps:.2f}",
+        self.label.config(text=get_text('gui_smash_final', count=self.click_count, cps=cps),
                          bg=background_color, fg=text_color)
         self.label.place(relx=0.5, rely=0.1, anchor='center')
         self.start_button.place(relx=0.5, rely=0.85, anchor='center')
@@ -402,12 +403,19 @@ if __name__ == "__main__":
     from threading import Thread
     from common.controller_input import ControllerInput
 
+    # 檢查是否有 --english 參數來提前設定語言
+    if '--english' in sys.argv:
+        set_language('en')
+    else:
+        set_language('zh')
+
     # 解析命令列參數
     parser = argparse.ArgumentParser(description="Button Smash Test")
-    parser.add_argument("--user", "-u", default=None, help="使用者 ID")
-    parser.add_argument("--age", type=int, default=None, help="使用者年齡")
-    parser.add_argument("--controller-freq", type=int, default=None, help="手把使用頻率 (1-7)")
+    parser.add_argument("--user", "-u", default=None, help=get_text('arg_user_id'))
+    parser.add_argument("--age", type=int, default=None, help=get_text('arg_age'))
+    parser.add_argument("--controller-freq", type=int, default=None, help=get_text('arg_controller_freq'))
     parser.add_argument("--test", action="store_true", help="執行測試模式")
+    parser.add_argument("--english", action="store_true", help=get_text('arg_english'))
     args = parser.parse_args()
 
     # 如果沒有提供 user_id，則請求輸入

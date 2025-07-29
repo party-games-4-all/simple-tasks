@@ -6,5 +6,6 @@ Common module package
 from .controller_input import ControllerInput
 from .utils import *
 from . import config
+from . import language
 
-__all__ = ['ControllerInput', 'config']
+__all__ = ['ControllerInput', 'config', 'language']

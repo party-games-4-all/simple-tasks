@@ -19,6 +19,7 @@ from common import config
 from common.result_saver import save_test_result
 from common.utils import get_directional_offset, setup_window_topmost, collect_user_info_if_needed
 from common.trace_plot import output_single_trace
+from common.language import set_language, get_text
 
 DEBUG = False  # 是否啟用除錯模式
 
@@ -701,7 +702,7 @@ class PathFollowingTestApp:
         timestamp = time.strftime("%Y%m%d_%H%M%S")
         self.session_output_dir = os.path.join("data", "images", "analog_path_trace", self.user_id, timestamp)
         os.makedirs(self.session_output_dir, exist_ok=True)
-        print(f"📂 本次資料儲存於：{self.session_output_dir}")
+        print(f"📂 {get_text('path_data_saved')}：{self.session_output_dir}")
 
     def create_paths(self):
         """回傳多條路徑清單 - 包含4種直線和8種L型轉彎路徑"""
@@ -896,7 +897,7 @@ class PathFollowingTestApp:
                             self.session_output_dir)
         self.current_path_index += 1
         if self.current_path_index >= len(self.paths):
-            print("✅ 所有路徑測試完成")
+            print(f"✅ {get_text('path_all_complete')}")
             self.save_test_results()
         else:
             self.load_path(self.current_path_index)
@@ -1009,17 +1010,17 @@ class PathFollowingTestApp:
         }
         self.test_results.append(trial_result)
         
-        print("🎯 到達終點")
-        print(f"⏱ 總時間：{self.total_time:.2f} 秒")
-        print(f"❌ 偏離路徑時間：{self.off_path_time:.2f} 秒")
-        print(f"📊 偏離比例：{percent_off:.2f}%")
-        print(f"🔄 移動類型：{path_info['movement_type']}")
+        print(f"🎯 {get_text('path_reached_end')}")
+        print(f"⏱ {get_text('path_total_time')}：{self.total_time:.2f} 秒")
+        print(f"❌ {get_text('path_off_path_time')}：{self.off_path_time:.2f} 秒")
+        print(f"📊 {get_text('path_off_path_percentage')}：{percent_off:.2f}%")
+        print(f"🔄 {get_text('path_movement_type')}：{path_info['movement_type']}")
         
         # 顯示段落分析
         if movement_analysis['straight_segments']:
-            print(f"📏 直線段落：{len(movement_analysis['straight_segments'])} 個")
+            print(f"📏 {get_text('path_straight_segments')}：{len(movement_analysis['straight_segments'])} 個")
         if movement_analysis['corner_segments']:
-            print(f"🔄 轉彎段落：{len(movement_analysis['corner_segments'])} 個")
+            print(f"🔄 {get_text('path_corner_segments')}：{len(movement_analysis['corner_segments'])} 個")
 
     def on_joycon_input(self, buttons, leftX, leftY, last_key_bit,
                         last_key_down):
@@ -1027,12 +1028,12 @@ class PathFollowingTestApp:
         self.leftY = leftY
         if not self.running and last_key_down:
             self.running = True
-            print("✅ 開始測試！請沿著路徑前進")
+            print(f"✅ {get_text('path_test_start')}")
 
     def save_test_results(self):
         """儲存測試結果為 JSON 檔案"""
         if not self.test_results:
-            print("⚠️ 無測試結果可儲存")
+            print(f"⚠️ {get_text('path_no_results')}")
             return
         
         # 計算總體統計
@@ -1137,39 +1138,46 @@ class PathFollowingTestApp:
         )
         
         print("=" * 50)
-        print("🛤️ Analog Path Follow Test - 測試完成總結")
+        print(f"🛤️ {get_text('path_test_summary')}")
         print("=" * 50)
-        print(f"👤 使用者：{self.user_id}")
-        print(f"🎯 總路徑數：{total_trials} (4條直線 + 8種L型)")
-        print(f"⏱️ 總用時：{total_time:.2f} 秒")
-        print(f"📊 平均完成時間：{avg_completion_time:.2f} 秒")
-        print(f"🎯 平均路徑精確度：{avg_accuracy:.1f}%")
+        print(f"👤 {get_text('path_user')}：{self.user_id}")
+        print(f"🎯 {get_text('path_total_paths')}：{total_trials} (4條直線 + 8種L型)")
+        print(f"⏱️ {get_text('path_total_used_time')}：{total_time:.2f} 秒")
+        print(f"📊 {get_text('path_avg_completion_time')}：{avg_completion_time:.2f} 秒")
+        print(f"🎯 {get_text('path_avg_accuracy')}：{avg_accuracy:.1f}%")
         print("")
-        print("📈 基本路徑類型表現分析：")
+        print(f"📈 {get_text('path_basic_analysis')}")
         for path_type, data in metrics["path_type_analysis"].items():
             if data["count"] > 0:
-                print(f"  {path_type}: {data['count']} 條，平均時間 {data['avg_completion_time_s']:.2f}s，精確度 {data['avg_accuracy_pct']:.1f}%")
+                print(f"  {get_text('path_stats_format').format(name=path_type, count=data['count'], time=data['avg_completion_time_s'], accuracy=data['avg_accuracy_pct'])}")
         print("")
-        print("🔍 詳細移動類型分析：")
+        print(f"🔍 {get_text('path_detailed_analysis')}")
         for movement_type, data in metrics["movement_type_analysis"].items():
             if data["count"] > 0:
                 type_name = {
-                    "horizontal_straight": "水平直線",
-                    "vertical_straight": "垂直直線", 
-                    "corner_turns": "L型轉彎"
+                    "horizontal_straight": get_text('path_horizontal_straight'),
+                    "vertical_straight": get_text('path_vertical_straight'), 
+                    "corner_turns": get_text('path_corner_turns')
                 }.get(movement_type, movement_type)
-                print(f"  {type_name}: {data['count']} 條，平均時間 {data['avg_completion_time_s']:.2f}s，精確度 {data['avg_accuracy_pct']:.1f}%")
+                print(f"  {get_text('path_stats_format').format(name=type_name, count=data['count'], time=data['avg_completion_time_s'], accuracy=data['avg_accuracy_pct'])}")
 
 
 if __name__ == "__main__":
     import argparse
     from common.controller_input import ControllerInput
 
+    # 檢查是否有 --english 參數來提前設定語言
+    if '--english' in sys.argv:
+        set_language('en')
+    else:
+        set_language('zh')
+
     # 解析命令列參數
     parser = argparse.ArgumentParser(description="Analog Path Follow Test")
-    parser.add_argument("--user", "-u", default=None, help="使用者 ID")
-    parser.add_argument("--age", type=int, default=None, help="使用者年齡")
-    parser.add_argument("--controller-freq", type=int, default=None, help="手把使用頻率 (1-7)")
+    parser.add_argument("--user", "-u", default=None, help=get_text('arg_user_id'))
+    parser.add_argument("--age", type=int, default=None, help=get_text('arg_age'))
+    parser.add_argument("--controller-freq", type=int, default=None, help=get_text('arg_controller_freq'))
+    parser.add_argument("--english", action="store_true", help=get_text('arg_english'))
     args = parser.parse_args()
 
     # 如果沒有提供 user_id，則請求輸入

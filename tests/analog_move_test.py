@@ -21,6 +21,7 @@ from common import config
 from common.result_saver import save_test_result
 from common.trace_plot import init_trace_output_folder, output_move_trace
 from common.utils import setup_window_topmost, collect_user_info_if_needed
+from common.language import set_language, get_text
 
 
 class JoystickTargetTestApp:
@@ -47,7 +48,7 @@ class JoystickTargetTestApp:
 
         text_color = f"#{config.COLORS['TEXT'][0]:02x}{config.COLORS['TEXT'][1]:02x}{config.COLORS['TEXT'][2]:02x}"
         self.label = tk.Label(root,
-                              text="按『開始測試』後先進行暖身，然後正式測試 (僅使用左手搖桿操作)",
+                              text=get_text('gui_analog_instructions'),
                               font=("Arial", 24),
                               bg=background_color,
                               fg=text_color)
@@ -55,7 +56,7 @@ class JoystickTargetTestApp:
 
         button_default_color = f"#{config.COLORS['BUTTON_DEFAULT'][0]:02x}{config.COLORS['BUTTON_DEFAULT'][1]:02x}{config.COLORS['BUTTON_DEFAULT'][2]:02x}"
         self.start_button = tk.Button(root,
-                                      text="開始測試",
+                                      text=get_text('gui_start_test'),
                                       font=("Arial", 24),
                                       command=self.start_test,
                                       bg=button_default_color,
@@ -390,10 +391,10 @@ class JoystickTargetTestApp:
                 print(f"📏 距離：{self.initial_distance:.1f} px")
                 print(f"⚡ 單位距離時間：{efficiency:.4f} 秒/像素")
                 print(f"📊 平均時間：{avg_time:.2f} 秒，平均秒/像素：{avg_efficiency:.4f}")
-                self.label.config(text=(f"第 {formal_count} 次"))
+                self.label.config(text=get_text('gui_trial_number').format(trial=formal_count))
             else:
                 # 暖身測試
-                print(f"🏃 暖身測試完成")
+                print(f"🏃 {get_text('gui_warmup_complete')}")
                 print(f"⏱ 用時：{elapsed:.2f} 秒")
                 print(f"📏 距離：{self.initial_distance:.1f} px")
                 print(f"🎯 現在開始正式測試...")
@@ -594,11 +595,18 @@ if __name__ == "__main__":
     from threading import Thread
     from common.controller_input import ControllerInput
 
+    # 檢查是否有 --english 參數來提前設定語言
+    if '--english' in sys.argv:
+        set_language('en')
+    else:
+        set_language('zh')
+
     # 解析命令列參數
     parser = argparse.ArgumentParser(description="Analog Move Test")
-    parser.add_argument("--user", "-u", default=None, help="使用者 ID")
-    parser.add_argument("--age", type=int, default=None, help="使用者年齡")
-    parser.add_argument("--controller-freq", type=int, default=None, help="手把使用頻率 (1-7)")
+    parser.add_argument("--user", "-u", default=None, help=get_text('arg_user_id'))
+    parser.add_argument("--age", type=int, default=None, help=get_text('arg_age'))
+    parser.add_argument("--controller-freq", type=int, default=None, help=get_text('arg_controller_freq'))
+    parser.add_argument("--english", action="store_true", help=get_text('arg_english'))
     args = parser.parse_args()
 
     # 如果沒有提供 user_id，則請求輸入
