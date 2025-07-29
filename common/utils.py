@@ -43,10 +43,10 @@ def setup_window_topmost(root):
         root.focus_force()
         root.lift()
         
-        print(f"🖥️ 視窗設定為：{width}x{height}，位置：({x}, {y})")
+        print(f"🖥️ Window set to | 視窗設定為：{width}x{height}，position | 位置：({x}, {y})")
         
     except Exception as e:
-        print(f"⚠️ 設定視窗置頂失敗: {e}")
+        print(f"⚠️ Failed to set window topmost | 設定視窗置頂失敗: {e}")
         # 備用設定
         try:
             root.geometry('1200x800')
@@ -66,6 +66,6 @@ def setup_pygame_window_topmost():
         import os
         # 在 macOS 上可以嘗試設定環境變數
         os.environ['SDL_VIDEO_WINDOW_POS'] = 'centered'
-        print("🔝 已嘗試設定 pygame 視窗置頂")
+        print("🔝 Attempted to set pygame window topmost | 已嘗試設定 pygame 視窗置頂")
     except Exception as e:
-        print(f"⚠️ 設定 pygame 視窗置頂失敗: {e}")
+        print(f"⚠️ Failed to set pygame window topmost | 設定 pygame 視窗置頂失敗: {e}")

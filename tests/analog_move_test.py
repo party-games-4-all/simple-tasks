@@ -28,7 +28,7 @@ class JoystickTargetTestApp:
     def __init__(self, root, user_id=None):
         self.root = root
         self.user_id = user_id or "default"
-        self.root.title("Joystick 移動目標測試")
+        self.root.title("Joystick Target Movement Test | Joystick 移動目標測試")
         
         # 設定視窗置頂
         setup_window_topmost(self.root)
@@ -44,15 +44,15 @@ class JoystickTargetTestApp:
 
         text_color = f"#{config.COLORS['TEXT'][0]:02x}{config.COLORS['TEXT'][1]:02x}{config.COLORS['TEXT'][2]:02x}"
         self.label = tk.Label(root,
-                              text="按『開始測試』後先進行暖身，然後正式測試 (僅使用左手搖桿操作)",
-                              font=("Arial", 24),
+                              text="Press 'Start Test' to begin warm-up, then formal test\n按『開始測試』後先進行暖身，然後正式測試\n(Use left joystick only | 僅使用左手搖桿操作)",
+                              font=("Arial", 18),
                               bg=background_color,
                               fg=text_color)
         self.label.place(relx=0.5, rely=0.02, anchor='n')
 
         button_default_color = f"#{config.COLORS['BUTTON_DEFAULT'][0]:02x}{config.COLORS['BUTTON_DEFAULT'][1]:02x}{config.COLORS['BUTTON_DEFAULT'][2]:02x}"
         self.start_button = tk.Button(root,
-                                      text="開始測試",
+                                      text="Start Test | 開始測試",
                                       font=("Arial", 24),
                                       command=self.start_test,
                                       bg=button_default_color,
@@ -366,20 +366,20 @@ class JoystickTargetTestApp:
                 }
                 self.test_results.append(trial_result)
 
-                print(f"✅ 第 {formal_count} 次成功")
-                print(f"🎯 位置：{current_target_info.get('position_index', 'N/A')} ({current_target_info.get('size_type', 'N/A')}-{current_target_info.get('distance_type', 'N/A')})")
-                print(f"⏱ 用時：{elapsed:.2f} 秒")
-                print(f"📏 距離：{self.initial_distance:.1f} px")
-                print(f"⚡ 單位距離時間：{efficiency:.4f} 秒/像素")
-                print(f"📊 平均時間：{avg_time:.2f} 秒，平均秒/像素：{avg_efficiency:.4f}")
-                self.label.config(text=(f"第 {formal_count} 次"))
+                print(f"✅ Success #{formal_count} | 第 {formal_count} 次成功")
+                print(f"🎯 Position | 位置：{current_target_info.get('position_index', 'N/A')} ({current_target_info.get('size_type', 'N/A')}-{current_target_info.get('distance_type', 'N/A')})")
+                print(f"⏱ Time | 用時：{elapsed:.2f} seconds | 秒")
+                print(f"📏 Distance | 距離：{self.initial_distance:.1f} px")
+                print(f"⚡ Time per pixel | 單位距離時間：{efficiency:.4f} seconds/pixel | 秒/像素")
+                print(f"📊 Average time | 平均時間：{avg_time:.2f} seconds | 秒，Average sec/pixel | 平均秒/像素：{avg_efficiency:.4f}")
+                self.label.config(text=(f"Test #{formal_count} | 第 {formal_count} 次"))
             else:
                 # 暖身測試
-                print(f"🏃 暖身測試完成")
-                print(f"⏱ 用時：{elapsed:.2f} 秒")
-                print(f"📏 距離：{self.initial_distance:.1f} px")
-                print(f"🎯 現在開始正式測試...")
-                self.label.config(text="暖身完成，開始正式測試")
+                print(f"🏃 Warm-up completed | 暖身測試完成")
+                print(f"⏱ Time | 用時：{elapsed:.2f} seconds | 秒")
+                print(f"📏 Distance | 距離：{self.initial_distance:.1f} px")
+                print(f"🎯 Starting formal test now | 現在開始正式測試...")
+                self.label.config(text="Warm-up completed, starting formal test | 暖身完成，開始正式測試")
                 
             self.testing = False
             
@@ -424,7 +424,7 @@ class JoystickTargetTestApp:
     def save_test_results(self):
         """儲存測試結果為 JSON 檔案"""
         if not self.test_results:
-            print("⚠️ 無測試結果可儲存")
+            print("⚠️ No test results to save | 無測試結果可儲存")
             return
         
         # 計算總體統計
@@ -536,22 +536,22 @@ class JoystickTargetTestApp:
         )
         
         print("=" * 50)
-        print("🎯 ISO9241 Analog Move Test - 測試完成總結")
+        print("🎯 ISO9241 Analog Move Test - Test Summary | 測試完成總結")
         print("=" * 50)
-        print(f"👤 使用者：{self.user_id}")
-        print(f"🎯 正式測試次數：{total_trials}")
-        print(f"🏃 包含暖身測試：是 (第0次不計入統計)")
-        print(f"⏱️ 總用時：{self.total_time:.2f} 秒")
-        print(f"📊 平均用時：{avg_time:.2f} 秒")
-        print(f"⚡ 平均效率：{avg_efficiency:.4f} 秒/像素")
-        print(f"🎪 測試標準：ISO9241 九點圓形指向測試")
-        print(f"📏 長距離：{self.distance} 像素，短距離：{self.short_distance} 像素")
-        print(f"🎯 測試組合：長距離大小目標 + 短距離大小目標")
+        print(f"👤 User | 使用者：{self.user_id}")
+        print(f"🎯 Formal test trials | 正式測試次數：{total_trials}")
+        print(f"🏃 Included warm-up test | 包含暖身測試：Yes (Trial 0 not included in statistics | 是，第0次不計入統計)")
+        print(f"⏱️ Total time | 總用時：{self.total_time:.2f} seconds | 秒")
+        print(f"📊 Average time | 平均用時：{avg_time:.2f} seconds | 秒")
+        print(f"⚡ Average efficiency | 平均效率：{avg_efficiency:.4f} seconds/pixel | 秒/像素")
+        print(f"🎪 Test standard | 測試標準：ISO9241 Nine-point circular pointing test | 九點圓形指向測試")
+        print(f"📏 Long distance | 長距離：{self.distance} pixels | 像素，Short distance | 短距離：{self.short_distance} pixels | 像素")
+        print(f"🎯 Test combinations | 測試組合：Long distance large/small targets + Short distance large/small targets | 長距離大小目標 + 短距離大小目標")
         print("")
-        print("📈 各難度表現分析：")
+        print("📈 Performance analysis by difficulty | 各難度表現分析：")
         for difficulty, data in metrics["difficulty_analysis"].items():
             if data["count"] > 0:
-                print(f"  {difficulty}: {data['count']} 次，平均 {data['avg_time_ms']:.0f} ms")
+                print(f"  {difficulty}: {data['count']} trials | 次，average | 平均 {data['avg_time_ms']:.0f} ms")
         print("=" * 50)
 
 
@@ -562,13 +562,13 @@ if __name__ == "__main__":
 
     # 解析命令列參數
     parser = argparse.ArgumentParser(description="Analog Move Test")
-    parser.add_argument("--user", "-u", default=None, help="使用者 ID")
+    parser.add_argument("--user", "-u", default=None, help="User ID | 使用者 ID")
     args = parser.parse_args()
 
     # 如果沒有提供 user_id，則請求輸入
     user_id = args.user
     if not user_id:
-        user_id = input("請輸入使用者 ID (例如: P1): ").strip()
+        user_id = input("Please enter User ID (e.g.: P1) | 請輸入使用者 ID (例如: P1): ").strip()
         if not user_id:
             user_id = "default"
 
@@ -583,4 +583,4 @@ if __name__ == "__main__":
     Thread(target=listener.run, daemon=True).start()
 
     root.mainloop()
-    print("🎮 Fitt's Law 測試結束")
+    print("🎮 Fitt's Law Test Complete | Fitt's Law 測試結束")

@@ -657,7 +657,7 @@ class PathFollowingTestApp:
     def __init__(self, root, user_id=None):
         self.root = root
         self.user_id = user_id or "default"
-        self.root.title("🎮 Path Following 測試 (簡化版本)")
+        self.root.title("🎮 Path Following Test (Simplified Version) | Path Following 測試 (簡化版本)")
         
         # 設定視窗置頂
         setup_window_topmost(self.root)
@@ -896,7 +896,7 @@ class PathFollowingTestApp:
                             self.session_output_dir)
         self.current_path_index += 1
         if self.current_path_index >= len(self.paths):
-            print("✅ 所有路徑測試完成")
+            print("✅ All path tests completed | 所有路徑測試完成")
             self.save_test_results()
         else:
             self.load_path(self.current_path_index)
@@ -1027,7 +1027,7 @@ class PathFollowingTestApp:
         self.leftY = leftY
         if not self.running and last_key_down:
             self.running = True
-            print("✅ 開始測試！請沿著路徑前進")
+            print("✅ Test started! Follow the path | 開始測試！請沿著路徑前進")
 
     def save_test_results(self):
         """儲存測試結果為 JSON 檔案"""
@@ -1137,7 +1137,7 @@ class PathFollowingTestApp:
         )
         
         print("=" * 50)
-        print("🛤️ Analog Path Follow Test - 測試完成總結")
+        print("🛤️ Analog Path Follow Test - Test Summary | 測試完成總結")
         print("=" * 50)
         print(f"👤 使用者：{self.user_id}")
         print(f"🎯 總路徑數：{total_trials} (4條直線 + 8種L型)")
@@ -1167,13 +1167,13 @@ if __name__ == "__main__":
 
     # 解析命令列參數
     parser = argparse.ArgumentParser(description="Analog Path Follow Test")
-    parser.add_argument("--user", "-u", default=None, help="使用者 ID")
+    parser.add_argument("--user", "-u", default=None, help="User ID | 使用者 ID")
     args = parser.parse_args()
 
     # 如果沒有提供 user_id，則請求輸入
     user_id = args.user
     if not user_id:
-        user_id = input("請輸入使用者 ID (例如: P1): ").strip()
+        user_id = input("Please enter User ID (e.g.: P1) | 請輸入使用者 ID (例如: P1): ").strip()
         if not user_id:
             user_id = "default"
 
@@ -1191,6 +1191,6 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         root.destroy()
         app.running = False
-        print("🔴 測試被中斷")
+        print("🔴 Test interrupted | 測試被中斷")
 
-    print("🎮 Path Following 測試結束")
+    print("🎮 Path Following Test Complete | Path Following 測試結束")

@@ -31,7 +31,7 @@ class ButtonSmashTestApp:
     def __init__(self, root, user_id=None):
         self.root = root
         self.user_id = user_id or "default"
-        self.root.title("Button Smash Test")
+        self.root.title("Button Smash Test | 連打測試")
         
         # 設定視窗置頂
         setup_window_topmost(self.root)
@@ -96,8 +96,8 @@ class ButtonSmashTestApp:
         background_color = f"#{config.COLORS['BACKGROUND'][0]:02x}{config.COLORS['BACKGROUND'][1]:02x}{config.COLORS['BACKGROUND'][2]:02x}"
         text_color = f"#{config.COLORS['TEXT'][0]:02x}{config.COLORS['TEXT'][1]:02x}{config.COLORS['TEXT'][2]:02x}"
         self.label = tk.Label(root,
-                              text="按『開始測試』開始 10 秒快速點擊測試\n(可使用 Joy-Con 或空白鍵測試)",
-                              font=("Arial", 20),
+                              text="Press 'Start Test' to begin 10-second rapid clicking test\n按『開始測試』開始 10 秒快速點擊測試\n(Use Joy-Con or Spacebar | 可使用 Joy-Con 或空白鍵測試)",
+                              font=("Arial", 16),
                               bg=background_color,
                               fg=text_color)
         self.label.place(relx=0.5, rely=0.1, anchor='center')
@@ -105,7 +105,7 @@ class ButtonSmashTestApp:
         # 開始按鈕
         button_default_color = f"#{config.COLORS['BUTTON_DEFAULT'][0]:02x}{config.COLORS['BUTTON_DEFAULT'][1]:02x}{config.COLORS['BUTTON_DEFAULT'][2]:02x}"
         self.start_button = tk.Button(root, 
-                                      text="開始測試", 
+                                      text="Start Test | 開始測試", 
                                       font=("Arial", 24), 
                                       command=self.start_test,
                                       bg=button_default_color,
@@ -135,10 +135,10 @@ class ButtonSmashTestApp:
         button_default_color = f"#{config.COLORS['BUTTON_DEFAULT'][0]:02x}{config.COLORS['BUTTON_DEFAULT'][1]:02x}{config.COLORS['BUTTON_DEFAULT'][2]:02x}"
         self.canvas.itemconfig(self.circle, fill=button_default_color)
         self.canvas.itemconfig(self.x_symbol, state="hidden")
-        self.canvas.itemconfig(self.timer_text, text="等待第一次點擊...")
+        self.canvas.itemconfig(self.timer_text, text="Waiting for first click... | 等待第一次點擊...")
         self.canvas.itemconfig(self.cps_text, text="")
         
-        print("🎮 Button Smash 測試開始！等待第一次點擊...")
+        print("🎮 Button Smash test started! Waiting for first click... | Button Smash 測試開始！等待第一次點擊...")
 
     def update_timer(self):
         """更新計時器顯示"""
@@ -150,7 +150,7 @@ class ButtonSmashTestApp:
         
         if remaining > 0:
             self.canvas.itemconfig(self.timer_text, 
-                                   text=f"剩餘時間: {remaining:.1f}s\n點擊次數: {self.click_count}")
+                                   text=f"Time remaining | 剩餘時間: {remaining:.1f}s\nClick count | 點擊次數: {self.click_count}")
             # 繼續更新計時器
             self.timer_id = self.root.after(100, self.update_timer)
         else:
@@ -172,9 +172,9 @@ class ButtonSmashTestApp:
         self.save_test_results(cps)
         
         # 顯示結果
-        self.canvas.itemconfig(self.timer_text, text="測試完成！")
+        self.canvas.itemconfig(self.timer_text, text="Test completed! | 測試完成！")
         self.canvas.itemconfig(self.cps_text, 
-                               text=f"總點擊數: {self.click_count}\nCPS: {cps:.2f}\n(點擊數 ÷ {self.test_duration} 秒)")
+                               text=f"Total clicks | 總點擊數: {self.click_count}\nCPS: {cps:.2f}\n(clicks ÷ {self.test_duration} seconds | 點擊數 ÷ {self.test_duration} 秒)")
         
         # 重置圓形和 X 符號（根據會議回饋：使用白底而非灰色）
         button_default_color = f"#{config.COLORS['BUTTON_DEFAULT'][0]:02x}{config.COLORS['BUTTON_DEFAULT'][1]:02x}{config.COLORS['BUTTON_DEFAULT'][2]:02x}"
@@ -184,16 +184,16 @@ class ButtonSmashTestApp:
         # 顯示重新開始按鈕
         background_color = f"#{config.COLORS['BACKGROUND'][0]:02x}{config.COLORS['BACKGROUND'][1]:02x}{config.COLORS['BACKGROUND'][2]:02x}"
         text_color = f"#{config.COLORS['TEXT'][0]:02x}{config.COLORS['TEXT'][1]:02x}{config.COLORS['TEXT'][2]:02x}"
-        self.label.config(text=f"測試完成！總點擊: {self.click_count}, CPS: {cps:.2f}",
+        self.label.config(text=f"Test completed! Total clicks | 測試完成！總點擊: {self.click_count}, CPS: {cps:.2f}",
                          bg=background_color, fg=text_color)
         self.label.place(relx=0.5, rely=0.1, anchor='center')
         self.start_button.place(relx=0.5, rely=0.85, anchor='center')
         
-        print(f"🎯 測試完成！")
-        print(f"📊 總點擊數: {self.click_count}")
-        print(f"⏱️ 測試時間: {self.test_duration} 秒")
+        print(f"🎯 Test completed! | 測試完成！")
+        print(f"📊 Total clicks | 總點擊數: {self.click_count}")
+        print(f"⏱️ Test duration | 測試時間: {self.test_duration} seconds | 秒")
         print(f"🖱️ CPS (Clicks Per Second): {cps:.2f}")
-        print(f"📈 計算方式: {self.click_count} ÷ {self.test_duration} = {cps:.2f}")
+        print(f"📈 Calculation | 計算方式: {self.click_count} ÷ {self.test_duration} = {cps:.2f}")
 
     def save_test_results(self, cps):
         """儲存測試結果為 JSON 檔案"""
@@ -318,7 +318,7 @@ class ButtonSmashTestApp:
             if self.start_time is None:
                 self.start_time = time.time()
                 self.update_timer()
-                print("⏰ 開始計時！")
+                print("⏰ Timer started! | 開始計時！")
             
             # 檢查是否還在測試時間內
             current_time = time.time()
@@ -333,7 +333,7 @@ class ButtonSmashTestApp:
                 }
                 self.click_timestamps.append(click_timestamp)
                 
-                print(f"🖱️ 點擊 #{self.click_count} (t={click_timestamp['relative_time_ms']:.1f}ms)")
+                print(f"🖱️ Click | 點擊 #{self.click_count} (t={click_timestamp['relative_time_ms']:.1f}ms)")
                 
                 # 視覺回饋：按下時顯示 X 符號（色盲友善設計）
                 button_active_color = f"#{config.COLORS['BUTTON_ACTIVE'][0]:02x}{config.COLORS['BUTTON_ACTIVE'][1]:02x}{config.COLORS['BUTTON_ACTIVE'][2]:02x}"
@@ -370,14 +370,14 @@ if __name__ == "__main__":
 
     # 解析命令列參數
     parser = argparse.ArgumentParser(description="Button Smash Test")
-    parser.add_argument("--user", "-u", default=None, help="使用者 ID")
-    parser.add_argument("--test", action="store_true", help="測試模式")
+    parser.add_argument("--user", "-u", default=None, help="User ID | 使用者 ID")
+    parser.add_argument("--test", action="store_true", help="Test mode | 測試模式")
     args = parser.parse_args()
 
     # 如果沒有提供 user_id，則請求輸入
     user_id = args.user
     if not user_id and not args.test:
-        user_id = input("請輸入使用者 ID (例如: P1): ").strip()
+        user_id = input("Please enter User ID (e.g.: P1) | 請輸入使用者 ID (例如: P1): ").strip()
         if not user_id:
             user_id = "default"
 
@@ -387,7 +387,7 @@ if __name__ == "__main__":
     # 檢查是否有測試參數
     if args.test:
         # 測試模式：模擬點擊來驗證 CPS 計算
-        print("🧪 測試模式：驗證 CPS 計算...")
+        print("🧪 Test mode: Verifying CPS calculation | 測試模式：驗證 CPS 計算...")
         
         # 模擬 25 次點擊，應該得到 2.5 CPS
         app.start_test()
@@ -395,7 +395,7 @@ if __name__ == "__main__":
         app.click_count = 25
         app.finish_test()
         
-        print("✅ 測試完成")
+        print("✅ Test completed | 測試完成")
         root.destroy()
         sys.exit(0)
 
@@ -406,4 +406,4 @@ if __name__ == "__main__":
     Thread(target=listener.run, daemon=True).start()
 
     root.mainloop()
-    print("🎮 Button Smash 測試結束")
+    print("🎮 Button Smash Test Complete | Button Smash 測試結束")

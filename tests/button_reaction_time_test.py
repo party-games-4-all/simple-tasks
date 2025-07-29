@@ -18,7 +18,7 @@ class ReactionTestApp:
     def __init__(self, root, user_id=None):
         self.root = root
         self.user_id = user_id or "default"
-        self.root.title("Reaction Test")
+        self.root.title("Reaction Test | 反應測試")
         
         # 設定視窗置頂
         setup_window_topmost(self.root)
@@ -43,13 +43,13 @@ class ReactionTestApp:
                                             fill=button_default_color, outline=text_color, width=3)
 
         self.label = tk.Label(root,
-                              text="請按『開始測試』按鈕開始測試",
+                              text="Press 'Start Test' button to begin | 請按『開始測試』按鈕開始測試",
                               font=("Arial", 24),
                               bg=f"#{config.COLORS['BACKGROUND'][0]:02x}{config.COLORS['BACKGROUND'][1]:02x}{config.COLORS['BACKGROUND'][2]:02x}",
                               fg=text_color)
         self.label.place(relx=0.5, rely=0.2, anchor='center')
 
-        self.start_button = tk.Button(root, text="開始測試", font=("Arial", 24), command=self.start_test,
+        self.start_button = tk.Button(root, text="Start Test | 開始測試", font=("Arial", 24), command=self.start_test,
                                      bg=f"#{config.COLORS['BUTTON_DEFAULT'][0]:02x}{config.COLORS['BUTTON_DEFAULT'][1]:02x}{config.COLORS['BUTTON_DEFAULT'][2]:02x}",
                                      fg=f"#{config.COLORS['TEXT'][0]:02x}{config.COLORS['TEXT'][1]:02x}{config.COLORS['TEXT'][2]:02x}")
         self.start_button.place(relx=0.5, rely=0.8, anchor='center')
@@ -91,7 +91,7 @@ class ReactionTestApp:
             background_color = f"#{config.COLORS['BACKGROUND'][0]:02x}{config.COLORS['BACKGROUND'][1]:02x}{config.COLORS['BACKGROUND'][2]:02x}"
             self.canvas.itemconfig(self.circle, fill=background_color)
             self.state = "waiting"
-            print(f"太快了！再試一次。")
+            print(f"Too fast! Try again. | 太快了！再試一次。")
 
         elif self.state == "go":
             reaction_time = time.time() - self.start_time
@@ -105,7 +105,7 @@ class ReactionTestApp:
             })
             
             # self.label.config(text=f"反應時間：{reaction_time:.3f} 秒。請再按一次開始", font=("Arial", 24))
-            print(f"反應時間：{reaction_time:.3f} 秒")
+            print(f"Reaction time | 反應時間：{reaction_time:.3f} seconds | 秒")
             success_color = f"#{config.COLORS['SUCCESS'][0]:02x}{config.COLORS['SUCCESS'][1]:02x}{config.COLORS['SUCCESS'][2]:02x}"
             self.canvas.itemconfig(self.circle, fill=success_color)
             self.state = "waiting"
@@ -115,7 +115,7 @@ class ReactionTestApp:
                 pass
             else:
                 avg_time = sum(self.reaction_times) / len(self.reaction_times)
-                print(f"平均反應時間：{avg_time:.3f} 秒")
+                print(f"Average reaction time | 平均反應時間：{avg_time:.3f} seconds | 秒")
                 
                 # 儲存測試結果
                 self.save_test_results()
@@ -123,7 +123,7 @@ class ReactionTestApp:
                 self.reaction_times.clear()
                 text_color = f"#{config.COLORS['TEXT'][0]:02x}{config.COLORS['TEXT'][1]:02x}{config.COLORS['TEXT'][2]:02x}"
                 background_color = f"#{config.COLORS['BACKGROUND'][0]:02x}{config.COLORS['BACKGROUND'][1]:02x}{config.COLORS['BACKGROUND'][2]:02x}"
-                self.label.config(text="測試完成！請按『開始測試』重新開始。", font=("Arial", 24),
+                self.label.config(text="Test completed! Press 'Start Test' to restart. | 測試完成！請按『開始測試』重新開始。", font=("Arial", 24),
                                 bg=background_color, fg=text_color)
                 self.label.place(relx=0.5, rely=0.2, anchor='center')
                 self.start_button.place(relx=0.5, rely=0.8, anchor='center')
@@ -131,7 +131,7 @@ class ReactionTestApp:
     def save_test_results(self):
         """儲存測試結果為 JSON 檔案"""
         if not self.test_results:
-            print("⚠️ 無測試結果可儲存")
+            print("⚠️ No test results to save | 無測試結果可儲存")
             return
         
         # 計算統計數據
@@ -198,13 +198,13 @@ if __name__ == "__main__":
 
     # 解析命令列參數
     parser = argparse.ArgumentParser(description="Button Reaction Time Test")
-    parser.add_argument("--user", "-u", default=None, help="使用者 ID")
+    parser.add_argument("--user", "-u", default=None, help="User ID | 使用者 ID")
     args = parser.parse_args()
 
     # 如果沒有提供 user_id，則請求輸入
     user_id = args.user
     if not user_id:
-        user_id = input("請輸入使用者 ID (例如: P1): ").strip()
+        user_id = input("Please enter User ID (e.g.: P1) | 請輸入使用者 ID (例如: P1): ").strip()
         if not user_id:
             user_id = "default"
 
@@ -217,4 +217,4 @@ if __name__ == "__main__":
     Thread(target=listener.run, daemon=True).start()
 
     root.mainloop()
-    print("🎮 SRT 反應時間測試結束")
+    print("🎮 SRT Reaction Time Test Complete | SRT 反應時間測試結束")

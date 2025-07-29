@@ -18,7 +18,7 @@ class AccuracyDirectionTestApp:
     def __init__(self, root, user_id=None):
         self.root = root
         self.user_id = user_id or "default"
-        self.root.title("按鍵準確度測試")
+        self.root.title("Button Accuracy Test | 按鍵準確度測試")
         
         # 設定視窗置頂
         setup_window_topmost(self.root)
@@ -67,10 +67,10 @@ class AccuracyDirectionTestApp:
                                                         width=3)
             # self.canvas.create_text(x, y, text=dir.upper(), font=("Arial", 16))
 
-        self.label = tk.Label(root, text="請按亮起的方向鍵", font=("Arial", 32),
+        self.label = tk.Label(root, text="Press the highlighted direction button | 請按亮起的方向鍵", font=("Arial", 28),
                              bg=background_color, fg=text_color)
         self.start_button = tk.Button(root,
-                                      text="開始計算",
+                                      text="Start Test | 開始測試",
                                       font=("Arial", 24),
                                       command=self.start_measurement,
                                       bg=button_default_color,
@@ -154,11 +154,11 @@ class AccuracyDirectionTestApp:
                         text_color = f"#{config.COLORS['TEXT'][0]:02x}{config.COLORS['TEXT'][1]:02x}{config.COLORS['TEXT'][2]:02x}"
                         self.label.config(
                             text=
-                            f"測驗結束\n正確率：{(1-error_rate):.1%}｜平均反應時間：{avg_time:.3f} 秒",
+                            f"Test completed | 測驗結束\nAccuracy | 正確率：{(1-error_rate):.1%}｜Average reaction time | 平均反應時間：{avg_time:.3f} seconds | 秒",
                             bg=background_color, fg=text_color
                         )
                         print(
-                            f"📊 平均反應時間：{avg_time:.3f} 秒｜錯誤率：{error_rate:.1%}")
+                            f"📊 Average reaction time | 平均反應時間：{avg_time:.3f} seconds | 秒｜Error rate | 錯誤率：{error_rate:.1%}")
                         self.reset()
                         break
                     if self.total > 1:  # 第 1 回合不記錄
@@ -178,10 +178,10 @@ class AccuracyDirectionTestApp:
                         #     text=f"正確率：{(1-error_rate):.1%}｜平均反應時間：{avg_time:.3f} 秒"
                         # )
                         print(
-                            f"🔘 回合 {self.total-1}：{'正確' if correct else '錯誤'}，反應時間 {response_time:.3f} 秒"
+                            f"🔘 Round | 回合 {self.total-1}：{'Correct | 正確' if correct else 'Wrong | 錯誤'}，reaction time | 反應時間 {response_time:.3f} seconds | 秒"
                         )
                     else:
-                        print("👟 第 1 回合為熱身，不納入統計。")
+                        print("👟 Round 1 is warm-up, not included in statistics | 第 1 回合為熱身，不納入統計。")
 
                 self.root.after(1000, self.next_round)  # 等待 1 秒後開始下一回合
                 break
@@ -189,7 +189,7 @@ class AccuracyDirectionTestApp:
     def save_test_results(self, avg_time, error_rate):
         """儲存測試結果為 JSON 檔案"""
         if not self.test_results:
-            print("⚠️ 無測試結果可儲存")
+            print("⚠️ No test results to save | 無測試結果可儲存")
             return
         
         # 計算統計數據
@@ -261,13 +261,13 @@ if __name__ == "__main__":
 
     # 解析命令列參數
     parser = argparse.ArgumentParser(description="Button Accuracy Test")
-    parser.add_argument("--user", "-u", default=None, help="使用者 ID")
+    parser.add_argument("--user", "-u", default=None, help="User ID | 使用者 ID")
     args = parser.parse_args()
 
     # 如果沒有提供 user_id，則請求輸入
     user_id = args.user
     if not user_id:
-        user_id = input("請輸入使用者 ID (例如: P1): ").strip()
+        user_id = input("Please enter User ID (e.g.: P1) | 請輸入使用者 ID (例如: P1): ").strip()
         if not user_id:
             user_id = "default"
 
@@ -286,4 +286,4 @@ if __name__ == "__main__":
     Thread(target=listener.run, daemon=True).start()
 
     root.mainloop()
-    print("🎮 CRT 反應時間測試結束")
+    print("🎮 CRT Choice Reaction Time Test Complete | CRT 反應時間測試結束")

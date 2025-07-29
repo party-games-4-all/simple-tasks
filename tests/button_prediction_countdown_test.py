@@ -33,7 +33,7 @@ class CountdownReactionTestApp:
     def __init__(self, root, user_id=None):
         self.root = root
         self.user_id = user_id or "default"
-        self.root.title("🎮 預測反應時間測試 - 遊戲化版本")
+        self.root.title("🎮 Prediction Reaction Time Test - Gamified Version | 預測反應時間測試 - 遊戲化版本")
         
         # 設定視窗置頂
         setup_window_topmost(self.root)
@@ -63,12 +63,12 @@ class CountdownReactionTestApp:
 
         background_color = f"#{config.COLORS['BACKGROUND'][0]:02x}{config.COLORS['BACKGROUND'][1]:02x}{config.COLORS['BACKGROUND'][2]:02x}"
         text_color = f"#{config.COLORS['TEXT'][0]:02x}{config.COLORS['TEXT'][1]:02x}{config.COLORS['TEXT'][2]:02x}"
-        self.label = tk.Label(root, text="準備好了嗎？請在球到達灰色圓圈時按下按鈕！", font=("Arial", 24),
+        self.label = tk.Label(root, text="Ready? Press the button when the ball reaches the gray circle!\n準備好了嗎？請在球到達灰色圓圈時按下按鈕！", font=("Arial", 20),
                              bg=background_color, fg=text_color)
         self.label.place(relx=0.5, rely=0.2, anchor='center')
 
         button_default_color = f"#{config.COLORS['BUTTON_DEFAULT'][0]:02x}{config.COLORS['BUTTON_DEFAULT'][1]:02x}{config.COLORS['BUTTON_DEFAULT'][2]:02x}"
-        self.start_button = tk.Button(root, text="開始測試", font=("Arial", 24), command=self.start_test,
+        self.start_button = tk.Button(root, text="Start Test | 開始測試", font=("Arial", 24), command=self.start_test,
                                      bg=button_default_color, fg=text_color)
         self.start_button.place(relx=0.5, rely=0.8, anchor='center')
 
@@ -328,18 +328,18 @@ class CountdownReactionTestApp:
             self.save_test_results(0, [])
         
         print("=" * 50)
-        print("✅ 結果已成功儲存到 JSON 檔案")
+        print("✅ Results successfully saved to JSON file | 結果已成功儲存到 JSON 檔案")
         print("=" * 50)
         
         # 顯示重新開始界面
         self.label.place(relx=0.5, rely=0.2, anchor='center')
-        self.label.config(text="測試完成！結果已儲存。點擊重新開始")
+        self.label.config(text="Test completed! Results saved. Click to restart\n測試完成！結果已儲存。點擊重新開始")
         
         background_color = f"#{config.COLORS['BACKGROUND'][0]:02x}{config.COLORS['BACKGROUND'][1]:02x}{config.COLORS['BACKGROUND'][2]:02x}"
         text_color = f"#{config.COLORS['TEXT'][0]:02x}{config.COLORS['TEXT'][1]:02x}{config.COLORS['TEXT'][2]:02x}"
         button_default_color = f"#{config.COLORS['BUTTON_DEFAULT'][0]:02x}{config.COLORS['BUTTON_DEFAULT'][1]:02x}{config.COLORS['BUTTON_DEFAULT'][2]:02x}"
         
-        self.start_button = tk.Button(self.root, text="重新開始", font=("Arial", 24), command=self.start_test,
+        self.start_button = tk.Button(self.root, text="Restart | 重新開始", font=("Arial", 24), command=self.start_test,
                                      bg=button_default_color, fg=text_color)
         self.start_button.place(relx=0.5, rely=0.8, anchor='center')
 
@@ -453,13 +453,13 @@ if __name__ == "__main__":
 
     # 解析命令列參數
     parser = argparse.ArgumentParser(description="Button Prediction Countdown Test")
-    parser.add_argument("--user", "-u", default=None, help="使用者 ID")
+    parser.add_argument("--user", "-u", default=None, help="User ID | 使用者 ID")
     args = parser.parse_args()
 
     # 如果沒有提供 user_id，則請求輸入
     user_id = args.user
     if not user_id:
-        user_id = input("請輸入使用者 ID (例如: P1): ").strip()
+        user_id = input("Please enter User ID (e.g.: P1) | 請輸入使用者 ID (例如: P1): ").strip()
         if not user_id:
             user_id = "default"
 
@@ -472,4 +472,4 @@ if __name__ == "__main__":
     Thread(target=listener.run, daemon=True).start()
 
     root.mainloop()
-    print("🎮 預測反應時間測試結束")
+    print("🎮 Prediction Reaction Time Test Complete | 預測反應時間測試結束")
