@@ -1,270 +1,331 @@
-# Simple Tasks - 手把測試應用程式
+# Simple Tasks - Controller Testing Application
 
-這是一個使用 Python 和 pygame 開發的手把測試應用程式集合，用於測試使用者的反應時間、精準度和協調能力。包含多種從簡單到複雜的互動測試，適用於遊戲研究、使用者體驗測試和能力評估。
+This is a collection of controller testing applications developed using Python and pygame, designed to test users' reaction time, accuracy, and coordination abilities. It includes various interactive tests ranging from simple to complex, suitable for gaming research, user experience testing, and ability assessment.
 
-## 前置需求
+## Prerequisites
 
-在開始使用之前，請確保您的系統已安裝以下軟體：
+Before getting started, please ensure your system has the following software installed:
 
-### 必要系統需求
-- **Python 3.8 或更高版本**
-- **macOS 10.14+ 或 Linux** (Windows 可能需要額外設定)
-- **支援的遊戲手把** (Joy-Con、PlayStation 控制器、Xbox 控制器等)
+### System Requirements
+- **Python 3.8 or higher**
+- **macOS 10.14+ or Linux** (Windows may require additional setup)
+- **Supported game controllers** (Joy-Con, PlayStation controllers, Xbox controllers, etc.)
 
-### 安裝 uv (強烈推薦)
-uv 是一個高效能的 Python 套件管理工具，提供快速的依賴安裝和環境管理：
+### Installing uv (Highly Recommended)
+uv is a high-performance Python package management tool that provides fast dependency installation and environment management:
 
 ```bash
-# macOS 和 Linux
+# macOS and Linux
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# 或使用 Homebrew (macOS)
+# Or using Homebrew (macOS)
 brew install uv
 
-# 或使用 pip
+# Or using pip
 pip install uv
 ```
 
-安裝後請重新啟動終端機，或執行：
+After installation, please restart your terminal or run:
 ```bash
 source ~/.bashrc  # Linux
-source ~/.zshrc   # macOS (如果使用 zsh)
+source ~/.zshrc   # macOS (if using zsh)
 ```
 
-### 驗證安裝
+### Verify Installation
 ```bash
 uv --version
 ```
 
-## 快速開始
+## Quick Start
 
-1. **Clone 專案並進入目錄**
+1. **Clone the project and enter the directory**
    ```bash
    git clone <your-repo-url>
    cd simple-tasks
    ```
 
-2. **連接手把裝置**
-   - 確保手把已正確連接到電腦
-   - 對於 Joy-Con：確保已透過藍牙配對
-   - 對於其他手把：確保驅動程式已安裝
+2. **Connect your controller**
+   - Ensure the controller is properly connected to your computer
+   - For Joy-Con: Ensure it's paired via Bluetooth
+   - For other controllers: Ensure drivers are installed
 
-3. **執行程式**
+3. **Run the application**
    ```bash
-   # uv 會自動建立虛擬環境並安裝所有依賴
+   # uv will automatically create a virtual environment and install all dependencies
    uv run python main.py
    ```
 
-## 專案架構
+## Project Architecture
 
-本專案採用模組化架構，方便維護與擴充：
+This project uses a modular architecture for easy maintenance and expansion:
 
 ```
 simple-tasks/
-├── main.py                         # 主控程式 - 互動式測試選單
-├── pyproject.toml                  # 專案配置和依賴管理
-├── uv.lock                        # 依賴版本鎖定檔案
-├── README.md                      # 專案說明文件
-├── tests/                         # 測試模組目錄
-│   ├── __init__.py               # Python 套件初始化
-│   ├── button_reaction_time_test.py    # 簡單反應時間測試
-│   ├── button_prediction_countdown_test.py # 預測反應時間測試  
-│   ├── button_smash_test.py       # Button Smash 連打測試
-│   ├── button_accuracy_test.py    # 方向選擇反應測試
-│   ├── analog_move_test.py        # 類比搖桿移動測試
-│   └── analog_path_follow_test.py # 路徑追蹤測試
-├── common/                        # 共用模組
-│   ├── __init__.py               # Python 套件初始化
-│   ├── config.py                 # 全域配置設定
-│   ├── controller_input.py       # 手把輸入處理核心
-│   ├── connection_test.py        # 手把連接測試工具
-│   ├── result_saver.py           # 測試結果儲存模組
-│   ├── trace_plot.py             # 軌跡圖表生成工具
-│   └── utils.py                  # 通用工具函式
-├── data/                         # 資料儲存目錄
-│   ├── results/                  # 測試結果 (JSON 格式)
-│   │   └── [user_id]/           # 各使用者的測試結果
-│   └── images/                   # 圖片輸出 (軌跡圖等)
-│       ├── analog_move/          # 移動測試軌跡圖
-│       └── analog_path_trace/    # 路徑追蹤軌跡圖
-├── docs/                         # 開發文件
-└── __pycache__/                  # Python 編譯快取 (自動生成)
+├── main.py                         # Main program - Interactive test menu
+├── pyproject.toml                  # Project configuration and dependency management
+├── uv.lock                        # Dependency version lock file
+├── README.md                      # Project documentation
+├── tests/                         # Test modules directory
+│   ├── __init__.py               # Python package initialization
+│   ├── button_reaction_time_test.py    # Simple reaction time test
+│   ├── button_prediction_countdown_test.py # Prediction reaction time test  
+│   ├── button_smash_test.py       # Button smash rapid-click test
+│   ├── button_accuracy_test.py    # Direction choice reaction test
+│   ├── analog_move_test.py        # Analog stick movement test
+│   └── analog_path_follow_test.py # Path following test
+├── common/                        # Shared modules
+│   ├── __init__.py               # Python package initialization
+│   ├── config.py                 # Global configuration settings
+│   ├── controller_input.py       # Controller input processing core
+│   ├── connection_test.py        # Controller connection test tool
+│   ├── result_saver.py           # Test result saving module
+│   ├── trace_plot.py             # Trajectory chart generation tool
+│   └── utils.py                  # Common utility functions
+├── data/                         # Data storage directory
+│   ├── results/                  # Test results (JSON format)
+│   │   └── [user_id]/           # Test results for each user
+│   └── images/                   # Image output (trajectory plots, etc.)
+│       ├── analog_move/          # Movement test trajectory plots
+│       └── analog_path_trace/    # Path following trajectory plots
+├── docs/                         # Development documentation
+└── __pycache__/                  # Python compiled cache (auto-generated)
 ```
 
-## 執行測試
+## Running Tests
 
-### 互動式執行
+### Interactive Execution
 ```bash
 uv run python main.py
 ```
 
-### 執行單一測試
-每個測試都可以獨立執行，並支援指定使用者 ID：
+### Running Individual Tests
+Each test can be run independently and supports specifying a user ID:
 
 ```bash
-# 手把連接測試
+# Controller connection test
 uv run python common/connection_test.py --user P1
 
-# Button 測試系列
+# Button test series
 uv run python tests/button_reaction_time_test.py --user P1
 uv run python tests/button_prediction_countdown_test.py --user P1
 uv run python tests/button_smash_test.py --user P1
 uv run python tests/button_accuracy_test.py --user P1
 
-# Analog Stick 測試系列
+# Analog Stick test series
 uv run python tests/analog_move_test.py --user P1
 uv run python tests/analog_path_follow_test.py --user P1
 ```
 
-如果不提供 `--user` 參數，程式會要求您輸入使用者 ID。
+If you don't provide the `--user` parameter, the program will prompt you to enter a user ID.
 
-### 執行完整測試套件
+### Running Complete Test Suite
 ```bash
-# 執行所有測試 (從主選單選擇選項 8)
+# Run all tests (select option 8 from main menu)
 uv run python main.py
 ```
 
-進入互動選單後選擇選項 8 即可依序執行所有測試。
+After entering the interactive menu, select option 8 to run all tests sequentially.
 
-**注意**：目前選項 8 (執行完整測試套件) 的功能需要手動依序執行各個測試。未來版本將會加入自動化腳本。
+**Note**: Currently option 8 (run complete test suite) requires manually running each test in sequence. Automated scripts will be added in future versions.
 
-## 測試說明
+## Test Descriptions
 
-本應用程式包含 8 種不同類型的測試，從簡單到複雜循序漸進，全面評估使用者的反應能力和操作技巧。
+This application includes 8 different types of tests, progressively arranged from simple to complex, comprehensively evaluating users' reaction abilities and operational skills.
 
-### Button 測試系列 (按鈕測試)
+### Button Test Series
 
-按照難度由簡單到困難的順序排列：
+Arranged in order of difficulty from simple to complex:
 
-#### 1. 簡單反應時間測試 (`button_reaction_time_test.py`)
-- **目的**：測試基礎反應速度
-- **操作**：當畫面顯示提示時立即按下任意按鈕
-- **測量指標**：反應時間（毫秒）
-- **測試次數**：10 次試驗
-- **說明**：這是最基本的反應速度測試，評估大腦接收視覺訊號並做出反應的時間
+#### 1. Simple Reaction Time Test (`button_reaction_time_test.py`)
+- **Purpose**: Test basic reaction speed
+- **Operation**: Press any button immediately when the screen shows a prompt
+- **Metrics**: Reaction time (milliseconds)
+- **Trials**: 10 tests
+- **Description**: This is the most basic reaction speed test, evaluating the time for the brain to receive visual signals and react
 
-#### 2. 預測反應時間測試 (`button_prediction_countdown_test.py`)
-- **目的**：測試預測和時間感知能力
-- **操作**：觀察移動的球，在它到達目標區域的瞬間按下按鈕
-- **測量指標**：預測準確度、提前/延遲時間
-- **設計特色**：參考 Mario Party 遊戲機制，球移動時間為 1200ms
-- **說明**：評估玩家在動態情境中的視覺追蹤和時間預測能力
+#### 2. Prediction Reaction Time Test (`button_prediction_countdown_test.py`)
+- **Purpose**: Test prediction and time perception abilities
+- **Operation**: Watch the moving ball and press the button at the moment it reaches the target area
+- **Metrics**: Prediction accuracy, early/late timing
+- **Design Feature**: Based on Mario Party game mechanics, ball movement time is 1200ms
+- **Description**: Evaluates players' visual tracking and time prediction abilities in dynamic situations
 
-#### 3. Button Smash 連打測試 (`button_smash_test.py`)
-- **目的**：測試快速連續點擊能力
-- **操作**：在 10 秒內盡可能快速地重複按下按鈕
-- **測量指標**：CPS (Clicks Per Second)、總點擊數
-- **視覺回饋**：按鈕按下時顯示 X 符號和顏色變化
-- **說明**：評估玩家的肌肉協調性和持續操作能力
+#### 3. Button Smash Test (`button_smash_test.py`)
+- **Purpose**: Test rapid consecutive clicking ability
+- **Operation**: Press buttons as quickly as possible repeatedly within 10 seconds
+- **Metrics**: CPS (Clicks Per Second), total clicks
+- **Visual Feedback**: Button shows X symbol and color change when pressed
+- **Description**: Evaluates players' muscle coordination and sustained operation ability
 
-#### 4. 方向選擇反應測試 (`button_accuracy_test.py`)
-- **目的**：測試選擇性反應和準確度
-- **操作**：根據畫面指示按下對應方向的按鈕（上下左右）
-- **測量指標**：準確率、反應時間、錯誤率
-- **測試次數**：20 次試驗
-- **說明**：評估認知處理能力和精確操作技巧
+#### 4. Direction Choice Reaction Test (`button_accuracy_test.py`)
+- **Purpose**: Test selective reaction and accuracy
+- **Operation**: Press the corresponding direction button (up, down, left, right) according to screen instructions
+- **Metrics**: Accuracy rate, reaction time, error rate
+- **Trials**: 20 tests
+- **Description**: Evaluates cognitive processing ability and precise operation skills
 
-### Analog 測試系列 (搖桿測試)
+### Analog Test Series
 
-按照難度由簡單到困難的順序排列：
+Arranged in order of difficulty from simple to complex:
 
-#### 5. 類比搖桿移動測試 (`analog_move_test.py`)
-- **目的**：測試基礎搖桿控制能力
-- **操作**：使用搖桿將游標移動到隨機出現的目標圓圈內
-- **測量指標**：移動時間、移動距離、軌跡效率
-- **視覺輸出**：產生移動軌跡圖，顯示玩家的移動路徑
-- **說明**：評估基本的搖桿操作技巧和手眼協調能力
+#### 5. Analog Stick Movement Test (`analog_move_test.py`)
+- **Purpose**: Test basic joystick control ability
+- **Operation**: Use the joystick to move the cursor to randomly appearing target circles
+- **Metrics**: Movement time, movement distance, trajectory efficiency
+- **Visual Output**: Generates movement trajectory plots showing the player's movement path
+- **Description**: Evaluates basic joystick operation skills and hand-eye coordination
 
-#### 6. 路徑追蹤測試 (`analog_path_follow_test.py`)
-- **目的**：測試精確路徑追蹤能力
-- **操作**：沿著指定路徑從起點移動到終點，不能偏離路徑
-- **測量指標**：完成時間、路徑偏離次數、偏離距離
-- **路徑類型**：直線路徑、S 型曲線路徑
-- **說明**：評估精細運動控制和路徑規劃能力
+#### 6. Path Following Test (`analog_path_follow_test.py`)
+- **Purpose**: Test precise path tracking ability
+- **Operation**: Move along specified paths from start to end without deviating from the path
+- **Metrics**: Completion time, path deviation count, deviation distance
+- **Path Types**: Straight line paths, S-curve paths
+- **Description**: Evaluates fine motor control and path planning abilities
 
-### 手把連接測試 (`connection_test.py`)
-- **目的**：驗證手把連接狀態
-- **功能**：檢測已連接的手把裝置、顯示按鈕和搖桿輸入狀態
-- **說明**：在進行正式測試前確保手把正常工作
+### Controller Connection Test (`connection_test.py`)
+- **Purpose**: Verify controller connection status
+- **Function**: Detect connected controller devices, display button and joystick input status
+- **Description**: Ensure the controller is working properly before conducting formal tests
 
-## 測試結果
+## Test Results
 
-### 資料儲存結構
-所有測試結果以統一格式儲存，便於後續分析和比較：
+### Data Storage Structure
+All test results are stored in a unified format for easy subsequent analysis and comparison:
 
-**JSON 結果檔案**
-- 儲存位置：`data/results/[user_id]/`
-- 格式：每個測試產生一個 JSON 檔案
-- 內容包含：使用者 ID、測試名稱、時間戳記、詳細測試指標
+**JSON Result Files**
+- Storage Location: `data/results/[user_id]/`
+- Format: Each test generates one JSON file
+- Contents Include: User ID, test name, timestamp, detailed test metrics
 
-**視覺化圖片**
-- 儲存位置：`data/images/[test_type]/[user_id]/[timestamp]/`
-- Analog Stick 測試會產生軌跡圖，顯示：
-  - 玩家移動路徑
-  - 目標區域
-  - 按鍵點擊位置
-  - 路徑偏離情況
+**Visualization Images**
+- Storage Location: `data/images/[test_type]/[user_id]/[timestamp]/`
+- Analog Stick tests generate trajectory plots showing:
+  - Player movement paths
+  - Target areas
+  - Button click positions
+  - Path deviation conditions
 
-### 支援的資料格式
-- **JSON**：數值資料、統計結果、時間戳記
-- **PNG**：軌跡圖、路徑圖、視覺化結果
+### Supported Data Formats
+- **JSON**: Numerical data, statistical results, timestamps
+- **PNG**: Trajectory plots, path diagrams, visualization results
 
-這種結構化的資料儲存方式便於：
-- 跨使用者的資料比較分析
-- 自動化資料處理和統計
-- 長期的研究資料保存
+This structured data storage approach facilitates:
+- Cross-user data comparison and analysis
+- Automated data processing and statistics
+- Long-term research data preservation
 
-## 設計特色
+## Design Features
 
-### 色盲友善設計
-- 採用藍色/橘色配色組合，對色盲使用者友善
-- 避免紅綠色直接搭配
-- 使用高對比度設計，提升可辨識性
-- 結合文字標籤和圖示符號，不僅依賴顏色傳達資訊
+### Color-Blind Friendly Design
+- Uses blue/orange color scheme, friendly to color-blind users
+- Avoids direct red-green color combinations
+- Uses high contrast design to improve recognizability
+- Combines text labels and icon symbols, not relying solely on color for information
 
-### 模組化架構
-- 各測試模組獨立，便於維護和擴充
-- 共用模組集中管理，避免重複程式碼
-- 統一的 JSON 資料格式，便於後續分析
+### Modular Architecture
+- Each test module is independent, facilitating maintenance and expansion
+- Common modules are centrally managed to avoid code duplication
+- Unified JSON data format facilitates subsequent analysis
 
-### 無障礙設計
-- 清楚的互動提示和倒數計時
-- 支援多種輸入方式
-- 一致的操作流程
+### Accessibility Design
+- Clear interaction prompts and countdown timers
+- Supports multiple input methods
+- Consistent operation procedures
 
-## 手把設定
+## Controller Setup
 
-程式會自動偵測連接的手把裝置。第一次執行時，請：
+The program will automatically detect connected controller devices. On first run, please:
 
-1. 確保手把已正確連接到電腦
-2. 執行任一測試程式
-3. 選擇要使用的手把裝置
+1. Ensure the controller is properly connected to the computer
+2. Run any test program
+3. Select the controller device to use
 
-## 使用 uv 的優勢
+## Advantages of Using uv
 
-- **快速啟動**：uv 會自動管理 Python 版本和虛擬環境
-- **快速安裝**：比 pip 快 10-100 倍的套件安裝速度
-- **自動依賴管理**：根據 `pyproject.toml` 自動安裝正確的依賴版本
-- **跨平台一致性**：確保在不同系統上的一致行為
+- **Fast Startup**: uv automatically manages Python versions and virtual environments
+- **Fast Installation**: Package installation 10-100 times faster than pip
+- **Automatic Dependency Management**: Automatically installs correct dependency versions based on `pyproject.toml`
+- **Cross-Platform Consistency**: Ensures consistent behavior across different systems
 
-## 常用 uv 指令
-
+## Common uv Commands
 ```bash
-# 執行特定檔案
-uv run python <filename>.py
+# Install specific packages
+uv add pygame matplotlib
 
-# 安裝額外套件
-uv add <package-name>
-
-# 移除套件
-uv remove <package-name>
-
-# 更新所有依賴
+# Update all dependencies
 uv lock --upgrade
 
-# 顯示已安裝的套件
+# Remove a package
+uv remove package_name
+
+# Check current environment
 uv pip list
+
+# Clear cache
+uv cache clean
 ```
+
+## Development Information
+
+### Adding New Tests
+To add new test types:
+1. Create new test files in the `tests/` directory
+2. Follow existing module structure and naming conventions
+3. Update the main menu in `main.py`
+4. Ensure JSON output format follows existing standards
+
+### Data Analysis
+- All test results are stored in JSON format for easy programmatic processing
+- Timestamp format: `YYYYMMDD_HHMMSS`
+- Cross-user data analysis scripts can be added to the `scripts/` directory
+
+## Troubleshooting
+
+### Controller Connection Issues
+- **Joy-Con not detected**:
+  - First time use: Press the sync button to enter pairing mode
+  - Ensure Bluetooth is enabled and Joy-Con shows up in Bluetooth settings
+  - Try closing and reopening Joy-Con (hold sync button)
+  - On macOS, may need to re-pair Bluetooth device
+
+- **Other controller issues**:
+  - PS4/PS5 controllers: Confirm drivers are installed
+  - Xbox controllers: Confirm connection or successful pairing
+  - Generic USB controllers: Check USB connection and compatibility
+
+### Program Execution Issues
+- **Python version error**:
+  - Confirm Python version is 3.8 or higher
+  - Use `python3 --version` to check version
+
+- **pygame related errors**:
+  - macOS may require additional packages: `brew install sdl2`
+  - If audio errors occur, program is configured to ignore audio output
+
+- **tkinter display issues**:
+  - macOS: Confirm Tkinter is installed: `python3 -m tkinter`
+  - Linux: May need to install `python3-tk`
+
+### uv Related Issues
+- **uv installation failure**:
+  - Confirm network connection is normal
+  - Try installing with pip: `pip install uv`
+  - Check system permissions, may need sudo
+
+- **Virtual environment issues**:
+  - Confirm uv is properly installed: `uv --version`
+  - Clear cache: `uv cache clean`
+  - Recreate environment: Delete `.venv` folder then re-run `uv run`
+
+- **Dependency installation issues**:
+  - Check `pyproject.toml` file integrity
+  - Try manual installation: `uv add pygame matplotlib`
+
+### Test Result Issues
+- **Cannot save results**:
+  - Check `data/` directory permissions
+  - Confirm sufficient disk space
+  - Check if file system supports timestamp format in filenames
 
 ## 故障排除
 
@@ -319,122 +380,122 @@ uv pip list
   - 確認硬碟空間充足
   - 檢查檔案系統是否支援檔名中的時間戳記格式
 
-- **圖片無法生成**：
-  - 確認 matplotlib 正確安裝
-  - 檢查 `data/images/` 目錄權限
-  - 確認系統支援 PNG 格式輸出
+- **Cannot generate images**:
+  - Confirm matplotlib is properly installed
+  - Check `data/images/` directory permissions
+  - Confirm system supports PNG format output
 
-### 效能問題
-- **程式運行緩慢**：
-  - 關閉其他佔用系統資源的應用程式
-  - 確認系統記憶體充足
-  - 嘗試降低顯示解析度 (修改 `config.py` 中的視窗大小)
+### Performance Issues
+- **Program running slowly**:
+  - Close other applications consuming system resources
+  - Confirm sufficient system memory
+  - Try reducing display resolution (modify window size in `config.py`)
 
-- **畫面卡頓**：
-  - 檢查系統 CPU 使用率
-  - 確認顯示卡驅動程式為最新版本
+- **Screen stuttering**:
+  - Check system CPU usage
+  - Confirm graphics card drivers are up to date
 
-### 獲取幫助
-如果問題仍未解決，請：
-1. 檢查錯誤訊息的完整內容
-2. 確認系統環境 (作業系統版本、Python 版本等)
-3. 嘗試在不同環境下執行測試
+### Getting Help
+If issues persist, please:
+1. Check the complete error message content
+2. Confirm system environment (OS version, Python version, etc.)
+3. Try running tests in different environments
 
-## 開發
+## Development
 
-如果要修改或擴展程式：
+To modify or extend the program:
 
 ```bash
-# 進入開發模式（啟動虛擬環境）
+# Enter development mode (activate virtual environment)
 uv shell
 
-# 之後可以直接使用 python 指令
+# Then you can directly use python commands
 python main.py
 
-# 安裝開發依賴
+# Install development dependencies
 uv add --dev pytest black flake8
 
-# 執行程式碼格式化
+# Run code formatting
 black .
 
-# 執行語法檢查
+# Run syntax checking
 flake8 .
 ```
 
-### 開發建議
-- **新增測試**：參考現有測試模組的結構和設計模式
-- **修改配置**：所有可調整參數都在 `common/config.py` 中
-- **新增功能**：遵循現有的模組化架構
-- **測試變更**：先使用 `connection_test.py` 確保手把功能正常
+### Development Recommendations
+- **Adding Tests**: Reference the structure and design patterns of existing test modules
+- **Modifying Configuration**: All adjustable parameters are in `common/config.py`
+- **Adding Features**: Follow the existing modular architecture
+- **Testing Changes**: First use `connection_test.py` to ensure controller functionality is normal
 
-## 檔案說明
+## File Descriptions
 
-### 主程式檔案
+### Main Program Files
 
 #### `main.py`
-- **功能**：應用程式主入口點
-- **特色**：提供互動式選單系統，可選擇執行單一測試或完整測試套件
-- **使用方式**：直接執行可進入選單模式，也可以命令列參數方式執行
+- **Function**: Application main entry point
+- **Features**: Provides interactive menu system, can select single test or complete test suite execution
+- **Usage**: Direct execution enters menu mode, can also be executed with command line parameters
 
 #### `pyproject.toml`
-- **功能**：專案配置檔案 (Python 標準)
-- **內容**：定義專案依賴 (pygame, matplotlib)、Python 版本需求等
-- **重要性**：uv 會根據此檔案自動管理虛擬環境和依賴安裝
+- **Function**: Project configuration file (Python standard)
+- **Contents**: Defines project dependencies (pygame, matplotlib), Python version requirements, etc.
+- **Importance**: uv automatically manages virtual environments and dependency installation based on this file
 
-### 測試模組 (`tests/` 目錄)
+### Test Modules (`tests/` directory)
 
-所有測試模組都遵循統一的設計模式：
-- 支援 `--user` 命令列參數指定使用者 ID
-- 自動儲存測試結果為 JSON 格式
-- 使用色盲友善的視覺設計
-- 支援手把和鍵盤輸入 (作為備用)
+All test modules follow a unified design pattern:
+- Support `--user` command line parameter to specify user ID
+- Automatically save test results in JSON format
+- Use color-blind friendly visual design
+- Support controller and keyboard input (as backup)
 
 #### `button_reaction_time_test.py`
-- **測試類型**：簡單反應時間測試
-- **UI 框架**：tkinter
-- **輸入方式**：任意按鈕/鍵盤空白鍵
-- **結果檔案**：`button_reaction_time_YYYYMMDD_HHMMSS.json`
+- **Test Type**: Simple reaction time test
+- **UI Framework**: tkinter
+- **Input Method**: Any button/keyboard spacebar
+- **Result File**: `button_reaction_time_YYYYMMDD_HHMMSS.json`
 
 #### `button_prediction_countdown_test.py`
-- **測試類型**：預測反應時間測試
-- **特殊功能**：動畫球移動、預測時間計算
-- **遊戲化設計**：參考 Mario Party 機制
-- **結果檔案**：`button_prediction_countdown_YYYYMMDD_HHMMSS.json`
+- **Test Type**: Prediction reaction time test
+- **Special Features**: Animated ball movement, prediction time calculation
+- **Gamified Design**: References Mario Party mechanics
+- **Result File**: `button_prediction_countdown_YYYYMMDD_HHMMSS.json`
 
 #### `button_smash_test.py`
-- **測試類型**：快速連打測試
-- **計時機制**：從第一次點擊開始計時 10 秒
-- **視覺回饋**：即時顯示點擊計數和 CPS
-- **結果檔案**：`button_smash_YYYYMMDD_HHMMSS.json`
+- **Test Type**: Rapid clicking test
+- **Timing Mechanism**: Starts timing from first click for 10 seconds
+- **Visual Feedback**: Real-time display of click count and CPS
+- **Result File**: `button_smash_YYYYMMDD_HHMMSS.json`
 
 #### `button_accuracy_test.py`
-- **測試類型**：方向選擇反應測試
-- **按鈕排列**：菱形排列模擬真實手把配置
-- **評估指標**：準確率、平均反應時間
-- **結果檔案**：`button_accuracy_YYYYMMDD_HHMMSS.json`
+- **Test Type**: Direction choice reaction test
+- **Button Layout**: Diamond arrangement simulating real controller configuration
+- **Evaluation Metrics**: Accuracy rate, average reaction time
+- **Result File**: `button_accuracy_YYYYMMDD_HHMMSS.json`
 
 #### `analog_move_test.py`
-- **測試類型**：搖桿移動測試
-- **圖形輸出**：自動產生移動軌跡圖
-- **測量指標**：移動效率、軌跡分析
-- **結果檔案**：JSON + PNG 軌跡圖
+- **Test Type**: Joystick movement test
+- **Graphical Output**: Automatically generates movement trajectory plots
+- **Measurement Metrics**: Movement efficiency, trajectory analysis
+- **Result Files**: JSON + PNG trajectory plot
 
 #### `analog_path_follow_test.py`
-- **測試類型**：路徑追蹤測試
-- **路徑類型**：直線路徑、S 型曲線路徑
-- **圖形輸出**：路徑追蹤軌跡圖，顯示偏離情況
-- **結果檔案**：JSON + PNG 軌跡圖
+- **Test Type**: Path tracking test
+- **Path Types**: Straight line paths, S-curve paths
+- **Graphical Output**: Path tracking trajectory plot showing deviation conditions
+- **Result Files**: JSON + PNG trajectory plot
 
-### 共用模組 (`common/` 目錄)
+### Common Modules (`common/` directory)
 
 #### `config.py`
-- **功能**：全域配置設定
-- **內容**：
-  - 測試時間設定 (如連打測試的 10 秒限制)
-  - 視窗尺寸設定 (1200x800)
-  - 色盲友善配色方案 (藍色/橘色組合)
-  - 反應時間相關參數
-- **設計原則**：集中管理所有可調整參數，便於維護
+- **Function**: Global configuration settings
+- **Contents**:
+  - Test timing settings (such as 10-second limit for clicking test)
+  - Window size settings (1200x800)
+  - Color-blind friendly color scheme (blue/orange combination)
+  - Reaction time related parameters
+- **Design Principles**: Centrally manage all adjustable parameters for easy maintenance
 
 #### `controller_input.py`
 - **功能**：手把輸入處理核心模組
@@ -485,12 +546,32 @@ flake8 .
 - **資料保存**：長期研究資料保存，便於統計分析
 
 #### `images/[test_type]/[user_id]/[timestamp]/`
-- **功能**：儲存視覺化圖表
-- **檔案格式**：PNG
-- **圖表類型**：
-  - `analog_move/`：移動測試軌跡圖
-  - `analog_path_trace/`：路徑追蹤軌跡圖
+- **Function**: Store visualization charts
+- **File Format**: PNG
+- **Chart Types**:
+  - `analog_move/`: Movement test trajectory plots
+  - `analog_path_trace/`: Path tracking trajectory plots
 
-### 開發文件 (`docs/`)
-- **內容**：專案開發過程中的會議記錄、技術文件
-- **用途**：記錄設計決策和開發進度
+### Development Documentation (`docs/`)
+- **Contents**: Meeting records and technical documents from the project development process
+- **Purpose**: Record design decisions and development progress
+
+## License
+
+This project is released under the MIT License. See the `LICENSE` file for details.
+
+## Contributing
+
+Contributions are welcome! Please:
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Submit a pull request
+
+## Acknowledgments
+
+Special thanks to all contributors and the research team that helped develop this testing framework.
+
+---
+
+*For more technical details and development documentation, please refer to the `docs/` directory.*
