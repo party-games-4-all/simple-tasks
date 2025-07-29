@@ -102,11 +102,23 @@ class AccuracyDirectionTestApp:
         self.label.place_forget()  # 隱藏提示文字
         self.start_button.place_forget()  # 隱藏開始按鈕
         self.progress_label.place(relx=0.5, rely=0.05, anchor='n')  # 顯示進度標籤
+        
+        # 完整重置測試狀態
         self.response_times.clear()
+        self.test_results.clear()
         self.total = 0
         self.score = 0
         self.error_count = 0
         self.measuring = True
+        self.current_target = None
+        self.round_start_time = None
+        self.waiting_for_input = False
+        
+        # 重置所有按鈕顏色
+        button_default_color = f"#{config.COLORS['BUTTON_DEFAULT'][0]:02x}{config.COLORS['BUTTON_DEFAULT'][1]:02x}{config.COLORS['BUTTON_DEFAULT'][2]:02x}"
+        for cid in self.circles.values():
+            self.canvas.itemconfig(cid, fill=button_default_color)
+        
         print("🔄 已重新開始計算！")
         
         # 開始第一回合（熱身測試）
@@ -182,13 +194,17 @@ class AccuracyDirectionTestApp:
                         self.root.after(1000, self.next_round)  # 等待 1 秒後重新開始熱身
                         return  # 直接返回，不要繼續執行
                     
-                    if self.total > 11:  # 熱身1次 + 正式測試10次 = 總共11次
+                    if self.total == 11:  # 熱身1次 + 正式測試10次 = 總共11次
                         avg_time = sum(self.response_times) / len(
                             self.response_times)
                         error_rate = self.error_count / (self.total - 1)
                         
                         # 儲存測試結果
                         self.save_test_results(avg_time, error_rate)
+                        
+                        # 設定為測試完成狀態
+                        self.measuring = False
+                        self.waiting_for_input = False
                         
                         # 更新畫面上方 label
                         background_color = f"#{config.COLORS['BACKGROUND'][0]:02x}{config.COLORS['BACKGROUND'][1]:02x}{config.COLORS['BACKGROUND'][2]:02x}"
@@ -200,9 +216,14 @@ class AccuracyDirectionTestApp:
                             f"測驗結束\n正確率：{(1-error_rate):.1%}｜平均反應時間：{avg_time:.3f} 秒",
                             bg=background_color, fg=text_color
                         )
+                        
+                        # 重新顯示開始按鈕，讓使用者可以重新開始測試
+                        self.start_button.config(text="重新開始")
+                        self.start_button.place(relx=0.5, rely=0.92, anchor='s')
+                        
                         print(
                             f"📊 平均反應時間：{avg_time:.3f} 秒｜錯誤率：{error_rate:.1%}")
-                        self.reset()
+                        print("✅ 測試結果已自動儲存")
                         return  # 直接返回，不要繼續執行下一回合
                     if self.total > 1:  # 第 1 回合不記錄
                         # 記錄詳細的測試結果
@@ -228,7 +249,9 @@ class AccuracyDirectionTestApp:
                         if correct:
                             print("✅ 熱身測試通過，開始正式測試")
 
-                self.root.after(1000, self.next_round)  # 等待 1 秒後開始下一回合
+                    # 只有在測試還沒結束且還在測試狀態時才安排下一回合
+                    if self.measuring:  # 只有在測試狀態時才繼續
+                        self.root.after(1000, self.next_round)  # 等待 1 秒後開始下一回合
                 break
 
     def save_test_results(self, avg_time, error_rate):
