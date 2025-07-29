@@ -12,6 +12,7 @@ sys.path.append(str(Path(__file__).parent / "common"))
 from common.controller_input import ControllerInput
 from common.controller_manager import controller_manager
 from common import config
+from common.utils import collect_user_info_if_needed
 
 def show_menu():
     """顯示測試選單"""
@@ -82,44 +83,12 @@ def main():
     if not user_id:
         user_id = "test_user"
     
-    # 收集使用者基本資訊
-    print("\n📝 請提供一些基本資訊以協助數據分析：")
+    # 收集使用者基本資訊（使用 utils 中的共用函數）
+    collect_user_info_if_needed(user_id)
     
-    # 年齡
-    while True:
-        try:
-            age_input = input("請輸入您的年齡: ").strip()
-            age = int(age_input)
-            if age > 0 and age < 150:  # 合理的年齡範圍
-                break
-            else:
-                print("請輸入有效的年齡 (1-149)")
-        except ValueError:
-            print("請輸入數字")
-    
-    # 手把使用頻率
-    print("\n🎮 手把使用頻率：")
-    print("1 = 沒用過")
-    print("2 = 有用過但沒有使用習慣") 
-    print("3 = 有規律使用習慣")
-    while True:
-        try:
-            freq_input = input("請選擇您的手把使用頻率 (1-3): ").strip()
-            controller_usage_frequency = int(freq_input)
-            if controller_usage_frequency in [1, 2, 3]:
-                break
-            else:
-                print("請輸入 1、2 或 3")
-        except ValueError:
-            print("請輸入數字")
-    
-    # 將使用者資訊存到 config 中供其他模組使用
-    config.user_info = {
-        "user_id": user_id,
-        "age": age,
-        "controller_usage_frequency": controller_usage_frequency,
-        "controller_usage_frequency_description": "1=沒用過, 2=有用過但無習慣, 3=有規律使用"
-    }
+    # 從 config 取得收集到的資訊
+    age = config.user_info.get('age')
+    controller_usage_frequency = config.user_info.get('controller_usage_frequency')
     
     print(f"\n✅ 使用者資訊已記錄：{user_id}, 年齡: {age}, 手把使用頻率: {controller_usage_frequency}")
     

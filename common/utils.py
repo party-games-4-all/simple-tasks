@@ -74,7 +74,7 @@ def setup_pygame_window_topmost():
 def collect_user_info_if_needed(user_id):
     """
     如果尚未收集使用者資訊，則收集使用者的年齡和手把使用頻率
-    用於直接執行單個測試時確保資料完整性
+    用於直接執行單個測試時確保資料完整性，也用於 main.py 的初次收集
     """
     from . import config
     
@@ -87,7 +87,11 @@ def collect_user_info_if_needed(user_id):
         print(f"✅ 使用者 '{user_id}' 的資訊已存在，無需重複收集")
         return
     
-    print(f"\n📝 為使用者 '{user_id}' 收集基本資訊以完善測試數據：")
+    # 判斷是否為首次收集（從 main.py 呼叫）或補充收集（從個別測試呼叫）
+    if not hasattr(config, 'user_info') or not config.user_info:
+        print(f"\n📝 請提供一些基本資訊以協助數據分析：")
+    else:
+        print(f"\n📝 為使用者 '{user_id}' 收集基本資訊以完善測試數據：")
     
     # 收集年齡
     while True:
@@ -103,17 +107,16 @@ def collect_user_info_if_needed(user_id):
     
     # 收集手把使用頻率
     print("\n🎮 手把使用頻率：")
-    print("1 = 沒用過")
-    print("2 = 有用過但沒有使用習慣") 
-    print("3 = 有規律使用習慣")
+    print("包含 Nintendo Wii / Switch、PS / Xbox 系列家機、掌機、遊樂場街機等")
+    print("1=從來沒用過  2  3  4  5  6  7=每天使用")
     while True:
         try:
-            freq_input = input("請選擇您的手把使用頻率 (1-3): ").strip()
+            freq_input = input("請選擇您的手把使用頻率 (1-7): ").strip()
             controller_usage_frequency = int(freq_input)
-            if controller_usage_frequency in [1, 2, 3]:
+            if controller_usage_frequency in [1, 2, 3, 4, 5, 6, 7]:
                 break
             else:
-                print("請輸入 1、2 或 3")
+                print("請輸入 1-7 之間的數字")
         except ValueError:
             print("請輸入數字")
     
@@ -122,7 +125,7 @@ def collect_user_info_if_needed(user_id):
         "user_id": user_id,
         "age": age,
         "controller_usage_frequency": controller_usage_frequency,
-        "controller_usage_frequency_description": "1=沒用過, 2=有用過但無習慣, 3=有規律使用"
+        "controller_usage_frequency_description": "1=從來沒用過, 7=每天使用"
     }
     
     print(f"✅ 使用者資訊已記錄：{user_id}, 年齡: {age}, 手把使用頻率: {controller_usage_frequency}\n")

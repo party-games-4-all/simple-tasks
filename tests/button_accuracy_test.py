@@ -308,7 +308,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Button Accuracy Test")
     parser.add_argument("--user", "-u", default=None, help="使用者 ID")
     parser.add_argument("--age", type=int, default=None, help="使用者年齡")
-    parser.add_argument("--controller-freq", type=int, default=None, help="手把使用頻率 (1-3)")
+    parser.add_argument("--controller-freq", type=int, default=None, help="手把使用頻率 (1-7)")
     args = parser.parse_args()
 
     # 如果沒有提供 user_id，則請求輸入
@@ -324,7 +324,7 @@ if __name__ == "__main__":
             "user_id": user_id,
             "age": args.age,
             "controller_usage_frequency": args.controller_freq,
-            "controller_usage_frequency_description": "1=沒用過, 2=有用過但無習慣, 3=有規律使用"
+            "controller_usage_frequency_description": "1=從來沒用過, 7=每天使用"
         }
         print(f"✅ 使用者 '{user_id}' 的資訊已從命令列參數載入")
     else:

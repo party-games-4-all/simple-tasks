@@ -54,6 +54,6 @@ user_info = {
     "user_id": "test_user",
     "age": None,
     "controller_usage_frequency": None,
-    "controller_usage_frequency_description": "1=沒用過, 2=有用過但無習慣, 3=有規律使用"
+    "controller_usage_frequency_description": "1=從來沒用過, 7=每天使用"
 }
 DEBUG_MODE = False
