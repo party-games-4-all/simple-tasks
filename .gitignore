@@ -7,3 +7,4 @@ data/images/
 
 # Virtual environment
 .venv/
+*.zip
