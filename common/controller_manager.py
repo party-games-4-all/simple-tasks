@@ -56,7 +56,7 @@ class ControllerManager:
             j.init()
             controller_name = j.get_name()
             print(get_text('controller_detected', name=controller_name))
-            confirm = input("要使用這個裝置嗎？(Y/n): ").strip().lower()
+            confirm = input(get_text('controller_use_device')).strip().lower()
             if confirm == "y" or confirm == "":
                 # 只記錄選擇，不保持連接
                 self._selected_controller_index = i

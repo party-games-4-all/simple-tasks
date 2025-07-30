@@ -124,6 +124,10 @@ class ControllerInput:
         try:
             while self.running:
                 try:
+                    # 檢查是否還有有效的事件系統
+                    if not pygame.get_init():
+                        break
+                        
                     for event in pygame.event.get():
                         if not self.running:  # 再次檢查運行狀態
                             break
@@ -225,17 +229,25 @@ class ControllerInput:
         try:
             if hasattr(self, 'joystick') and self.joystick:
                 self.joystick.quit()
+                self.joystick = None
         except Exception:
             pass  # 忽略清理過程中的錯誤
         
-        # 清理 pygame
+        # 清理 pygame - 但不完全關閉，避免其他地方還在使用
         try:
             pygame.joystick.quit()
-            pygame.quit()
+            # 不調用 pygame.quit()，讓主程式決定何時關閉
         except Exception:
             pass  # 忽略清理過程中的錯誤
             
         print(get_text('controller_listening_stopped'))
+
+    def __del__(self):
+        """析構函數，確保資源釋放"""
+        try:
+            self.stop()
+        except Exception:
+            pass
 
 
 if __name__ == "__main__":

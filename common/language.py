@@ -643,7 +643,7 @@ LANGUAGES = {
         'button_accuracy_start_button': "Start",
         'button_accuracy_correct_feedback': "✅ Correct!",
         'button_accuracy_incorrect_feedback': "❌ Incorrect! Correct answer is {}",
-        'button_accuracy_test_summary': "Test Complete\\nAccuracy: {:.1%}｜Average Response Time: {:.3f} sec",
+        'button_accuracy_test_summary': "Test Complete\nAccuracy: {:.1%}｜Average Response Time: {:.3f} sec",
         'button_accuracy_statistics_output': "📊 Average Response Time: {:.3f} sec｜Error Rate: {:.1%}",
         'button_accuracy_results_saved': "✅ Test results automatically saved",
         'button_accuracy_warmup_feedback': "👟 Practice: {}, Response Time {:.3f} sec",

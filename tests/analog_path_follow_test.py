@@ -899,8 +899,19 @@ class PathFollowingTestApp:
         if self.current_path_index >= len(self.paths):
             print(f"✅ {get_text('path_all_complete')}")
             self.save_test_results()
+            # 延遲關閉視窗以確保所有資源正確清理
+            self.root.after(2000, self.close_application)
         else:
             self.load_path(self.current_path_index)
+
+    def close_application(self):
+        """安全關閉應用程式"""
+        self.running = False
+        try:
+            self.root.quit()
+            self.root.destroy()
+        except Exception:
+            pass
 
     def check_reached_goal(self):
         """檢查是否到達目標"""
@@ -1165,6 +1176,7 @@ class PathFollowingTestApp:
 if __name__ == "__main__":
     import argparse
     from common.controller_input import ControllerInput
+    import atexit
 
     # 檢查是否有 --english 參數來提前設定語言
     if '--english' in sys.argv:
@@ -1200,20 +1212,63 @@ if __name__ == "__main__":
         # 收集使用者基本資訊（如果尚未收集）
         collect_user_info_if_needed(user_id)
 
-    root = tk.Tk()
-    app = PathFollowingTestApp(root, user_id)
+    # 全域變數來存儲控制器和應用程式實例
+    listener = None
+    controller_thread = None
+    app = None
+    root = None
+
+    def cleanup_on_exit():
+        """程式結束時的清理函數"""
+        global listener, controller_thread, app, root
+        try:
+            if listener:
+                listener.stop()
+            if controller_thread and controller_thread.is_alive():
+                controller_thread.join(timeout=1.0)  # 等待最多1秒
+            if app:
+                app.running = False
+            if root:
+                try:
+                    root.quit()
+                    root.destroy()
+                except:
+                    pass
+        except Exception:
+            pass  # 忽略清理過程中的錯誤
+
+    # 註冊清理函數
+    atexit.register(cleanup_on_exit)
 
     try:
+        root = tk.Tk()
+        app = PathFollowingTestApp(root, user_id)
+        
+        # 定義視窗關閉事件處理
+        def on_window_closing():
+            global listener, controller_thread, app
+            if listener:
+                listener.stop()
+            if app:
+                app.running = False
+            root.quit()
+            root.destroy()
+            
+        root.protocol("WM_DELETE_WINDOW", on_window_closing)
+
         # 使用新的遙控器管理系統 - 會自動使用已配對的遙控器
         listener = ControllerInput(analog_callback=app.on_joycon_input,
                                    use_existing_controller=True)
-        Thread(target=listener.run, daemon=True).start()
+        controller_thread = Thread(target=listener.run, daemon=False)  # 改為非 daemon 執行緒
+        controller_thread.start()
 
         root.mainloop()
 
     except KeyboardInterrupt:
-        root.destroy()
-        app.running = False
         print(get_text('path_test_interrupted'))
+    except Exception as e:
+        print(f"程式發生錯誤：{e}")
+    finally:
+        cleanup_on_exit()
 
     print(get_text('path_test_completed'))

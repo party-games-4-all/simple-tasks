@@ -96,6 +96,7 @@ class AccuracyDirectionTestApp:
         self.total = 0
         self.response_times = []
         self.error_count = 0
+        self.formal_error_count = 0  # 新增：僅記錄正式測試的錯誤次數
         self.test_results = []  # 儲存詳細的測試結果
         # 重置所有按鈕顏色
         button_default_color = f"#{config.COLORS['BUTTON_DEFAULT'][0]:02x}{config.COLORS['BUTTON_DEFAULT'][1]:02x}{config.COLORS['BUTTON_DEFAULT'][2]:02x}"
@@ -113,6 +114,7 @@ class AccuracyDirectionTestApp:
         self.total = 0
         self.score = 0
         self.error_count = 0
+        self.formal_error_count = 0  # 新增：僅記錄正式測試的錯誤次數
         self.measuring = True
         self.current_target = None
         self.round_start_time = None
@@ -190,44 +192,22 @@ class AccuracyDirectionTestApp:
 
                 self.total += 1
 
+                # 只有正式測試的錯誤才計入 formal_error_count (熱身之後的測試)
+                if not correct and self.total > 1:
+                    self.formal_error_count += 1
+
                 if self.measuring:
                     # 檢查是否為熱身測試且答錯
                     if self.total == 1 and not correct:
                         print(get_text('warmup_failed'))
                         self.total = 0  # 重設計數器，重新開始熱身
+                        self.error_count = 0  # 重設錯誤計數器
+                        self.formal_error_count = 0  # 重設正式測試錯誤計數器
                         self.root.after(1000, self.next_round)  # 等待 1 秒後重新開始熱身
                         return  # 直接返回，不要繼續執行
                     
-                    if self.total == 11:  # 熱身1次 + 正式測試10次 = 總共11次
-                        avg_time = sum(self.response_times) / len(
-                            self.response_times)
-                        error_rate = self.error_count / (self.total - 1)
-                        
-                        # 儲存測試結果
-                        self.save_test_results(avg_time, error_rate)
-                        
-                        # 設定為測試完成狀態
-                        self.measuring = False
-                        self.waiting_for_input = False
-                        
-                        # 更新畫面上方 label
-                        background_color = f"#{config.COLORS['BACKGROUND'][0]:02x}{config.COLORS['BACKGROUND'][1]:02x}{config.COLORS['BACKGROUND'][2]:02x}"
-                        text_color = f"#{config.COLORS['TEXT'][0]:02x}{config.COLORS['TEXT'][1]:02x}{config.COLORS['TEXT'][2]:02x}"
-                        self.progress_label.place_forget()  # 隱藏進度標籤
-                        self.label.place(relx=0.5, rely=0.05, anchor='n')  # 顯示結果標籤
-                        self.label.config(
-                            text=get_text('button_accuracy_test_summary').format(1-error_rate, avg_time),
-                            bg=background_color, fg=text_color
-                        )
-                        
-                        # 重新顯示開始按鈕，讓使用者可以重新開始測試
-                        self.start_button.config(text=get_text('gui_restart'))
-                        self.start_button.place(relx=0.5, rely=0.92, anchor='s')
-                        
-                        print(get_text('button_accuracy_statistics_output').format(avg_time, error_rate))
-                        print(get_text('button_accuracy_results_saved'))
-                        return  # 直接返回，不要繼續執行下一回合
-                    if self.total > 1:  # 第 1 回合不記錄
+                    # 記錄正式測試的詳細結果（包括第10輪）
+                    if self.total > 1:  # 第 1 回合是熱身，不記錄
                         # 記錄詳細的測試結果
                         self.test_results.append({
                             "trial_number": self.total - 1,
@@ -239,10 +219,6 @@ class AccuracyDirectionTestApp:
                         })
                         
                         self.response_times.append(response_time)
-                        # # 更新畫面上方 label
-                        # self.label.config(
-                        #     text=f"正確率：{(1-error_rate):.1%}｜平均反應時間：{avg_time:.3f} 秒"
-                        # )
                         correct_text = get_text('button_accuracy_correct') if correct else get_text('button_accuracy_incorrect')
                         print(get_text('button_accuracy_formal_feedback').format(self.total-1, correct_text, response_time))
                     elif self.total == 1:  # 第 1 回合是熱身
@@ -250,6 +226,36 @@ class AccuracyDirectionTestApp:
                         print(get_text('button_accuracy_warmup_feedback').format(correct_text, response_time))
                         if correct:
                             print(get_text('button_accuracy_warmup_passed'))
+                    
+                    if self.total == 11:  # 熱身1次 + 正式測試10次 = 總共11次
+                        avg_time = sum(self.response_times) / len(
+                            self.response_times)
+                        formal_error_rate = self.formal_error_count / 10  # 正式測試的錯誤率
+                        
+                        # 儲存測試結果
+                        self.save_test_results(avg_time, formal_error_rate)
+                        
+                        # 設定為測試完成狀態
+                        self.measuring = False
+                        self.waiting_for_input = False
+                        
+                        # 更新畫面上方 label
+                        background_color = f"#{config.COLORS['BACKGROUND'][0]:02x}{config.COLORS['BACKGROUND'][1]:02x}{config.COLORS['BACKGROUND'][2]:02x}"
+                        text_color = f"#{config.COLORS['TEXT'][0]:02x}{config.COLORS['TEXT'][1]:02x}{config.COLORS['TEXT'][2]:02x}"
+                        self.progress_label.place_forget()  # 隱藏進度標籤
+                        self.label.place(relx=0.5, rely=0.05, anchor='n')  # 顯示結果標籤
+                        self.label.config(
+                            text=get_text('button_accuracy_test_summary').format(1-formal_error_rate, avg_time),
+                            bg=background_color, fg=text_color
+                        )
+                        
+                        # 重新顯示開始按鈕，讓使用者可以重新開始測試
+                        self.start_button.config(text=get_text('gui_restart'))
+                        self.start_button.place(relx=0.5, rely=0.92, anchor='s')
+                        
+                        print(get_text('button_accuracy_statistics_output').format(avg_time, formal_error_rate))
+                        print(get_text('button_accuracy_results_saved'))
+                        return  # 直接返回，不要繼續執行下一回合
 
                     # 只有在測試還沒結束且還在測試狀態時才安排下一回合
                     if self.measuring:  # 只有在測試狀態時才繼續
@@ -316,7 +322,7 @@ class AccuracyDirectionTestApp:
         )
         
         print("=" * 50)
-        print("📊 測試結果統計")
+        print(get_text('test_statistics'))
         print(get_text('stats_total_trials', count=total_trials))
         print(get_text('stats_correct_trials', count=correct_count))
         print(get_text('stats_incorrect_trials', count=total_trials - correct_count))
