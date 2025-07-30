@@ -658,7 +658,7 @@ class PathFollowingTestApp:
     def __init__(self, root, user_id=None):
         self.root = root
         self.user_id = user_id or "default"
-        self.root.title("🎮 Path Following 測試 (簡化版本)")
+        self.root.title(get_text('window_title_path_follow'))
         
         # 設定視窗置頂
         setup_window_topmost(self.root)
@@ -1011,16 +1011,16 @@ class PathFollowingTestApp:
         self.test_results.append(trial_result)
         
         print(f"🎯 {get_text('path_reached_end')}")
-        print(f"⏱ {get_text('path_total_time')}：{self.total_time:.2f} 秒")
-        print(f"❌ {get_text('path_off_path_time')}：{self.off_path_time:.2f} 秒")
-        print(f"📊 {get_text('path_off_path_percentage')}：{percent_off:.2f}%")
-        print(f"🔄 {get_text('path_movement_type')}：{path_info['movement_type']}")
+        print(get_text('path_total_time_format', time=self.total_time))
+        print(get_text('path_off_path_time_format', time=self.off_path_time))
+        print(get_text('path_off_path_percentage_format', percentage=percent_off))
+        print(get_text('path_movement_type_format', type=path_info['movement_type']))
         
         # 顯示段落分析
         if movement_analysis['straight_segments']:
-            print(f"📏 {get_text('path_straight_segments')}：{len(movement_analysis['straight_segments'])} 個")
+            print(get_text('path_straight_segments_format', count=len(movement_analysis['straight_segments'])))
         if movement_analysis['corner_segments']:
-            print(f"🔄 {get_text('path_corner_segments')}：{len(movement_analysis['corner_segments'])} 個")
+            print(get_text('path_corner_segments_format', count=len(movement_analysis['corner_segments'])))
 
     def on_joycon_input(self, buttons, leftX, leftY, last_key_bit,
                         last_key_down):
@@ -1134,17 +1134,17 @@ class PathFollowingTestApp:
             test_name="analog_path_follow",
             metrics=metrics,
             parameters=parameters,
-            image_files=[f"軌跡圖片儲存在: {self.session_output_dir}"]
+            image_files=[get_text('trace_image_saved_path', path=self.session_output_dir)]
         )
         
         print("=" * 50)
         print(f"🛤️ {get_text('path_test_summary')}")
         print("=" * 50)
-        print(f"👤 {get_text('path_user')}：{self.user_id}")
-        print(f"🎯 {get_text('path_total_paths')}：{total_trials} (4條直線 + 8種L型)")
-        print(f"⏱️ {get_text('path_total_used_time')}：{total_time:.2f} 秒")
-        print(f"📊 {get_text('path_avg_completion_time')}：{avg_completion_time:.2f} 秒")
-        print(f"🎯 {get_text('path_avg_accuracy')}：{avg_accuracy:.1f}%")
+        print(get_text('path_user_format', user_id=self.user_id))
+        print(get_text('path_total_paths_format', trials=total_trials))
+        print(get_text('path_total_used_time_format', time=total_time))
+        print(get_text('path_avg_completion_time_format', time=avg_completion_time))
+        print(get_text('path_avg_accuracy_format', accuracy=avg_accuracy))
         print("")
         print(f"📈 {get_text('path_basic_analysis')}")
         for path_type, data in metrics["path_type_analysis"].items():
@@ -1183,7 +1183,7 @@ if __name__ == "__main__":
     # 如果沒有提供 user_id，則請求輸入
     user_id = args.user
     if not user_id:
-        user_id = input("請輸入使用者 ID (例如: P1): ").strip()
+        user_id = input(get_text('enter_user_id_prompt')).strip()
         if not user_id:
             user_id = "default"
 
@@ -1193,9 +1193,9 @@ if __name__ == "__main__":
             "user_id": user_id,
             "age": args.age,
             "controller_usage_frequency": args.controller_freq,
-            "controller_usage_frequency_description": "1=從來沒用過, 7=每天使用"
+            "controller_usage_frequency_description": get_text('controller_usage_freq_desc')
         }
-        print(f"✅ 使用者 '{user_id}' 的資訊已從命令列參數載入")
+        print(get_text('user_info_loaded_cli', user_id=user_id))
     else:
         # 收集使用者基本資訊（如果尚未收集）
         collect_user_info_if_needed(user_id)
@@ -1214,6 +1214,6 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         root.destroy()
         app.running = False
-        print("🔴 測試被中斷")
+        print(get_text('path_test_interrupted'))
 
-    print("🎮 Path Following 測試結束")
+    print(get_text('path_test_completed'))

@@ -32,7 +32,7 @@ class ButtonSmashTestApp:
     def __init__(self, root, user_id=None):
         self.root = root
         self.user_id = user_id or "default"
-        self.root.title("Button Smash Test")
+        self.root.title(get_text('button_smash_window_title'))
         
         # 設定視窗關閉處理
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
@@ -144,7 +144,7 @@ class ButtonSmashTestApp:
         self.canvas.itemconfig(self.timer_text, text=get_text('gui_waiting_first_click'))
         self.canvas.itemconfig(self.cps_text, text="")
         
-        print("🎮 Button Smash 測試開始！用手把按鈕開始第一次點擊...")
+        print(get_text('button_smash_test_started'))
 
     def update_timer(self):
         """更新計時器顯示"""
@@ -195,11 +195,11 @@ class ButtonSmashTestApp:
         self.label.place(relx=0.5, rely=0.1, anchor='center')
         self.start_button.place(relx=0.5, rely=0.85, anchor='center')
         
-        print(f"🎯 測試完成！")
-        print(f"📊 總點擊數: {self.click_count}")
-        print(f"⏱️ 測試時間: {self.test_duration} 秒")
+        print(get_text('button_smash_test_complete_msg'))
+        print(get_text('button_smash_total_clicks', count=self.click_count))
+        print(get_text('button_smash_test_time', duration=self.test_duration))
         print(f"🖱️ CPS (Clicks Per Second): {cps:.2f}")
-        print(f"📈 計算方式: {self.click_count} ÷ {self.test_duration} = {cps:.2f}")
+        print(get_text('button_smash_cps_calculation', count=self.click_count, duration=self.test_duration, cps=cps))
 
     def save_test_results(self, cps):
         """儲存測試結果為 JSON 檔案"""
@@ -273,25 +273,25 @@ class ButtonSmashTestApp:
         )
         
         print("=" * 50)
-        print("📊 測試結果統計")
-        print(f"總點擊數: {self.click_count}")
-        print(f"測試時間: {self.test_duration} 秒")
-        print(f"點擊率: {cps:.2f} CPS")
-        print(f"表現評級: {self.get_performance_rating(cps)}")
+        print(get_text('button_smash_test_statistics'))
+        print(get_text('button_smash_total_clicks', count=self.click_count))
+        print(get_text('button_smash_test_time', duration=self.test_duration))
+        print(get_text('button_smash_click_rate', cps=cps))
+        print(get_text('button_smash_performance_rating', rating=self.get_performance_rating(cps)))
         print("=" * 50)
 
     def get_performance_rating(self, cps):
         """根據 CPS 給出表現評級"""
         if cps >= 10:
-            return "優秀"
+            return get_text('button_smash_excellent')
         elif cps >= 8:
-            return "良好"
+            return get_text('button_smash_good')
         elif cps >= 6:
-            return "普通"
+            return get_text('button_smash_average')
         elif cps >= 4:
-            return "需要練習"
+            return get_text('button_smash_needs_practice')
         else:
-            return "初學者"
+            return get_text('button_smash_beginner')
 
     def on_joycon_input(self, buttons, leftX, leftY, last_key_bit, last_key_down):
         """處理 Joy-Con 輸入"""
@@ -312,7 +312,7 @@ class ButtonSmashTestApp:
             # 按鍵按下 - 如果是第一次按下，記錄為指定按鈕
             if self.designated_button is None:
                 self.designated_button = last_key_bit
-                print(f"🎮 指定按鈕: {last_key_bit}")
+                print(get_text('button_smash_designated_button', button=last_key_bit))
             self.on_button_press()
         else:
             # 按鍵放開 - 只處理指定按鈕的放開事件
@@ -332,7 +332,7 @@ class ButtonSmashTestApp:
             if self.start_time is None:
                 self.start_time = time.time()
                 self.update_timer()
-                print("⏰ 開始計時！")
+                print(get_text('button_smash_start_timing'))
             
             # 檢查是否還在測試時間內
             current_time = time.time()
@@ -347,7 +347,7 @@ class ButtonSmashTestApp:
                 }
                 self.click_timestamps.append(click_timestamp)
                 
-                print(f"🖱️ 點擊 #{self.click_count} (t={click_timestamp['relative_time_ms']:.1f}ms)")
+                print(get_text('button_smash_click_record', count=self.click_count, time=click_timestamp['relative_time_ms']))
                 
                 # 視覺回饋：按下時顯示 X 符號（色盲友善設計）
                 button_active_color = f"#{config.COLORS['BUTTON_ACTIVE'][0]:02x}{config.COLORS['BUTTON_ACTIVE'][1]:02x}{config.COLORS['BUTTON_ACTIVE'][2]:02x}"
@@ -410,18 +410,18 @@ if __name__ == "__main__":
         set_language('zh')
 
     # 解析命令列參數
-    parser = argparse.ArgumentParser(description="Button Smash Test")
+    parser = argparse.ArgumentParser(description=get_text('button_smash_test_description'))
     parser.add_argument("--user", "-u", default=None, help=get_text('arg_user_id'))
     parser.add_argument("--age", type=int, default=None, help=get_text('arg_age'))
     parser.add_argument("--controller-freq", type=int, default=None, help=get_text('arg_controller_freq'))
-    parser.add_argument("--test", action="store_true", help="執行測試模式")
+    parser.add_argument("--test", action="store_true", help=get_text('button_smash_test_mode_help'))
     parser.add_argument("--english", action="store_true", help=get_text('arg_english'))
     args = parser.parse_args()
 
     # 如果沒有提供 user_id，則請求輸入
     user_id = args.user
     if not user_id and not args.test:
-        user_id = input("請輸入使用者 ID (例如: P1): ").strip()
+        user_id = input(get_text('user_id_input_prompt')).strip()
         if not user_id:
             user_id = "default"
 
@@ -433,7 +433,7 @@ if __name__ == "__main__":
             "controller_usage_frequency": args.controller_freq,
             "controller_usage_frequency_description": "1=從來沒用過, 7=每天使用"
         }
-        print(f"✅ 使用者 '{user_id}' 的資訊已從命令列參數載入")
+        print(get_text('button_smash_user_info_loaded', user_id=user_id))
     elif not args.test:
         # 收集使用者基本資訊（如果尚未收集）
         collect_user_info_if_needed(user_id)
@@ -444,7 +444,7 @@ if __name__ == "__main__":
     # 檢查是否有測試參數
     if args.test:
         # 測試模式：模擬點擊來驗證 CPS 計算
-        print("🧪 測試模式：驗證 CPS 計算...")
+        print(get_text('button_smash_test_mode_verify'))
         
         # 模擬 25 次點擊，應該得到 2.5 CPS
         app.start_test()
@@ -452,7 +452,7 @@ if __name__ == "__main__":
         app.click_count = 25
         app.finish_test()
         
-        print("✅ 測試完成")
+        print(get_text('button_smash_test_complete_verify'))
         root.destroy()
         sys.exit(0)
 
@@ -465,9 +465,9 @@ if __name__ == "__main__":
     try:
         root.mainloop()
     except KeyboardInterrupt:
-        print("\n🔄 接收到中斷信號，正在關閉...")
+        print(f"\n{get_text('button_smash_interrupt_signal')}")
     finally:
         # 確保清理資源
         if hasattr(app, 'listener') and app.listener:
             app.listener.stop()
-        print("🎮 Button Smash 測試結束")
+        print(get_text('button_smash_test_end'))

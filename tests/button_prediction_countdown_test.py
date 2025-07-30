@@ -34,7 +34,7 @@ class CountdownReactionTestApp:
     def __init__(self, root, user_id=None):
         self.root = root
         self.user_id = user_id or "default"
-        self.root.title("🎮 預測反應時間測試 - 遊戲化版本")
+        self.root.title(get_text('window_title_prediction_countdown'))
         
         # 設定視窗關閉處理
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
@@ -130,7 +130,10 @@ class CountdownReactionTestApp:
         }
         self.active_balls.append(ball_data)
         self.balls_launched += 1
-        print(f"🚀 發射第 {ball_number} 個球 (已發射: {self.balls_launched}/{self.total_balls})")
+        print(get_text('ball_launched', 
+                      ball_number=ball_number, 
+                      launched=self.balls_launched, 
+                      total=self.total_balls))
 
     def animate_all_balls(self):
         """同時動畫所有活躍的球"""
@@ -174,7 +177,7 @@ class CountdownReactionTestApp:
                 # 標記為錯過，但不立即移除，讓球繼續移動
                 if not ball_data.get('missed', False):  # 避免重複記錄
                     ball_data['missed'] = True
-                    print(f"⏰ 錯過了第 {ball_data['number']} 個球！球繼續往右移動...")
+                    print(get_text('ball_missed', ball_number=ball_data['number']))
                     self.reaction_results.append(None)
 
             # 當球完全跑出畫面右邊時才移除
@@ -192,7 +195,7 @@ class CountdownReactionTestApp:
         all_balls_processed = (len(self.reaction_results) >= self.total_balls)
         
         if all_balls_launched and all_balls_processed:
-            print(f"✅ 所有 {self.total_balls} 顆球已處理完畢，結束測試")
+            print(get_text('all_balls_processed', total=self.total_balls))
             self.finish_test()
             return
 
@@ -208,7 +211,7 @@ class CountdownReactionTestApp:
         best_ball = None
         best_score = float('inf')
         
-        print(f"⚡ 按鍵時刻，檢查 {len(self.active_balls)} 個活躍球:")
+        print(get_text('button_press_check', count=len(self.active_balls)))
         
         # 找到最合適的球，優先考慮最接近理想擊中時間的球
         for ball_data in self.active_balls:
@@ -218,7 +221,7 @@ class CountdownReactionTestApp:
             elapsed = now - ball_data['start_time']
             target_time = 1.0  # 1秒整到達目標位置
             
-            print(f"  球 {ball_data['number']}: 經過時間 {elapsed:.2f}s")
+            print(get_text('ball_elapsed_time', number=ball_data['number'], elapsed=elapsed))
             
             # 只考慮在合理時間範圍內的球（0.5秒到1.3秒之間）
             if 0.5 <= elapsed <= 1.3:
@@ -233,17 +236,17 @@ class CountdownReactionTestApp:
                 if time_penalty < best_score:
                     best_score = time_penalty
                     best_ball = ball_data
-                    print(f"    -> 目前最佳選擇 (評分: {time_penalty:.4f})")
+                    print(get_text('current_best_choice', score=time_penalty))
         
         if best_ball is None:
             # 放寬條件再試一次，但更嚴格
-            print("  第一輪未找到，放寬條件...")
+            print(get_text('relaxed_condition_search'))
             for ball_data in self.active_balls:
                 if not ball_data['active'] or ball_data['hit'] or ball_data.get('missed', False):
                     continue
                     
                 elapsed = now - ball_data['start_time']
-                print(f"  球 {ball_data['number']} (放寬): 經過時間 {elapsed:.2f}s")
+                print(get_text('ball_elapsed_relaxed', number=ball_data['number'], elapsed=elapsed))
                 
                 # 緊急情況下只考慮0.7到1.2秒的球
                 if 0.7 <= elapsed <= 1.2:
@@ -251,10 +254,10 @@ class CountdownReactionTestApp:
                     if time_penalty < best_score:
                         best_score = time_penalty
                         best_ball = ball_data
-                        print(f"    -> 放寬條件下最佳選擇")
+                        print(get_text('relaxed_best_choice'))
         
         if best_ball is None:
-            print("⚠️ 沒有找到適合的球！")
+            print(get_text('no_suitable_ball'))
             return
             
         # 處理擊中的球
@@ -266,22 +269,26 @@ class CountdownReactionTestApp:
         best_ball['hit'] = True
         self.canvas.delete(best_ball['id'])
         
-        print(f"🎯 擊中球 {best_ball['number']} (經過時間: {elapsed:.2f}s)")
+        print(get_text('ball_hit', number=best_ball['number'], elapsed=elapsed))
         
         # 更友善的反饋訊息
         accuracy_ms = abs(error) * 1000
         feedback = ""
         if accuracy_ms < 50:
-            feedback = "🎯 完美！"
+            feedback = get_text('feedback_perfect')
         elif accuracy_ms < 100:
-            feedback = "👍 很好！"
+            feedback = get_text('feedback_great')
         elif accuracy_ms < 200:
-            feedback = "👌 不錯！"
+            feedback = get_text('feedback_good')
         else:
-            feedback = "💪 再練習一下！"
+            feedback = get_text('feedback_practice')
             
-        direction = "快了" if error < 0 else "慢了"
-        print(f"球 {best_ball['number']}: {feedback} {direction} {accuracy_ms:.0f} 毫秒")
+        direction = get_text('timing_too_fast') if error < 0 else get_text('timing_too_slow')
+        print(get_text('ball_feedback_format', 
+                      number=best_ball['number'], 
+                      feedback=feedback, 
+                      direction=direction, 
+                      accuracy=accuracy_ms))
         
         # 記錄詳細的測試結果
         self.test_results.append({
@@ -311,7 +318,7 @@ class CountdownReactionTestApp:
         valid_errors = [abs(e) for e in self.reaction_results if e is not None]
         
         print("\n" + "=" * 50)
-        print("🎮 測試完成！正在輸出結果...")
+        print(get_text('test_completing'))
         print("=" * 50)
         
         if valid_errors:
@@ -320,19 +327,19 @@ class CountdownReactionTestApp:
             # 立即儲存測試結果到 JSON 檔案
             self.save_test_results(avg_error_ms, valid_errors)
             
-            print(f"📊 最終統計結果：")
-            print(f"總測試次數: {self.total_balls}")
-            print(f"成功響應: {len(valid_errors)}")
-            print(f"錯過響應: {self.total_balls - len(valid_errors)}")
-            print(f"成功率: {(len(valid_errors) / self.total_balls) * 100:.1f}%")
-            print(f"平均誤差: {avg_error_ms:.1f} ms")
+            print(get_text('final_statistics'))
+            print(get_text('total_trials_count', count=self.total_balls))
+            print(get_text('successful_responses', count=len(valid_errors)))
+            print(get_text('missed_responses', count=self.total_balls - len(valid_errors)))
+            print(get_text('success_rate_percent', rate=(len(valid_errors) / self.total_balls) * 100))
+            print(get_text('average_error_ms', error=avg_error_ms))
         else:
-            print("⚠️ 所有測試皆未按下按鈕")
+            print(get_text('all_missed_warning'))
             # 即使沒有成功響應也要儲存結果
             self.save_test_results(0, [])
         
         print("=" * 50)
-        print("✅ 結果已成功儲存到 JSON 檔案")
+        print(get_text('results_saved_success'))
         print("=" * 50)
         
         # 顯示重新開始界面
@@ -369,7 +376,7 @@ class CountdownReactionTestApp:
                     "error_seconds": None,
                     "error_ms": None,
                     "accuracy_ms": None,
-                    "feedback": "錯過"
+                    "feedback": get_text('missed_ball_feedback')
                 })
         
         # 按球號排序
@@ -429,21 +436,21 @@ class CountdownReactionTestApp:
                 metrics=metrics,
                 parameters=parameters
             )
-            print(f"💾 測試結果已成功儲存！")
+            print(get_text('save_result_success'))
         except Exception as e:
-            print(f"❌ 儲存結果時發生錯誤: {e}")
+            print(get_text('save_result_error', error=e))
         
         print("=" * 50)
-        print("📊 詳細測試結果統計")
-        print(f"使用者 ID: {self.user_id}")
-        print(f"總測試次數: {self.total_balls}")
-        print(f"成功響應: {success_count}")
-        print(f"錯過響應: {missed_count}")
-        print(f"成功率: {success_rate:.1f}%")
+        print(get_text('detailed_test_statistics'))
+        print(get_text('user_id_label', user_id=self.user_id))
+        print(get_text('total_trials_count', count=self.total_balls))
+        print(get_text('successful_responses', count=success_count))
+        print(get_text('missed_responses', count=missed_count))
+        print(get_text('success_rate_percent', rate=success_rate))
         if valid_errors:
-            print(f"平均誤差: {avg_error_ms:.1f} ms")
-            print(f"最小誤差: {min_error_ms:.1f} ms")
-            print(f"最大誤差: {max_error_ms:.1f} ms")
+            print(get_text('average_error_ms', error=avg_error_ms))
+            print(get_text('minimum_error_ms', error=min_error_ms))
+            print(get_text('maximum_error_ms', error=max_error_ms))
         print("=" * 50)
 
     # ← Joy-Con 按鍵會呼叫這個函數
@@ -453,7 +460,7 @@ class CountdownReactionTestApp:
 
     def on_closing(self):
         """處理視窗關閉事件"""
-        print("🔄 正在安全關閉應用程式...")
+        print(get_text('closing_app_safely'))
         
         # 停止測試
         self.game_state = "finished"
@@ -488,7 +495,7 @@ if __name__ == "__main__":
     # 如果沒有提供 user_id，則請求輸入
     user_id = args.user
     if not user_id:
-        user_id = input("請輸入使用者 ID (例如: P1): ").strip()
+        user_id = input(get_text('enter_user_id_prompt')).strip()
         if not user_id:
             user_id = "default"
 
@@ -498,9 +505,9 @@ if __name__ == "__main__":
             "user_id": user_id,
             "age": args.age,
             "controller_usage_frequency": args.controller_freq,
-            "controller_usage_frequency_description": "1=從來沒用過, 7=每天使用"
+            "controller_usage_frequency_description": get_text('controller_usage_freq_desc')
         }
-        print(f"✅ 使用者 '{user_id}' 的資訊已從命令列參數載入")
+        print(get_text('user_info_loaded_cli', user_id=user_id))
     else:
         # 收集使用者基本資訊（如果尚未收集）
         collect_user_info_if_needed(user_id)
@@ -516,9 +523,9 @@ if __name__ == "__main__":
     try:
         root.mainloop()
     except KeyboardInterrupt:
-        print("\n🔄 接收到中斷信號，正在關閉...")
+        print(get_text('interrupt_signal'))
     finally:
         # 確保清理資源
         if hasattr(app, 'listener') and app.listener:
             app.listener.stop()
-        print("🎮 預測反應時間測試結束")
+        print(get_text('prediction_test_end'))

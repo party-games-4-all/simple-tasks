@@ -19,7 +19,7 @@ class AccuracyDirectionTestApp:
     def __init__(self, root, user_id=None):
         self.root = root
         self.user_id = user_id or "default"
-        self.root.title("按鍵準確度測試")
+        self.root.title(get_text('button_accuracy_window_title'))
         
         # 設定視窗關閉處理
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
@@ -137,11 +137,11 @@ class AccuracyDirectionTestApp:
         
         # 更新進度顯示 - 在等待期間就顯示下一輪的進度
         if self.total == 0:
-            progress_text = "不計分測試"
+            progress_text = get_text('button_accuracy_warmup_test')
         elif self.total >= 1 and self.total <= 10:
-            progress_text = f"第 {self.total}/10 次"
+            progress_text = get_text('button_accuracy_formal_test').format(self.total)
         else:
-            progress_text = "測試結束"
+            progress_text = get_text('button_accuracy_test_finished')
         
         background_color = f"#{config.COLORS['BACKGROUND'][0]:02x}{config.COLORS['BACKGROUND'][1]:02x}{config.COLORS['BACKGROUND'][2]:02x}"
         text_color = f"#{config.COLORS['TEXT'][0]:02x}{config.COLORS['TEXT'][1]:02x}{config.COLORS['TEXT'][2]:02x}"
@@ -216,8 +216,7 @@ class AccuracyDirectionTestApp:
                         self.progress_label.place_forget()  # 隱藏進度標籤
                         self.label.place(relx=0.5, rely=0.05, anchor='n')  # 顯示結果標籤
                         self.label.config(
-                            text=
-                            f"測驗結束\n正確率：{(1-error_rate):.1%}｜平均反應時間：{avg_time:.3f} 秒",
+                            text=get_text('button_accuracy_test_summary').format(1-error_rate, avg_time),
                             bg=background_color, fg=text_color
                         )
                         
@@ -225,9 +224,8 @@ class AccuracyDirectionTestApp:
                         self.start_button.config(text=get_text('gui_restart'))
                         self.start_button.place(relx=0.5, rely=0.92, anchor='s')
                         
-                        print(
-                            f"📊 平均反應時間：{avg_time:.3f} 秒｜錯誤率：{error_rate:.1%}")
-                        print("✅ 測試結果已自動儲存")
+                        print(get_text('button_accuracy_statistics_output').format(avg_time, error_rate))
+                        print(get_text('button_accuracy_results_saved'))
                         return  # 直接返回，不要繼續執行下一回合
                     if self.total > 1:  # 第 1 回合不記錄
                         # 記錄詳細的測試結果
@@ -245,13 +243,13 @@ class AccuracyDirectionTestApp:
                         # self.label.config(
                         #     text=f"正確率：{(1-error_rate):.1%}｜平均反應時間：{avg_time:.3f} 秒"
                         # )
-                        print(
-                            f"🔘 回合 {self.total-1}：{'正確' if correct else '錯誤'}，反應時間 {response_time:.3f} 秒"
-                        )
+                        correct_text = get_text('button_accuracy_correct') if correct else get_text('button_accuracy_incorrect')
+                        print(get_text('button_accuracy_formal_feedback').format(self.total-1, correct_text, response_time))
                     elif self.total == 1:  # 第 1 回合是熱身
-                        print(f"👟 熱身測試：{'正確' if correct else '錯誤'}，反應時間 {response_time:.3f} 秒")
+                        correct_text = get_text('button_accuracy_correct') if correct else get_text('button_accuracy_incorrect')
+                        print(get_text('button_accuracy_warmup_feedback').format(correct_text, response_time))
                         if correct:
-                            print("✅ 熱身測試通過，開始正式測試")
+                            print(get_text('button_accuracy_warmup_passed'))
 
                     # 只有在測試還沒結束且還在測試狀態時才安排下一回合
                     if self.measuring:  # 只有在測試狀態時才繼續
@@ -319,16 +317,16 @@ class AccuracyDirectionTestApp:
         
         print("=" * 50)
         print("📊 測試結果統計")
-        print(f"總回合數: {total_trials}")
-        print(f"正確回合: {correct_count}")
-        print(f"錯誤回合: {total_trials - correct_count}")
-        print(f"正確率: {accuracy_percentage:.1f}%")
-        print(f"平均反應時間: {avg_time:.3f} 秒")
+        print(get_text('stats_total_trials', count=total_trials))
+        print(get_text('stats_correct_trials', count=correct_count))
+        print(get_text('stats_incorrect_trials', count=total_trials - correct_count))
+        print(get_text('stats_accuracy_percentage', percentage=accuracy_percentage))
+        print(get_text('stats_average_time', time=avg_time))
         print("=" * 50)
 
     def on_closing(self):
         """處理視窗關閉事件"""
-        print("🔄 正在安全關閉應用程式...")
+        print(get_text('closing_app_safely'))
         
         # 停止測試
         self.measuring = False
@@ -363,7 +361,7 @@ if __name__ == "__main__":
     # 如果沒有提供 user_id，則請求輸入
     user_id = args.user
     if not user_id:
-        user_id = input("請輸入使用者 ID (例如: P1): ").strip()
+        user_id = input(get_text('enter_user_id_prompt')).strip()
         if not user_id:
             user_id = "default"
 
@@ -373,9 +371,9 @@ if __name__ == "__main__":
             "user_id": user_id,
             "age": args.age,
             "controller_usage_frequency": args.controller_freq,
-            "controller_usage_frequency_description": "1=從來沒用過, 7=每天使用"
+            "controller_usage_frequency_description": get_text('controller_usage_freq_desc')
         }
-        print(f"✅ 使用者 '{user_id}' 的資訊已從命令列參數載入")
+        print(get_text('user_info_loaded_cli', user_id=user_id))
     else:
         # 收集使用者基本資訊（如果尚未收集）
         collect_user_info_if_needed(user_id)
@@ -397,9 +395,9 @@ if __name__ == "__main__":
     try:
         root.mainloop()
     except KeyboardInterrupt:
-        print("\n🔄 接收到中斷信號，正在關閉...")
+        print(get_text('interrupt_signal'))
     finally:
         # 確保清理資源
         if hasattr(app, 'listener') and app.listener:
             app.listener.stop()
-        print("🎮 按鍵準確度測試結束")
+        print(get_text('button_accuracy_test_end'))

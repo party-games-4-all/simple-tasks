@@ -29,7 +29,7 @@ class JoystickTargetTestApp:
     def __init__(self, root, user_id=None):
         self.root = root
         self.user_id = user_id or "default"
-        self.root.title("Joystick 移動目標測試")
+        self.root.title(get_text('window_title_analog_move'))
         
         # 設定視窗關閉處理
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
@@ -209,13 +209,13 @@ class JoystickTargetTestApp:
                     self.update_player_position()
                 except Exception as e:
                     if self.running:  # 只在仍在運行時報告錯誤
-                        print(f"⚠️ 更新玩家位置時發生錯誤: {e}")
+                        print(get_text('update_position_error', error=e))
                     break
             time.sleep(0.016)  # 約 60fps
 
     def start_test(self):
         if self.success_count >= len(self.fixed_targets):
-            self.label.config(text="✅ 測驗完成")
+            self.label.config(text=get_text('gui_test_complete_analog'))
             return
 
         self.testing = True
@@ -234,7 +234,7 @@ class JoystickTargetTestApp:
             self.player_y = self.center_y
 
         if self.success_count >= len(self.fixed_targets):
-            self.label.config(text="✅ 測驗完成")
+            self.label.config(text=get_text('gui_test_complete_analog'))
             return
 
         target_index = self.success_count
@@ -385,20 +385,23 @@ class JoystickTargetTestApp:
                 }
                 self.test_results.append(trial_result)
 
-                print(f"✅ 第 {formal_count} 次成功")
-                print(f"🎯 位置：{current_target_info.get('position_index', 'N/A')} ({current_target_info.get('size_type', 'N/A')}-{current_target_info.get('distance_type', 'N/A')})")
-                print(f"⏱ 用時：{elapsed:.2f} 秒")
-                print(f"📏 距離：{self.initial_distance:.1f} px")
-                print(f"⚡ 單位距離時間：{efficiency:.4f} 秒/像素")
-                print(f"📊 平均時間：{avg_time:.2f} 秒，平均秒/像素：{avg_efficiency:.4f}")
+                print(get_text('trial_success', trial=formal_count))
+                print(get_text('trial_position', 
+                              position=current_target_info.get('position_index', 'N/A'),
+                              size_type=current_target_info.get('size_type', 'N/A'),
+                              distance_type=current_target_info.get('distance_type', 'N/A')))
+                print(get_text('trial_time', time=elapsed))
+                print(get_text('trial_distance', distance=self.initial_distance))
+                print(get_text('trial_efficiency', efficiency=efficiency))
+                print(get_text('trial_average', avg_time=avg_time, avg_efficiency=avg_efficiency))
                 self.label.config(text=get_text('gui_trial_number').format(trial=formal_count))
             else:
                 # 暖身測試
                 print(f"🏃 {get_text('gui_warmup_complete')}")
-                print(f"⏱ 用時：{elapsed:.2f} 秒")
-                print(f"📏 距離：{self.initial_distance:.1f} px")
-                print(f"🎯 現在開始正式測試...")
-                self.label.config(text="暖身完成，開始正式測試")
+                print(get_text('trial_time', time=elapsed))
+                print(get_text('trial_distance', distance=self.initial_distance))
+                print(get_text('warmup_complete_formal'))
+                self.label.config(text=get_text('warmup_complete_status'))
                 
             self.testing = False
             
@@ -443,7 +446,7 @@ class JoystickTargetTestApp:
     def save_test_results(self):
         """儲存測試結果為 JSON 檔案"""
         if not self.test_results:
-            print("⚠️ 無測試結果可儲存")
+            print(get_text('saving_results'))
             return
         
         # 計算總體統計
@@ -551,31 +554,34 @@ class JoystickTargetTestApp:
             test_name="analog_move",
             metrics=metrics,
             parameters=parameters,
-            image_files=[f"軌跡圖片儲存在: {self.output_dir}"]
+            image_files=[get_text('trace_image_saved_path', path=self.output_dir)]
         )
         
-        print("=" * 50)
-        print("🎯 ISO9241 Analog Move Test - 測試完成總結")
-        print("=" * 50)
-        print(f"👤 使用者：{self.user_id}")
-        print(f"🎯 正式測試次數：{total_trials}")
-        print(f"🏃 包含暖身測試：是 (第0次不計入統計)")
-        print(f"⏱️ 總用時：{self.total_time:.2f} 秒")
-        print(f"📊 平均用時：{avg_time:.2f} 秒")
-        print(f"⚡ 平均效率：{avg_efficiency:.4f} 秒/像素")
-        print(f"🎪 測試標準：ISO9241 九點圓形指向測試")
-        print(f"📏 長距離：{self.distance} 像素，短距離：{self.short_distance} 像素")
-        print(f"🎯 測試組合：長距離大小目標 + 短距離大小目標")
+        print(get_text('test_summary_separator'))
+        print(get_text('test_summary_title'))
+        print(get_text('test_summary_separator'))
+        print(get_text('test_summary_user', user_id=self.user_id))
+        print(get_text('test_summary_trials', trials=total_trials))
+        print(get_text('test_summary_warmup'))
+        print(get_text('test_summary_total_time', time=self.total_time))
+        print(get_text('test_summary_avg_time', time=avg_time))
+        print(get_text('test_summary_avg_efficiency', efficiency=avg_efficiency))
+        print(get_text('test_summary_standard'))
+        print(get_text('test_summary_distances', long=self.distance, short=self.short_distance))
+        print(get_text('test_summary_combinations'))
         print("")
-        print("📈 各難度表現分析：")
+        print(get_text('test_summary_analysis'))
         for difficulty, data in metrics["difficulty_analysis"].items():
             if data["count"] > 0:
-                print(f"  {difficulty}: {data['count']} 次，平均 {data['avg_time_ms']:.0f} ms")
-        print("=" * 50)
+                print(get_text('difficulty_item', 
+                              difficulty=difficulty, 
+                              count=data['count'], 
+                              avg_time=data['avg_time_ms']))
+        print(get_text('test_summary_separator'))
 
     def on_closing(self):
         """處理視窗關閉事件"""
-        print("🔄 正在安全關閉應用程式...")
+        print(get_text('closing_app_safely'))
         
         # 停止所有執行緒
         self.running = False
@@ -612,7 +618,7 @@ if __name__ == "__main__":
     # 如果沒有提供 user_id，則請求輸入
     user_id = args.user
     if not user_id:
-        user_id = input("請輸入使用者 ID (例如: P1): ").strip()
+        user_id = input(get_text('enter_user_id_prompt')).strip()
         if not user_id:
             user_id = "default"
 
@@ -622,9 +628,9 @@ if __name__ == "__main__":
             "user_id": user_id,
             "age": args.age,
             "controller_usage_frequency": args.controller_freq,
-            "controller_usage_frequency_description": "1=從來沒用過, 7=每天使用"
+            "controller_usage_frequency_description": get_text('controller_usage_freq_desc')
         }
-        print(f"✅ 使用者 '{user_id}' 的資訊已從命令列參數載入")
+        print(get_text('user_info_loaded_cli', user_id=user_id))
     else:
         # 收集使用者基本資訊（如果尚未收集）
         collect_user_info_if_needed(user_id)
@@ -641,10 +647,10 @@ if __name__ == "__main__":
     try:
         root.mainloop()
     except KeyboardInterrupt:
-        print("\n🔄 接收到中斷信號，正在關閉...")
+        print(get_text('interrupt_signal'))
     finally:
         # 確保清理資源
         app.running = False
         if hasattr(app, 'listener') and app.listener:
             app.listener.stop()
-        print("🎮 Fitt's Law 測試結束")
+        print(get_text('fitts_law_test_end'))

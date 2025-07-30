@@ -19,7 +19,7 @@ class ReactionTestApp:
     def __init__(self, root, user_id=None):
         self.root = root
         self.user_id = user_id or "default"
-        self.root.title("Reaction Test")
+        self.root.title(get_text('button_reaction_window_title'))
         
         # 設定視窗關閉處理
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
@@ -299,7 +299,7 @@ if __name__ == "__main__":
         set_language('zh')
 
     # 解析命令列參數
-    parser = argparse.ArgumentParser(description="Button Reaction Time Test")
+    parser = argparse.ArgumentParser(description=get_text('button_reaction_test_description'))
     parser.add_argument("--user", "-u", default=None, help=get_text('arg_user_id'))
     parser.add_argument("--age", type=int, default=None, help=get_text('arg_age'))
     parser.add_argument("--controller-freq", type=int, default=None, help=get_text('arg_controller_freq'))
@@ -309,7 +309,7 @@ if __name__ == "__main__":
     # 如果沒有提供 user_id，則請求輸入
     user_id = args.user
     if not user_id:
-        user_id = input("請輸入使用者 ID (例如: P1): ").strip()
+        user_id = input(get_text('user_id_input_prompt')).strip()
         if not user_id:
             user_id = "default"
 
