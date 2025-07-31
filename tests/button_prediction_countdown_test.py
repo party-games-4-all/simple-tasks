@@ -59,7 +59,7 @@ class CountdownReactionTestApp:
         self.gray_x1 = self.target_x + self.ball_radius
         # self.canvas.create_rectangle(self.gray_x0, 0, self.gray_x1, config.WINDOW_HEIGHT, fill="lightgray", outline="")
         # 在 __init__ 中新增灰色圓形（與球一樣大小）放在 target_x 處
-        target_color = f"#{config.COLORS['TARGET'][0]:02x}{config.COLORS['TARGET'][1]:02x}{config.COLORS['TARGET'][2]:02x}"
+        target_color = f"#{config.COLORS['NEUTRAL'][0]:02x}{config.COLORS['NEUTRAL'][1]:02x}{config.COLORS['NEUTRAL'][2]:02x}"
         self.gray_circle = self.canvas.create_oval(
             self.target_x - self.ball_radius, self.y_pos - self.ball_radius,
             self.target_x + self.ball_radius, self.y_pos + self.ball_radius,
