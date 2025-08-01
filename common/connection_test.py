@@ -1,5 +1,15 @@
 import pygame
-from .language import get_text
+import sys
+import os
+from pathlib import Path
+
+# 支持相對導入和直接執行
+try:
+    from .language import get_text
+except ImportError:
+    # 當直接執行時，添加父目錄到路徑
+    sys.path.append(str(Path(__file__).parent.parent))
+    from common.language import get_text
 
 # 初始化 pygame joystick 模組
 pygame.init()
