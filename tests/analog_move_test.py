@@ -199,6 +199,9 @@ class JoystickTargetTestApp:
         
         # 不打亂順序，保持測試的一致性
 
+        # 計算正式測試總數（扣除暖身測試）
+        self.total_formal_tests = len([t for t in self.fixed_targets if not t.get("is_warmup", False)])
+
         self.spawn_target()
         Thread(target=self.player_loop, daemon=True).start()
 
@@ -394,7 +397,7 @@ class JoystickTargetTestApp:
                 print(get_text('trial_distance', distance=self.initial_distance))
                 print(get_text('trial_efficiency', efficiency=efficiency))
                 print(get_text('trial_average', avg_time=avg_time, avg_efficiency=avg_efficiency))
-                self.label.config(text=get_text('gui_trial_number').format(trial=formal_count))
+                self.label.config(text=get_text('gui_trial_number').format(trial=formal_count, total=self.total_formal_tests))
             else:
                 # 暖身測試
                 print(f"🏃 {get_text('gui_warmup_complete')}")

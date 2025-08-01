@@ -227,7 +227,7 @@ LANGUAGES = {
                 # GUI Text - Analog Movement Test
         'gui_analog_instructions': "按『開始測試』後先進行暖身，然後正式測試 (僅使用左手搖桿操作)",
         'gui_test_complete_analog': "✅ 測驗完成",
-        'gui_trial_number': "第 {trial} 次",
+        'gui_trial_number': "第 {trial}/{total} 次",
         'gui_warmup_complete': "暖身測試完成",
         
         # Analog Move Test specific messages
@@ -508,7 +508,7 @@ LANGUAGES = {
         # GUI Text - Analog Movement Test
         'gui_analog_instructions': "Click 'Start Test' for warmup first, then formal test (use left stick only)",
         'gui_test_complete_analog': "✅ Test Complete",
-        'gui_trial_number': "Trial {trial}",
+        'gui_trial_number': "Trial {trial}/{total}",
         'gui_warmup_complete': "Warmup test completed",
         
         # Analog Move Test specific messages
